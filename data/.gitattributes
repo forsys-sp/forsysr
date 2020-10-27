@@ -1,0 +1,4 @@
+IDHexnet_North20190523_Final.dbf filter=lfs diff=lfs merge=lfs -text
+IDHexnet_North20190523_Final.dbf.xml filter=lfs diff=lfs merge=lfs -text
+ID_PA_North20190523_Final.zip filter=lfs diff=lfs merge=lfs -text
+nID_hexnet_datadictionary.xlsx filter=lfs diff=lfs merge=lfs -text
