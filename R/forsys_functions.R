@@ -12,11 +12,11 @@
 #' @param filter_threshold The 
 #' @return The selected stands from \code{df}, ordered by \code{prioritize_by}, and selected until the sum of \code{tally_by} is as close to 
 #' \code{group_target} as possible.
-selectSubunits <- function(dt = dbfFile, 
-                           grouped_by = 'PA_ID', 
-                           prioritize_by = 'TVMBF_SPM', 
-                           tally_by = 'AREA_HA', 
-                           grouped_target = 'AREA_PA10P'){
+selectSimpleGreedyAlgorithm <- function(dt = dbfFile, 
+                                        grouped_by = 'PA_ID', 
+                                        prioritize_by = 'TVMBF_SPM', 
+                                        tally_by = 'AREA_HA', 
+                                        grouped_target = 'AREA_PA10P'){
   # For each grouped_by:
   # Remove subunits that don't meet threshold:
   # Order by priority:
@@ -29,6 +29,7 @@ selectSubunits <- function(dt = dbfFile,
   dt[, treat := 0]
   # This recursive function selects subunits until either targets have been met or all available subunits have been checked. 
   #dt <- recursiveSelection(dt, grouped_by, prioritize_by, tally_by, grouped_target)
+  # Common issue: if the dataset has na values in the priority field, this will fail.
   while(sum(dt[,considerForTreatment==1 & treat == 0]) != 0){
     # Order the data table by the priority.
     dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
@@ -147,9 +148,9 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
 
 addTargetField <- function(stands, pa_unit, pa_target, pa_target_multiplier, project_area, land_base){
   if(length(land_base) == 0){
-    stands_updated <- standDT[, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = subunit_group_by]
+    stands_updated <- standDT[, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = stand_group_by]
   }else{
-    stands_updated <- standDT[get(land_base) == 1, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = subunit_group_by]
+    stands_updated <- standDT[get(land_base) == 1, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = stand_group_by]
   }
   return(stands_updated)
 }
