@@ -72,3 +72,6 @@ fixed_area_target <- 2000
 ## national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning 
 ##area regardless of where it is located), set TRUE.
 system_constraint <- FALSE
+
+## Toggle to overwrite existing output files
+overwrite_output <- TRUE

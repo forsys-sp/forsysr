@@ -7,203 +7,280 @@
 ##                                                                    ##
 ########################################################################
 
-## Set parameters here.
-## configuration_file is a relic - currently used to set working directory.
-configuration_file <- c("config_Idaho.R")
+#' Run the ForSys treatment planner. Either provide parameters, or define parameters
+#' in a config file and pass the name of the file to this run function.
+#'
+#' @param config_file Relative path to a config file that defines needed parameters
+#' @param scenario_name A name for this scenario
+#' @param is_dbf Toggle for reading DBF
+#' @param is_csv Toggle for reading CSV files
+#' @param input_standfile # TODO
+#' @param stand_field # TODO
+#' @param pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
+#' @param land_base The land base is the area that is used to calculate the PCP and SPM values. 
+#'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
+#'                  A blank field means all lands are included in the calculation.
+#' @param priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
+#' @param stand_group_by # TODO
+#' @param pa_target # TODO
+#' @param pa_unit # TODO
+#' @param pa_target_multiplier # TODO
+#' @param nesting # TODO
+#' @param nesting_group_by # TODO
+#' @param nesting_target # TODO
+#' @param nesting_target_multiplier # TODO
+#' @param weighting_values Defines the weights and integer steps between weights. The values are for min, max, and step.
+#' @param thresholds Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
+#' @param include_stands This defines global threshold values to include stands - i.e. for any threshold type.
+#' @param output_fields This should include the desired fields for the planning area treatment files. Planning area id, 
+#'                      priority weights and treatment rank are added automatically.
+#' @param grouping_variables Include the smaller and larger groups here for grouping of treated stands.
+#' @param fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
+#' @param fixed_area_target # TODO
+#' @param system_constraint If the constraint is by master nesting unit (i.e. treat the top X planning areas in each 
+#'                          national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning 
+#'                          area regardless of where it is located), set TRUE.
+#' @param overwrite_output Toggle to overwrite existing output files
+#' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
+#' @export
+run <- function(
+  config_file = '',
+  scenario_name = '',
+  is_dbf = TRUE,
+  is_csv = FALSE,
+  input_standfile = '',
+  stand_field = 'Cell_ID',
+  pcp_spm = c(),
+  land_base = '',
+  priorities = c(),
+  stand_group_by = '',
+  pa_target = '',
+  pa_unit = '',
+  pa_target_multiplier = 0.15,
+  nesting = FALSE,
+  nesting_group_by = NULL,
+  nesting_target = NULL,
+  nesting_unit = NULL,
+  nesting_target_multiplier = 1.0,
+  weighting_values = "0 5 1",
+  thresholds = c("Manageable man_alldis == 1") ,
+  include_stands = c("man_alldis == 1"),
+  output_fields = c("AREA_HA", "TVMBF_STND", "TVMBF_PCP", "HUSUM_STND", "HUSUM_PCP"),
+  grouping_variables = c("PA_ID", "Owner"),
+  fixed_target = FALSE,
+  fixed_area_target = 2000,
+  system_constraint = FALSE,
+  overwrite_output = TRUE
+  ) {
 
-#-----------------------------------------------------------------
+# If a config file has been selected, source it to read in variables
+if (length(config_file) > 1) {
+  configuration_file <- c("config_Idaho.R") # DEBUG! Hard coded
+  setwd(dirname(configuration_file))
+  source(configuration_file)
+}
 
-setwd(dirname(configuration_file))
+
+## Load functions, write parameter data out to Arc.
+source("R/forsys_functions.R")
+options(scipen = 9999)
+
+('Loading required R packages...')
+#install.packages('pacman')
+pacman::p_load(
+  dplyr,
+  data.table,
+  rgdal,
+  ggplot2,
+  sp,
+  grid,
+  maptools,
+  rgeos,
+  ggsn,
+  roxygen2,
+  foreign,
+  gtools,
+  hexbin,
+  stringr,
+  purrr)
+
 # Check if output directory exists
-if(!dir.exists(file.path(getwd(), "output"))){
+if (!dir.exists(file.path(getwd(), "output"))) {
   print(paste("Making output directory: ", file.path(getwd(), "output")), sep="")
   dir.create(file.path(getwd(), "output"))
-} else(
+} else {
   print(paste("output directory, ", file.path(getwd(), "output"), ", already exists"), sep="")
-)
+}
 
-## Clean up any files left from previous database. Failure to remove the .ini file will cause failures when
-## table attributes change.
-##unlink("output\\*.csv")
-##unlink("output\\*.ini")
+if (overwrite_output) {
+  ## Clean up any files left from previous database. Failure to remove the .ini file will cause failures when
+  ## table attributes change.
+  unlink("output\\*.csv")
+  unlink("output\\*.ini")
+
+  output_files <- sapply(list.files('output'), function(x) paste0('output/', x))
+  file.remove(output_files)
+} else {
+  fname <- paste0('output/pa_all', scenario_name, '.csv')
+  if (file.exists(fname)) {
+    print(paste0('Warning: Output file ', fname, ' already exists. Appending results.'))
+  }
+  # TODO add check for grouping files
+}
 
 ## Print a specs document that describes the inputs.
 #printSpecsDocument(constraints[[1]][2], priorities, timber_threshold, volume_constraint)
 
-## Load functions, write parameter data out to Arc.
-source(configuration_file)
-source("R/forsys_functions.R")
-options(scipen = 9999)
-('Loading required R packages...')
-#install.packages('pacman')
-pacman::p_load(dplyr, data.table, rgdal, ggplot2, sp, grid, maptools, rgeos, ggsn, roxygen2, foreign, gtools, hexbin, stringr)
-
 #
 # # # Load data -------------
-print("Loading Dataset")
-if(is_dbf == TRUE){
-  standDT <- data.table(read.dbf(input_standfile))
-}else if(is_csv == TRUE){
-  standDT <- data.table(fread(input_standfile, header = TRUE))
-}else{
-  ('Input format not recognized')
-}
-standDT <- calculateSPMPCP(standDT, land_base, pcp_spm)
 
-# Add target area or volume fields based on a land base here:
-standDT <- addTargetField(standDT, pa_unit, pa_target, pa_target_multiplier, stand_group_by, land_base)
+standDT <- load_dataset(input_standfile, is_dbf)
+standDT %>%
+  calculate_spm_pcp(land_base, pcp_spm) %>%
+  # Add target area or volume fields based on a land base here:
+  add_target_field(pa_unit, pa_target, pa_target_multiplier, stand_group_by, land_base)
+
 
 # Dynamic output variable names
 output_fields <- as.character(output_fields)
-output_grouped_variables <- c(output_fields,
-                              nesting_target, "weightedPriority")
+output_grouped_variables <- c(output_fields, nesting_target, "weightedPriority")
 
 ## Maintain the original stand list. allStands becomes the filtered table.
-allStands <- standDT
-
-# Hack the area target - can be set in the shapefile.
-# This code may be updated for looping multiple treatment types.
-# It should do the same thing that Pedro is working on within a single run instead of wrapped.
-allStands$Commercial <- allStands$Commercial*allStands$AREA_HA
-allStands$PreCommercial <- allStands$AREA_HA - allStands$Commercial
-allStands$treat <- 0
-allStands$treatment_type <- ""
-allStands$treatedPAArea <- 0
+allStands <- standDT %>%
+  # Hack the area target - can be set in the shapefile.
+  # This code may be updated for looping multiple treatment types.
+  # It should do the same thing that Pedro is working on within a single run instead of wrapped.
+  set_up_treatment_types(allStands)
 
 # Calculate weights
-weights <- weightPriorities(length(priorities), weighting_values[1])
+weights <- weight_priorities(length(priorities), weighting_values[1])
 print(paste0("These parameters have defined ", nrow(weights), " weighted scenarios. Running now."))
 
 # Run selection code for each set of weights
-for(w in 1:nrow(weights)){
+for (w in 1:nrow(weights)) { # START FOR 0
 
   ## Step 0: create the weighted priorities.
   print(paste0("Creating weighted priorities:",  w, " of ", nrow(weights)))
 
   allStands$weightedPriority <- 0
   allStands$treat <- 0
-  selectedStands <- NULL
-  for(i in 1:ncol(weights)){
-    allStands$weightedPriority <- allStands$weightedPriority + weights[[i]][w]*allStands[, get(priorities[[i]][1])]
-    priorityName <- paste0("Pr_", i, "_", priorities[[i]][1])
-    allStands[, (priorityName) := weights[[i]][w]]
-  }
+  selected_stands <- NULL
+
+  # for (i in 1:ncol(weights)) { # START FOR 1
+  #   curr_weight = weights[[i]][w]
+  #   curr_priority = priorities[[i]][1]
+
+  #   allStands$weightedPriority <- allStands$weightedPriority + curr_weight * allStands[, get(curr_priority)]
+  #   priorityName <- paste0("Pr_", i, "_", curr_priority)
+  #   allStands[, (priorityName) := curr_weight]
+  # } # END FOR 1
+
+  allStands <- set_up_priorities(w, priorities, weights, allStands)
+
   ## Step 1: Select stands in each planning area based on stand conditions and priorities:
   # Filter dataset using threshold information
   # Convert threshold strings into a data table to produce filters.
 
-  all_thresholds <- NULL
-  for(i in 1:length(thresholds)){
-    all_thresholds <- rbind(all_thresholds, strsplit(thresholds[i], " ")[1])
-  }
+
+  # TODO Can we make all_thresholds a single statement, and then adjust treatment_types accordingly?
+  all_thresholds <- make_thresholds(thresholds)
   treatment_types <- unique(sapply(all_thresholds, function(x) x[1]))
   all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
-  standsUpdated <- allStands[, treatedPAArea := 0]
+  stands_updated <- allStands[, treatedPAArea := 0]
 
+  # TODO Do we have to do parse/eval? Makes me itchy, but I see the utility
   # Remove excluded stands (man_alldis == 0, etc.)
   #if(length(include_stands) > 0){
-    for(f in 1:length(include_stands)){
-      standsUpdated <- subset(standsUpdated, eval(parse(text = include_stands[f])))
-    }
+    for(f in 1:length(include_stands)){ # START FOR 3
+      stands_updated <- subset(stands_updated, eval(parse(text = include_stands[f])))
+    } # STOP FOR 3
   #}
-  for(t in 1:length(treatment_types)){
-    filteredStands <- standFilter(standsUpdated, all_thresholds[V1 == treatment_types[t], ])
-    print(paste0("There are ", nrow(filteredStands), " stands that meet treatment thresholds for ", treatment_types[t]))
-    # Set the target for each bin here:
-    print(paste0("Treatment type: ", all_thresholds[t,1]))
-    if(fixed_target == TRUE){
-      filteredStands[, current_area_target := fixed_area_target]# Target based on fixed field
-    }else if(fixed_target == FALSE){
-      filteredStands[, current_area_target := get(pa_target)*pa_target_multiplier]#activate for percentage not fixed area
-    }
-    # The following code splits out the planning area treatments by treatment type and percent of area treated. An area (rather than %)
-    # area target can be set by removing the multiplier and replacing AREA_MAN with the area target in hectares (i.e. 2000).
-    # if(all_thresholds[t,1] == c("Commercial")){
-    #   filteredStands[, current_area_target := AREA_MAN *.15 - treatedPAArea]
-    # }else if(all_thresholds[t,1] == c("HF")){
-    #   filteredStands[, current_area_target := AREA_MAN * .30 - treatedPAArea]
-    #   filteredStands[, weightedPriority := WHPMN_SPM]
-    # }else{
-    #   print("Missing Threshold Update! Treatment selection is suspect!")
-    # }
-    treatStands <- selectSimpleGreedyAlgorithm(dt = filteredStands,
-                                          grouped_by = stand_group_by,
-                                          prioritize_by = "weightedPriority",
-                                          tally_by = pa_unit,
-                                          grouped_target = "current_area_target")
 
-    # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
+  # for(t in 1:length(treatment_types)){ # START FOR 4
+  #   filtered_stands <- stand_filter(stands_updated, all_thresholds[V1 == treatment_types[t], ])
+  #   print(paste0("There are ", nrow(filtered_stands), " stands that meet treatment thresholds for ", treatment_types[t]))
+  #   # Set the target for each bin here:
+  #   print(paste0("Treatment type: ", all_thresholds[t,1]))
 
-    area_treatedPA <- updateTarget(treatStands, stand_group_by, pa_unit)
-    standsUpdated <- standsUpdated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
-    standsUpdated <- standsUpdated[treatStands, ':='(treatment_type = treatment_types[t], treat = 1), on = stand]
-    selectedStands <- rbind(selectedStands, standsUpdated[treat==1,])
-  }
+  #   if (fixed_target == TRUE) {
+  #     filtered_stands <- set_fixed_area_target(filtered_stands, fixed_area_target) # Target based on fixed field
+  #   } else if (fixed_target == FALSE) {
+  #     filtered_stands <- set_percentage_area_target(filtered_stands, pa_target, pa_target_multiplier) #activate for percentage not fixed area
+  #   }
+
+  #   # The following code splits out the planning area treatments by treatment type and percent of area treated. An area (rather than %)
+  #   # area target can be set by removing the multiplier and replacing AREA_MAN with the area target in hectares (i.e. 2000).
+  #   # if(all_thresholds[t,1] == c("Commercial")){
+  #   #   filtered_stands[, current_area_target := AREA_MAN *.15 - treatedPAArea]
+  #   # }else if(all_thresholds[t,1] == c("HF")){
+  #   #   filtered_stands[, current_area_target := AREA_MAN * .30 - treatedPAArea]
+  #   #   filtered_stands[, weightedPriority := WHPMN_SPM]
+  #   # }else{
+  #   #   print("Missing Threshold Update! Treatment selection is suspect!")
+  #   # }
+  #   treatStands <- select_simple_greedy_algorithm(dt = filtered_stands,
+  #                                         grouped_by = stand_group_by,
+  #                                         prioritize_by = "weightedPriority",
+  #                                         tally_by = pa_unit,
+  #                                         grouped_target = "current_area_target")
+
+  #   # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
+
+  #   area_treatedPA <- update_target(treatStands, stand_group_by, pa_unit)
+  #   stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
+  #   stands_updated <- stands_updated[treatStands, ':='(treatment_type = treatment_types[t], treat = 1), on = stand]
+  #   selected_stands <- rbind(selected_stands, stands_updated[treat==1,])
+  # } # END FOR 4
+
+  # source('R/forsys_functions.R')
+  selected_stands = apply_treatment(
+                      treatment_types = treatment_types,
+                      stands = stands_updated,
+                      all_thresholds = all_thresholds,
+                      fixed_target = fixed_target,
+                      fixed_area_target = fixed_area_target,
+                      pa_target = pa_target,
+                      pa_target_multiplier = pa_target_multiplier)
 
   # # Step 2: IF NESTING: Group the selected subunits by planning area (based on areas previously selected for treatment)
   print("Creating Grouped Dataset")
-  groupedByPA <- createGroupedDataset(selectedStands,
+  groupedByPA <- create_grouped_dataset(selected_stands,
                                       stand_group_by,
                                       output_grouped_variables)
-  if(length(grouping_variables > 1)){
-    groupedByAll <- createGroupedDataset(selectedStands,
+  if (length(grouping_variables > 1)) {
+    groupedByAll <- create_grouped_dataset(selected_stands,
                                          grouping_variables,
                                          output_grouped_variables)
   }
-  if(isTRUE(nesting)){
 
-    # Step 3: Identify the best planning areas within each nest.
-    print("Selecting planning area subunits")
-    groupedByPA$system <- 1
-    if(system_constraint == TRUE){
-      grouping_type <- c("system")
-      groupedByPA[,harvestTarg := sum(groupedByPA[,get(nesting_target) * get(nesting_unit)])]
-
-    }else{
-      grouping_type <- nesting_unit
-      groupedByPA[,harvestTarg := groupedByPA[,get(nesting_target) * get(nesting_unit)]]
-    }
-    groupedByPA$treat <- 0
-    paSubunits <- selectSimpleGreedyAlgorithm(dt = groupedByPA,
-                                              grouped_by = grouping_type,
-                                              prioritize_by = "weightedPriority",
-                                              tally_by = nesting_unit,
-                                              grouped_target = "harvestTarg")
-    paSubunits <- paSubunits[order(-paSubunits$weightedPriority),]
-    print("adding treatment rank")
-    paSubunits$treatment_rank <- seq(1:nrow(paSubunits))
+  # Step 3: Identify the best planning areas within each nest.
+  if (isTRUE(nesting)) {
+    paSubunits = identify_nested_planning_areas(groupedByPA)
   }
 
   uniqueWeights <- ""
-   for(i in 1:ncol(weights)){
-     uniqueWeights <- paste0(uniqueWeights, "_", weights[[i]][w])
-   }
+  # for (i in 1:ncol(weights)) { # START FOR 5
+  #    uniqueWeights <- paste0(uniqueWeights, "_", weights[[i]][w])
+  # } # END FOR 5
+
+  uniqueWeights = paste0(sapply(1:ncol(weights), function(i) {uniqueWeights <- paste0(uniqueWeights, "_", weights[[i]][w])}), collapse='')
+
   print("Producing output files for stands and planning areas")
-  if(write_stand_outputs == TRUE){
-    standOutputFile <- paste0("output/stands", uniqueWeights, scenario_name, ".csv")
-    fwrite(selectedStands, standOutputFile)
+  if (write_stand_outputs == TRUE) {
+      write_stand_outputs_to_file(uniqueWeights, scenario_name)
   }
+
   planningAreaOutputFile <- paste0("output/pa", uniqueWeights, ".csv")
 
   # compile all planning areas and stands
-  groupAllPlanningAreas <- standDT %>%
-    group_by_at(stand_group_by)
+  allPlanningAreas <- compile_planning_areas_and_stands(uniqueWeights, standDT, stand_group_by, output_fields)
 
-  allPlanningAreas <- data.table(summarize_at(groupAllPlanningAreas, .vars = vars(output_fields), .funs = c(sum="sum")))
-  names(allPlanningAreas) <- gsub(x = names(allPlanningAreas), pattern = "_sum", replacement = "")
-  sum_names <- paste0("ESum_", colnames(allPlanningAreas[,output_fields, with = FALSE]), sep = "")
-  setnames(allPlanningAreas, c(output_fields), c(sum_names))
   #Test outputs
   #fwrite(allPlanningAreas, file = "output/allPlanningAreas.csv", sep = ",", row.names = FALSE)
 
   # compile all planning areas, broken out by any subunits
-  groupAllPlanningAreasSubset <- standDT %>%
-    group_by_at(grouping_variables)
+  allPlanningAreasSubset <- compile_planning_areas_and_stands(uniqueWeights, standDT, grouping_variables, output_fields)
 
-  allPlanningAreasSubset <- data.table(summarize_at(groupAllPlanningAreasSubset, .vars = vars(output_fields), .funs = c(sum="sum")))
-  names(allPlanningAreasSubset) <- gsub(x = names(allPlanningAreasSubset), pattern = "_sum", replacement = "")
-  sum_names <- paste0("ESum_", colnames(allPlanningAreasSubset[,output_fields, with = FALSE]), sep = "")
-  setnames(allPlanningAreasSubset, c(output_fields), c(sum_names))
   #Test outputs
   #fwrite(allPlanningAreasSubset, file = "output/allPlanningAreasSubset.csv", sep = ",", row.names = FALSE)
 
@@ -211,10 +288,12 @@ for(w in 1:nrow(weights)){
   trt_names <- paste0("ETrt_", colnames(groupedByPA[,output_fields, with = FALSE]), sep = "")
   setnames(groupedByPA, c(output_fields), c(trt_names))
   paOutput <- merge(allPlanningAreas, groupedByPA, by=c(stand_group_by), all.x = TRUE)
-  for(i in 1:ncol(weights)){
+
+  for (i in 1:ncol(weights)) { # START FOR 6
     priorityName <- paste0("Pr_", i, "_", priorities[[i]][1])
     paOutput[, (priorityName) := weights[[i]][w]]
-  }
+  } # END FOR 6
+
   paOutput <- paOutput[order(-paOutput$weightedPriority),]
   print("adding treatment rank")
   paOutput[,"treatment_rank" := seq(1:nrow(paOutput)),]
@@ -226,15 +305,15 @@ for(w in 1:nrow(weights)){
   paOutput <- unique(paOutput)
   print("Adding results to master planning area file")
   masterPA = paste0("output/pa_all", scenario_name, ".csv")
-  if(file.exists(masterPA)){
+  if (file.exists(masterPA)) {
     fwrite(paOutput, file = masterPA, sep = ",", row.names = FALSE, append = TRUE, col.names = FALSE)
-  }else{
+  } else {
     fwrite(paOutput, file = masterPA, sep = ",", row.names = FALSE)
   }
 
   ## This code creates outputs for datasets that have subcategories within planning areas, such as ownership. It
   ## produces a single row for each planning area/subset combination.
-  if(length(grouping_variables > 1)){
+  if (length(grouping_variables > 1)) {
     # Rename treatment variables and merge into the planning area dataset for output.
     trt_names <- paste0("ETrt_", colnames(groupedByAll[,output_fields, with = FALSE]), sep = "")
     setnames(groupedByAll, c(output_fields), c(trt_names))
@@ -244,20 +323,22 @@ for(w in 1:nrow(weights)){
     print("adding treatment rank")
     paSubOutput <- merge(paSubOutput, paOutput[, c(stand_group_by, "treatment_rank"), with = FALSE], by = c(stand_group_by))
     paSubOutput <- unique(paSubOutput)
-    for(i in 1:ncol(weights)){
+
+    for (i in 1:ncol(weights)) { # START FOR 7
       priorityName <- paste0("Pr_", i, "_", priorities[[i]][1])
       paSubOutput[, (priorityName) := weights[[i]][w]]
-    }
+    } # END FOR 7
 
 
     print("Adding results to the master planning area subset file.")
     subPA = paste0("output/pa_subset", scenario_name, ".csv")
-    if(file.exists(subPA)){
+    if (file.exists(subPA)) {
       fwrite(paSubOutput, file = subPA, sep = ",", row.names = FALSE, append = TRUE, col.names = FALSE)
-    }else{
+    } else {
       fwrite(paSubOutput, file = subPA, sep = ",", row.names = FALSE)
     }
   }
-}
 
+} # END FOR 0
 
+} # End main
