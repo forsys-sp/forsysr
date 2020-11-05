@@ -14,21 +14,21 @@
 #' @param scenario_name A name for this scenario
 #' @param is_dbf Toggle for reading DBF
 #' @param is_csv Toggle for reading CSV files
-#' @param input_standfile # TODO
-#' @param stand_field # TODO
+#' @param input_standfile TODO
+#' @param stand_field TODO
 #' @param pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
 #' @param land_base The land base is the area that is used to calculate the PCP and SPM values. 
 #'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
 #'                  A blank field means all lands are included in the calculation.
 #' @param priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
-#' @param stand_group_by # TODO
-#' @param pa_target # TODO
-#' @param pa_unit # TODO
-#' @param pa_target_multiplier # TODO
-#' @param nesting # TODO
-#' @param nesting_group_by # TODO
-#' @param nesting_target # TODO
-#' @param nesting_target_multiplier # TODO
+#' @param stand_group_by TODO
+#' @param pa_target TODO
+#' @param pa_unit TODO
+#' @param pa_target_multiplier TODO
+#' @param nesting TODO
+#' @param nesting_group_by TODO
+#' @param nesting_target TODO
+#' @param nesting_target_multiplier TODO
 #' @param weighting_values Defines the weights and integer steps between weights. The values are for min, max, and step.
 #' @param thresholds Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
 #' @param include_stands This defines global threshold values to include stands - i.e. for any threshold type.
@@ -36,7 +36,7 @@
 #'                      priority weights and treatment rank are added automatically.
 #' @param grouping_variables Include the smaller and larger groups here for grouping of treated stands.
 #' @param fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
-#' @param fixed_area_target # TODO
+#' @param fixed_area_target TODO
 #' @param system_constraint If the constraint is by master nesting unit (i.e. treat the top X planning areas in each 
 #'                          national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning 
 #'                          area regardless of where it is located), set TRUE.
@@ -82,7 +82,6 @@ if (length(config_file) > 1) {
 
 
 ## Load functions, write parameter data out to Arc.
-source("R/forsys_functions.R")
 options(scipen = 9999)
 
 ('Loading required R packages...')
@@ -90,19 +89,20 @@ options(scipen = 9999)
 pacman::p_load(
   dplyr,
   data.table,
-  rgdal,
-  ggplot2,
-  sp,
-  grid,
-  maptools,
-  rgeos,
-  ggsn,
-  roxygen2,
   foreign,
+  ggplot2,
+  ggsn,
+  grid,
   gtools,
   hexbin,
-  stringr,
-  purrr)
+  maptools,
+  purrr,
+  rgdal,
+  rgeos,
+  roxygen2,
+  sp,
+  stringr
+  )
 
 # Check if output directory exists
 if (!dir.exists(file.path(getwd(), "output"))) {
@@ -233,7 +233,7 @@ for (w in 1:nrow(weights)) { # START FOR 0
   # } # END FOR 4
 
   # source('R/forsys_functions.R')
-  selected_stands = apply_treatment(
+  selected_stands <- apply_treatment(
                       treatment_types = treatment_types,
                       stands = stands_updated,
                       all_thresholds = all_thresholds,

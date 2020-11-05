@@ -127,9 +127,9 @@ createWeightedPairs <- function(dt){
 
 #' Update target area for treatment after each activity
 #'
-#' @param treatedStands
-#' @param subunit
-#' @param unit_area
+#' @param treated_stands TODO
+#' @param subunit TODO
+#' @param unit_area TODO
 #' @return A table with the updated subunit targets for all planning areas that had treatments
 update_target <-function(treated_stands, subunit, unit_area){
   treated_subunit_target <- create_grouped_dataset(treated_stands,

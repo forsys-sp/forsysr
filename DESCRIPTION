@@ -2,22 +2,11 @@ Package: forsys
 Title: ForSys Scenario Planning
 Version: 0.0.0.9000
 Authors@R: 
-  c(
-    person(given = "Robb",
-           family = "Lankston",
-           role = c("aut", "cre"),
-           email = "lankston.consulting@gmail.com"),
     person(given = "Rachel",
            family = "Houtman",
            role = c("aut", "cre"),
            email = "Rachel.Houtman@oregonstate.edu",
-           comment = c(ORCID = "YOUR-ORCID-ID")),
-    person(given = "Cody",
-           family = "Evers",
-           role = c("aut", "cre"),
-           email = "evers.cody@gmail.com",
            comment = c(ORCID = "YOUR-ORCID-ID"))
-   )
 Description: What the package does (one paragraph).
 Depends: pacman
 License: GPL-3
