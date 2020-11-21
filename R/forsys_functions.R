@@ -29,7 +29,7 @@ select_simple_greedy_algorithm <- function(dt = dbfFile,
                                         grouped_by = 'PA_ID',
                                         prioritize_by = 'TVMBF_SPM',
                                         tally_by = 'AREA_HA',
-                                        grouped_target = 'AREA_PA10P'){
+                                        grouped_target = 'AREA_PA10P') {
   # For each grouped_by:
   # Remove subunits that don't meet threshold:
   # Order by priority:
@@ -68,7 +68,7 @@ select_simple_greedy_algorithm <- function(dt = dbfFile,
 #' @param dt A data table with all stand information necessary to determine availability for a specific treatment type.
 #' @param filters A list of strings that are used to filter the stands for treatment availability.
 #' @return The final data table with stands available for treatment.
-stand_filter <- function(dt, filters){
+stand_filter <- function(dt, filters) {
   for(f in 1:nrow(filters)){
     filter <- paste0(filters[f,2], " ", filters[f,3], " ", filters[f,4])
     filter <- str_remove(filter, "'")
@@ -91,7 +91,7 @@ stand_filter <- function(dt, filters){
 #' \code{treat_target} as possible.
 create_grouped_dataset <- function(dt,
                                  grouping_vars,
-                                 summing_vars){
+                                 summing_vars) {
   ## Create the grouped data.table by grouping the treated subunits from the previous step.
   dt <- subset(dt[treat==1])
   dt <- group_by_at(dt, vars(grouping_vars))
@@ -106,7 +106,7 @@ create_grouped_dataset <- function(dt,
 #' @param minimum The minimum value of the weighting schema.
 #' @param maximum The maximum value of the weighting schema.
 #' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
-weight_priorities <- function(numPriorities, weights = c("0 10 1")){
+weight_priorities <- function(numPriorities, weights = c("0 10 1")) {
   if(numPriorities == 1)
     return(data.table(1))
   weights <- strtoi(unlist(strsplit(weights, " ")))
@@ -118,7 +118,7 @@ weight_priorities <- function(numPriorities, weights = c("0 10 1")){
   uniqueWeightCombinations <- rbind(uniqueWeightCombinations[,c("Var1", "Var2")], zero_one)
 }
 
-createWeightedPairs <- function(dt){
+createWeightedPairs <- function(dt) {
   dt <- dt[Var1 != Var2]
   dt[, proportion := ifelse(Var2 != 0, Var1 / Var2, 0)]
   dt <- dt[!duplicated(dt$proportion) ]
@@ -131,13 +131,13 @@ createWeightedPairs <- function(dt){
 #' @param subunit TODO
 #' @param unit_area TODO
 #' @return A table with the updated subunit targets for all planning areas that had treatments
-update_target <-function(treated_stands, subunit, unit_area){
+update_target <-function(treated_stands, subunit, unit_area) {
   treated_subunit_target <- create_grouped_dataset(treated_stands,
                                                subunit,
                                                unit_area)
 }
 
-printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_constraint){
+printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_constraint) {
   parameters <- paste0("ForSys simulation designed and coded by Rachel Houtman, run on: ", Sys.Date(), "\n",
                        "This code creates attainment graphs for to explore both WUI exposure (HUIDW) and merchantable timber volume\n",
                        "with the following ForSys settings:\n",
@@ -156,10 +156,10 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
 }
 
 # TODO Add function description
-add_target_field <- function(stands, pa_unit, pa_target, pa_target_multiplier, project_area, land_base){
-  if(length(land_base) == 0){
+add_target_field <- function(stands, pa_unit, pa_target, pa_target_multiplier, project_area, land_base) {
+  if(length(land_base) == 0) {
     stands_updated <- standDT[, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = stand_group_by]
-  }else{
+  } else {
     stands_updated <- standDT[get(land_base) == 1, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = stand_group_by]
   }
   return(stands_updated)
@@ -167,8 +167,8 @@ add_target_field <- function(stands, pa_unit, pa_target, pa_target_multiplier, p
 
 # TODO Add function description
 calculate_spm_pcp <- function(stands, filter, fields){
-  for(f in fields){
-    if(length(filter) == 0) {
+  for (f in fields) {
+    if (length(filter) == 0) {
       maximum <- max(stands[, get(f)])
       cn <- paste0(f, "_SPM")
       expr <- bquote(.(as.name(cn)):= 0)
@@ -183,7 +183,7 @@ calculate_spm_pcp <- function(stands, filter, fields){
       expr <- bquote(.(as.name(cn)):= (100 * get(f) / sum.total))
       stands[, eval(expr)]
     }
-    else{
+    else {
       maximum <- max(stands[get(filter) == 1, get(f)])
       cn <- paste0(f, "_SPM")
       expr <- bquote(.(as.name(cn)):= 0)
@@ -200,6 +200,19 @@ calculate_spm_pcp <- function(stands, filter, fields){
     }
   }
   return(stands)
+}
+
+# This just gets names that calculate_spm_pcp would create, for use in the UI
+get_spm_pcp_names <- function(fields) {
+  l <- vector('list', length(fields) * 2)
+  i <- 1
+  for (f in fields) {
+    l[i] <- paste0(f, '_SPM')
+    l[i+1] <- paste0(f, '_PCP')
+    i <- i + 2
+  }
+  return(unlist(l))
+  # nms <- sapply(fields, function(f) {c(paste0(f, "_SPM"), paste0(f, "_PCP"))})
 }
 
 # Hack the area target - can be set in the shapefile.
@@ -230,7 +243,7 @@ set_up_priorities <- function(w, priorities, weights, stands) {
   } # END FOR 1
 
 
-  return(stands)  
+  return(stands)
 }
 
 make_thresholds <- function(thresholds) {
@@ -246,7 +259,7 @@ apply_treatment <- function(treatment_types,
                             fixed_target, fixed_area_target=NULL,
                             pa_target=NULL, pa_target_multiplier=NULL) {
   stands_updated = stands
-  
+
   for (t in 1:length(treatment_types)) {
     filtered_stands <- stand_filter(stands, all_thresholds[V1 == treatment_types[t], ])
     print(paste0("There are ", nrow(filtered_stands), " stands that meet treatment thresholds for ", treatment_types[t]))
@@ -282,7 +295,7 @@ apply_treatment <- function(treatment_types,
     stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
     stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_types[t], treat = 1), on = stand]
     selected_stands <- rbind(selected_stands, stands_updated[treat==1,])
-    
+
   }
 
   return(selected_stands)

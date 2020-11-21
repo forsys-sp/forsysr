@@ -17,7 +17,7 @@
 #' @param input_standfile TODO
 #' @param stand_field TODO
 #' @param pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
-#' @param land_base The land base is the area that is used to calculate the PCP and SPM values. 
+#' @param land_base The land base is the area that is used to calculate the PCP and SPM values.
 #'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
 #'                  A blank field means all lands are included in the calculation.
 #' @param priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
@@ -32,13 +32,13 @@
 #' @param weighting_values Defines the weights and integer steps between weights. The values are for min, max, and step.
 #' @param thresholds Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
 #' @param include_stands This defines global threshold values to include stands - i.e. for any threshold type.
-#' @param output_fields This should include the desired fields for the planning area treatment files. Planning area id, 
+#' @param output_fields This should include the desired fields for the planning area treatment files. Planning area id,
 #'                      priority weights and treatment rank are added automatically.
 #' @param grouping_variables Include the smaller and larger groups here for grouping of treated stands.
 #' @param fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
 #' @param fixed_area_target TODO
-#' @param system_constraint If the constraint is by master nesting unit (i.e. treat the top X planning areas in each 
-#'                          national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning 
+#' @param system_constraint If the constraint is by master nesting unit (i.e. treat the top X planning areas in each
+#'                          national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning
 #'                          area regardless of where it is located), set TRUE.
 #' @param overwrite_output Toggle to overwrite existing output files
 #' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
@@ -75,41 +75,23 @@ run <- function(
 
 # If a config file has been selected, source it to read in variables
 if (length(config_file) > 1) {
-  configuration_file <- c("config_Idaho.R") # DEBUG! Hard coded
+  configuration_file <- c("/home/robb/PycharmProjects/forsys-git/forsys/config_Idaho.R") # DEBUG! Hard coded
   setwd(dirname(configuration_file))
   source(configuration_file)
 }
 
+source('R/forsys_libraries.R')
+source('R/forsys_functions.R')
 
 ## Load functions, write parameter data out to Arc.
 options(scipen = 9999)
-
-('Loading required R packages...')
-#install.packages('pacman')
-pacman::p_load(
-  dplyr,
-  data.table,
-  foreign,
-  ggplot2,
-  ggsn,
-  grid,
-  gtools,
-  hexbin,
-  maptools,
-  purrr,
-  rgdal,
-  rgeos,
-  roxygen2,
-  sp,
-  stringr
-  )
 
 # Check if output directory exists
 if (!dir.exists(file.path(getwd(), "output"))) {
   print(paste("Making output directory: ", file.path(getwd(), "output")), sep="")
   dir.create(file.path(getwd(), "output"))
 } else {
-  print(paste("output directory, ", file.path(getwd(), "output"), ", already exists"), sep="")
+  print(paste0("output directory, ", file.path(getwd(), "output"), ", already exists"), sep="")
 }
 
 if (overwrite_output) {
@@ -119,7 +101,7 @@ if (overwrite_output) {
   unlink("output\\*.ini")
 
   output_files <- sapply(list.files('output'), function(x) paste0('output/', x))
-  file.remove(output_files)
+  if (length(output_files) > 0) { file.remove(output_files) }
 } else {
   fname <- paste0('output/pa_all', scenario_name, '.csv')
   if (file.exists(fname)) {
