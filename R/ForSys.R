@@ -7,6 +7,12 @@
 ##                                                                    ##
 ########################################################################
 
+initialize <- function(
+  ) {
+
+}
+
+
 #' Run the ForSys treatment planner. Either provide parameters, or define parameters
 #' in a config file and pass the name of the file to this run function.
 #'
@@ -78,6 +84,8 @@ if (length(config_file) > 1) {
   configuration_file <- c("/home/robb/PycharmProjects/forsys-git/forsys/config_Idaho.R") # DEBUG! Hard coded
   setwd(dirname(configuration_file))
   source(configuration_file)
+} else {
+
 }
 
 source('R/forsys_libraries.R')
@@ -100,7 +108,7 @@ if (overwrite_output) {
   unlink("output\\*.csv")
   unlink("output\\*.ini")
 
-  output_files <- sapply(list.files('output'), function(x) paste0('output/', x))
+  output_files <- sapply(list.files('output'), function(x) glue('output/{x}'))
   if (length(output_files) > 0) { file.remove(output_files) }
 } else {
   fname <- paste0('output/pa_all', scenario_name, '.csv')

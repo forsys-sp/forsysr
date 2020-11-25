@@ -1,3 +1,13 @@
+null_transformer <- function(text, envir) {
+  out <- identity_transformer(text, envir)
+  if (is.null(out)) {
+    return("NULL")
+  }
+  
+  return(out)
+}
+
+
 #' in a config file and pass the name of the file to this run function.
 #'
 #' @param config_file Relative path to a config file that defines needed parameters
@@ -34,7 +44,6 @@
 #' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
 #' @export
 write_save_file <- function(
-  config_file = '',
   scenario_name = '',
   input_standfile = '',
   stand_field = 'Cell_ID',
@@ -61,11 +70,85 @@ write_save_file <- function(
   overwrite_output = TRUE
   ) {
 
-  
+	vector_data <- vector(mode='list', length=24)
+
+	names(vector_data) = c(
+		'scenario_name', 
+		'input_standfile', 
+		'stand_field', 
+		'pcp_spm', 
+		'land_base', 
+		'priorities',
+		'stand_group_by', 
+		'pa_target', 
+		'pa_unit', 
+		'pa_target_multiplier', 
+		'nesting', 
+		'nesting_group_by', 
+		'nesting_target', 
+		'nesting_unit', 
+		'nesting_target_multiplier', 
+		'weighting_values',
+		'thresholds', 
+		'include_stands',
+		'output_fields',
+		'grouping_variables', 
+		'fixed_target', 
+		'fixed_area_target', 
+		'system_constraint', 
+		'overwrite_output'
+		)
+
+	vector_data$scenario_name = scenario_name 
+	vector_data$input_standfile = input_standfile 
+	vector_data$stand_field = stand_field
+	vector_data$pcp_spm = pcp_spm
+	vector_data$land_base = land_base 
+	vector_data$priorities = priorities 
+	vector_data$stand_group_by = stand_group_by 
+	vector_data$pa_target = pa_target
+	vector_data$pa_unit = pa_unit
+	vector_data$pa_target_multiplier = pa_target_multiplier  
+	vector_data$nesting = nesting 
+	vector_data$nesting_group_by = nesting_group_by 
+	vector_data$nesting_target = nesting_target 
+	vector_data$nesting_unit = nesting_unit 
+	vector_data$nesting_target_multiplier = nesting_target_multiplier 
+	vector_data$weighting_values = weighting_values
+	vector_data$thresholds = thresholds 
+	vector_data$include_stands = include_stands
+	vector_data$output_fields = output_fields
+	vector_data$grouping_variables = grouping_variables 
+	vector_data$fixed_target = fixed_target 
+	vector_data$fixed_area_target = fixed_area_target 
+	vector_data$system_constraint = system_constraint 
+	vector_data$overwrite_output = overwrite_output
+
+	json_data <- toJSON(vector_data, null = 'null') # TODO null setting doesn't work
+
+	output_file_name <- glue('configs/{scenario_name}.json')
+
+	if (!dir.exists(file.path(getwd(), 'configs'))) {
+	  print(glue('Making output directory: ', file.path(getwd(), 'output')), sep="")
+	  dir.create(file.path(getwd(), "configs"))
+	}
+
+	write_json(json_data, output_file_name)
+
+	return(json_data)
 }
 
-read_save_file <- function(...) {
+read_save_file <- function(filename = '') {
 
+	# TODO check if file exists
+
+	json_data = read_json(filename)
+}
+
+list_scenarios <- function() {
+	if (dir.exists(file.path(getwd(), 'configs'))) {
+		output_files <- sapply(list.files('configs'), function(x) glue('output/{x}'))
+	}
 }
 
 write_config_file <- function(...) {

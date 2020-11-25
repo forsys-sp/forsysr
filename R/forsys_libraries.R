@@ -1,23 +1,17 @@
 ('Loading required R packages...')
 #install.packages('pacman')
 pacman::p_load(
-  dplyr,
   data.table,
-  foreign,
-  ggplot2,
-  ggsn,
-  grid,
-  gtools,
-  hexbin,
+  foreign, 
+  glue, 
+  jsonlite, 
   maptools,
-  purrr,
   shiny,
   shinyBS,
+  shinyjs, 
   rgdal,
   rgeos,
-  rjson, 
   roxygen2,
   sp,
-  stringr,
-  vroom
+  tidyverse
   )
