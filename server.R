@@ -12,16 +12,23 @@ server <- function(input, output, session) {
 	addTooltip(session, id = 'save_and_run_but', title = 'Save and Run Scenario')
 	addTooltip(session, id = 'clear_form_but', title = 'Clear Form')
 
+	# Get the intially availabled scenarios from disk
 	available_scenarios <- list_scenarios()
 	updateSelectInput(session, 'select_scenario', choices = available_scenarios)
 
+	# If there are no saved scenarios, then skip to the scenario creation page
 	if (length(available_scenarios) == 0) {
 		updateTabsetPanel(session, 'main_nav', selected = 'scenario_setup_panel')
 	}
 
+	# These are the main reactive data collections. 
+	# r_data contains the input data itself, along with some information about the input data.
+	# r_choices acts as a collection of possibe selections from the data to use with selectInput
 	r_data <- reactiveValues(data = NULL, data_path = NULL, ext = NULL, json = '')
 	r_choices <- reactiveValues(priorities = NULL, outputs = NULL)
 
+	# r_data could be populated 2 ways: by user input, or by loading an old scenario. 
+	# data() handles user uploaded data
 	data <- reactive({
 		# Block until file is completely uploaded
 		req(input$file_select)
@@ -42,21 +49,24 @@ server <- function(input, output, session) {
 			dbf = load_dataset(perm_data_path, TRUE))
 		})
 
+	# Generate a preview of the data for the data preview page
 	output$input_data <- renderDataTable({
 		head(r_data$data, 10)
 		})
 
+	# Create a listener for user uploaded data. This actually fires the reactive data() loading process
 	observeEvent(data(), {
 		data()
 		})
 
+	# Event listener for the reactive data. This updates available selection options in selectInputs
 	observeEvent(r_data$data, {
 		choices <- colnames(r_data$data)
 		updateSelectInput(session, 'stand_field', choices = choices)
 		updateSelectInput(session, 'pcp_spm_fields', choices = choices)
 		updateSelectInput(session, 'land_base_field', choices = choices)
 		updateSelectInput(session, 'stand_group_by_field', choices = choices)
-		# updateSelectInput(session, 'pa_target_field', choices = choices)
+		# updateSelectInput(session, 'pa_target_field', choices = choices) # TODO in the Idaho file, this is "AREA_MAN" which doesn't exist in the data
 		updateSelectInput(session, 'pa_unit_field', choices = choices)
 		updateSelectInput(session, 'pa_target_multiplier_field', choices = choices)
 		updateSelectInput(session, 'grouping_fields', choices = choices)
@@ -64,11 +74,16 @@ server <- function(input, output, session) {
 		# print(r_data$json)
 
 		# TODO implement better check for json data
+		# If there is json data available (so a saved scenario with user selections), attempt to update
+		# selectInput boxes with old selections
 		if (length(r_data$json) > 1) {
 			updateTextInput(session, 'scenario_name', value = r_data$json$scenario_name)
 			updateCheckboxInput(session, 'write_stand_outputs_chk', value = r_data$json$write_stand_outputs)
 			updateSelectInput(session, 'stand_field', selected = r_data$json$stand_field)
 			updateSelectInput(session, 'pcp_spm_fields', selected = r_data$json$pcp_spm)
+
+			# TODO priorities and grouping doesn't update properly. This probably has something to do with 
+			# execution order of the reactive environments. Find a way around this.
 
 			############################
 			# Populate outputs now that we have some options
@@ -119,7 +134,8 @@ server <- function(input, output, session) {
 		}
 		})
 
-	# Populate the PCP and SPM field selector
+	# Certain fields can affect which options are available for other fields. These functions set up
+	# a reactive retrieval of these selections
 	reactive_pcp_spm_fields <- reactive({
 		fields <- input$pcp_spm_fields
 		})
@@ -173,33 +189,7 @@ server <- function(input, output, session) {
 
 		weight_values <- weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
 
-		json <- write_save_file(
-			scenario_name = input$scenario_name, 
-			input_standfile = r_data$data_path,
-			write_stand_outputs = input$write_stand_outputs_chk, 
-			stand_field = input$stand_field,
-			pcp_spm = input$pcp_spm_fields,
-			land_base = input$land_base_field,
-			priorities = input$priorities_fields, 
-			stand_group_by = input$stand_group_by_field,
-			pa_target = input$pa_target_field,
-			pa_unit = input$pa_unit_field,
-			pa_target_multiplier = input$pa_target_multiplier,
-			nesting = FALSE,
-			nesting_group_by = NULL,
-			nesting_target = NULL,
-			nesting_unit = NULL,
-			nesting_target_multiplier = 1.0,
-			weighting_values = weight_values,
-			thresholds = input$thresholds_expr,
-			include_stands = c("man_alldis == 1"), # TODO parse include_stands from thresholds, or the other way around
-			output_fields = input$outputs_select,
-			grouping_variables = input$grouping_fields, # c("PA_ID", "Owner"),
-			fixed_target = FALSE,
-			fixed_area_target = input$fixed_area_target,
-			system_constraint = input$system_constraint_chk,
-			overwrite_output = input$overwrite_output_chk
-			)
+		json <- write_save_file_helper(input)
 
 		r_data$json <- json
 
@@ -211,33 +201,7 @@ server <- function(input, output, session) {
 	observeEvent(input$save_and_run_but, {
 		weight_values <- weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
 
-		json <- write_save_file(
-			scenario_name = input$scenario_name, 
-			input_standfile = r_data$data_path,
-			write_stand_outputs = input$write_stand_outputs_chk, 
-			stand_field = input$stand_field,
-			pcp_spm = input$pcp_spm_fields,
-			land_base = input$land_base_field,
-			priorities = input$priorities_fields, 
-			stand_group_by = input$stand_group_by_field,
-			pa_target = input$pa_target_field,
-			pa_unit = input$pa_unit_field,
-			pa_target_multiplier = input$pa_target_multiplier,
-			nesting = FALSE,
-			nesting_group_by = NULL,
-			nesting_target = NULL,
-			nesting_unit = NULL,
-			nesting_target_multiplier = 1.0,
-			weighting_values = weight_values,
-			thresholds = input$thresholds_expr,
-			include_stands = c("man_alldis == 1"), # TODO parse include_stands from thresholds, or the other way around
-			output_fields = input$outputs_select,
-			grouping_variables = input$grouping_fields, # c("PA_ID", "Owner"),
-			fixed_target = FALSE,
-			fixed_area_target = input$fixed_area_target,
-			system_constraint = input$system_constraint_chk,
-			overwrite_output = input$overwrite_output_chk
-			)
+		json <- write_save_file_helper(input)
 
 		r_data$json <- json
 
@@ -276,6 +240,7 @@ server <- function(input, output, session) {
 			})
 		})
 
+	# Event listener for the clear panel button. Clears the scenario setup panel
 	# TODO add the rest of the fields to clear
 	observeEvent(input$clear_form_but, {
 		updateTextInput(session, 'scenario_name', value = '')
@@ -307,11 +272,13 @@ server <- function(input, output, session) {
 		# selected values don't update correctly
 		updateTabsetPanel(session, 'main_nav', selected = 'scenario_setup_panel')
 
+		# Read in the scenario data
 		json_data = read_save_file(input$select_scenario)
 
 		file <- json_data$input_standfile
 		ext <- tools::file_ext(file)
 		
+		# Update the reactive data elements
 		r_data$data <- switch(ext, 
 			csv = load_dataset(file, FALSE), 
 			dbf = load_dataset(file, TRUE))
@@ -321,6 +288,8 @@ server <- function(input, output, session) {
 		
 		})
 
+	# Event listener for the delete scenario button
+	# TODO add a "are you sure" prompt
 	observeEvent(input$delete_scenario_but, {
 		file.remove(input$select_scenario)
 

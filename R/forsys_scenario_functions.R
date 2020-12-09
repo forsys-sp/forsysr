@@ -33,7 +33,7 @@
 #'                          national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning
 #'                          area regardless of where it is located), set TRUE.
 #' @param overwrite_output Toggle to overwrite existing output files
-#' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
+#' @return A serialized vector of input choices in json format
 #' @export
 write_save_file <- function(
   scenario_name = '',
@@ -133,6 +133,50 @@ write_save_file <- function(
 	return(json_data)
 }
 
+
+#' Take the input object from a shiny server function all at once and then call the write_save_file function
+#' This function helps keep the server code clean.
+#'
+#' @param input input object from a shiny server function
+#' @return A serialized vector of input choices in json format
+#' @export
+write_save_file_helper <- function(input) {
+	weight_values <- weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
+
+	json <- write_save_file(
+		scenario_name = input$scenario_name, 
+		input_standfile = r_data$data_path,
+		write_stand_outputs = input$write_stand_outputs_chk, 
+		stand_field = input$stand_field,
+		pcp_spm = input$pcp_spm_fields,
+		land_base = input$land_base_field,
+		priorities = input$priorities_fields, 
+		stand_group_by = input$stand_group_by_field,
+		pa_target = input$pa_target_field,
+		pa_unit = input$pa_unit_field,
+		pa_target_multiplier = input$pa_target_multiplier,
+		nesting = FALSE,
+		nesting_group_by = NULL,
+		nesting_target = NULL,
+		nesting_unit = NULL,
+		nesting_target_multiplier = 1.0,
+		weighting_values = weight_values,
+		thresholds = input$thresholds_expr,
+		include_stands = c("man_alldis == 1"), # TODO parse include_stands from thresholds, or the other way around
+		output_fields = input$outputs_select,
+		grouping_variables = input$grouping_fields, # c("PA_ID", "Owner"),
+		fixed_target = FALSE,
+		fixed_area_target = input$fixed_area_target,
+		system_constraint = input$system_constraint_chk,
+		overwrite_output = input$overwrite_output_chk
+		)
+}
+
+#' Load a json config file written from the write_save_file function. 
+#'
+#' @param filename Relative path and filename to the scenario json
+#' @return A vector of input choices
+#' @export
 read_save_file <- function(filename = '') {
 
 	# TODO check if file exists
@@ -142,6 +186,10 @@ read_save_file <- function(filename = '') {
 	json_data = unserializeJSON(json_data)
 }
 
+#' List json files in the configs folder, if it exists.
+#'
+#' @return A list of found config files
+#' @export
 list_scenarios <- function() {
 	if (dir.exists(file.path(getwd(), 'configs'))) {
 		output_files <- sapply(list.files('configs'), function(x) glue('configs/{x}'))
