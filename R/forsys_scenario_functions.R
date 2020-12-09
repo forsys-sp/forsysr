@@ -1,11 +1,3 @@
-null_transformer <- function(text, envir) {
-  out <- identity_transformer(text, envir)
-  if (is.null(out)) {
-    return("NULL")
-  }
-  
-  return(out)
-}
 
 
 #' in a config file and pass the name of the file to this run function.
@@ -46,6 +38,7 @@ null_transformer <- function(text, envir) {
 write_save_file <- function(
   scenario_name = '',
   input_standfile = '',
+  write_stand_outputs = '', 
   stand_field = 'Cell_ID',
   pcp_spm = c(),
   land_base = '',
@@ -70,11 +63,12 @@ write_save_file <- function(
   overwrite_output = TRUE
   ) {
 
-	vector_data <- vector(mode='list', length=24)
+	vector_data <- vector(mode='list', length=25)
 
 	names(vector_data) = c(
 		'scenario_name', 
 		'input_standfile', 
+		'write_stand_outputs', 
 		'stand_field', 
 		'pcp_spm', 
 		'land_base', 
@@ -101,6 +95,7 @@ write_save_file <- function(
 
 	vector_data$scenario_name = scenario_name 
 	vector_data$input_standfile = input_standfile 
+	vector_data$write_stand_outputs = write_stand_outputs
 	vector_data$stand_field = stand_field
 	vector_data$pcp_spm = pcp_spm
 	vector_data$land_base = land_base 
@@ -124,12 +119,12 @@ write_save_file <- function(
 	vector_data$system_constraint = system_constraint 
 	vector_data$overwrite_output = overwrite_output
 
-	json_data <- toJSON(vector_data, null = 'null') # TODO null setting doesn't work
+	json_data <- serializeJSON(vector_data, pretty = TRUE)
 
 	output_file_name <- glue('configs/{scenario_name}.json')
 
 	if (!dir.exists(file.path(getwd(), 'configs'))) {
-	  print(glue('Making output directory: ', file.path(getwd(), 'output')), sep="")
+	  print(glue('Making output directory: ', file.path(getwd(), 'configs')), sep="")
 	  dir.create(file.path(getwd(), "configs"))
 	}
 
@@ -141,13 +136,15 @@ write_save_file <- function(
 read_save_file <- function(filename = '') {
 
 	# TODO check if file exists
+	# print(filename)
 
-	json_data = read_json(filename)
+	json_data = fromJSON(filename)
+	json_data = unserializeJSON(json_data)
 }
 
 list_scenarios <- function() {
 	if (dir.exists(file.path(getwd(), 'configs'))) {
-		output_files <- sapply(list.files('configs'), function(x) glue('output/{x}'))
+		output_files <- sapply(list.files('configs'), function(x) glue('configs/{x}'))
 	}
 }
 

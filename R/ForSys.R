@@ -21,6 +21,7 @@ initialize <- function(
 #' @param is_dbf Toggle for reading DBF
 #' @param is_csv Toggle for reading CSV files
 #' @param input_standfile TODO
+#' @param write_stand_outputs TODO
 #' @param stand_field TODO
 #' @param pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
 #' @param land_base The land base is the area that is used to calculate the PCP and SPM values.
@@ -55,6 +56,7 @@ run <- function(
   is_dbf = TRUE,
   is_csv = FALSE,
   input_standfile = '',
+  write_stand_outputs = FALSE,
   stand_field = 'Cell_ID',
   pcp_spm = c(),
   land_base = '',
@@ -227,8 +229,11 @@ for (w in 1:nrow(weights)) { # START FOR 0
                       treatment_types = treatment_types,
                       stands = stands_updated,
                       all_thresholds = all_thresholds,
+                      stand_group_by = stand_group_by,
+                      stand_field = stand_field, 
                       fixed_target = fixed_target,
                       fixed_area_target = fixed_area_target,
+                      pa_unit = pa_unit,
                       pa_target = pa_target,
                       pa_target_multiplier = pa_target_multiplier)
 
@@ -257,7 +262,7 @@ for (w in 1:nrow(weights)) { # START FOR 0
 
   print("Producing output files for stands and planning areas")
   if (write_stand_outputs == TRUE) {
-      write_stand_outputs_to_file(uniqueWeights, scenario_name)
+      write_stand_outputs_to_file(uniqueWeights, scenario_name, selected_stands)
   }
 
   planningAreaOutputFile <- paste0("output/pa", uniqueWeights, ".csv")

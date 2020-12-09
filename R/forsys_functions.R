@@ -100,6 +100,16 @@ create_grouped_dataset <- function(dt,
   return(dt)
 }
 
+weight_values_to_string <- function(min = 0, max = 5, step =1) {
+  glue(min, ' ', max, ' ', step)
+}
+
+weight_string_to_values <- function(weight_str) {
+  vals <- str_split(weight_str, ' ')
+  print(vals)
+  vals <- sapply(vals, as.numeric)
+  print(vals[,1])
+}
 
 #' Weight priorities for selection
 #'
@@ -156,11 +166,11 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
 }
 
 # TODO Add function description
-add_target_field <- function(stands, pa_unit, pa_target, pa_target_multiplier, project_area, land_base) {
+add_target_field <- function(stands, pa_unit, pa_target, pa_target_multiplier, stand_group_by, land_base) {
   if(length(land_base) == 0) {
-    stands_updated <- standDT[, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = stand_group_by]
+    stands_updated <- stands[, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = stand_group_by]
   } else {
-    stands_updated <- standDT[get(land_base) == 1, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = stand_group_by]
+    stands_updated <- stands[get(land_base) == 1, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = stand_group_by]
   }
   return(stands_updated)
 }
@@ -215,6 +225,27 @@ get_spm_pcp_names <- function(fields) {
   # nms <- sapply(fields, function(f) {c(paste0(f, "_SPM"), paste0(f, "_PCP"))})
 }
 
+# Inverse function of get_spm_pcp_names, it returns the opposite of the selected
+# fields for suggested priority names
+get_priority_output_names <- function(fields) {
+  l <- vector('list', length(fields))
+  i <- 1
+  for (f in fields) {
+    g <- str_replace(f, 'STND_', '')
+
+    if (str_detect(g, 'SPM')) {
+      l[i] <- str_replace(g, 'SPM', 'PCP')
+      
+    } else {
+      l[i] <- str_replace(g, 'PCP', 'SPM')
+    }
+
+    i <- i + 1
+  }
+
+  return(unlist(l))
+}
+
 # Hack the area target - can be set in the shapefile.
 # This code may be updated for looping multiple treatment types.
 # It should do the same thing that Pedro is working on within a single run instead of wrapped.
@@ -256,9 +287,12 @@ make_thresholds <- function(thresholds) {
 apply_treatment <- function(treatment_types,
                             stands,
                             all_thresholds,
+                            stand_group_by, 
+                            stand_field, 
                             fixed_target, fixed_area_target=NULL,
-                            pa_target=NULL, pa_target_multiplier=NULL) {
-  stands_updated = stands
+                            pa_unit=NULL, pa_target=NULL, pa_target_multiplier=NULL) {
+  stands_updated <- stands
+  selected_stands <- NULL
 
   for (t in 1:length(treatment_types)) {
     filtered_stands <- stand_filter(stands, all_thresholds[V1 == treatment_types[t], ])
@@ -293,7 +327,7 @@ apply_treatment <- function(treatment_types,
 
     area_treatedPA <- update_target(treat_stands, stand_group_by, pa_unit)
     stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
-    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_types[t], treat = 1), on = stand]
+    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_types[t], treat = 1), on = stand_field]
     selected_stands <- rbind(selected_stands, stands_updated[treat==1,])
 
   }
@@ -336,7 +370,7 @@ identify_nested_planning_areas <- function(grouped_by_pa) {
   paSubunits$treatment_rank <- seq(1:nrow(paSubunits))
 }
 
-write_stand_outputs_to_file <- function(unique_weights, name) {
+write_stand_outputs_to_file <- function(unique_weights, name, selected_stands) {
     stand_output_file <- paste0("output/stands", unique_weights, name, ".csv")
     fwrite(selected_stands, stand_output_file)
 }

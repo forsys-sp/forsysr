@@ -16,7 +16,16 @@ scenario_buttons_text<- fluidRow(
 	column(4, align = 'center', 
 		actionButton('save_and_run_but', 'Save and Run Scenario', icon = icon('refresh'))), 
 	column(4, align = 'center', 
-		actionButton('clear_form_but', 'Clear Form', icon = icon('times')))
+		actionButton('clear_form_but', 'Clear Form', icon = icon('times')), 
+		tags$script('
+			Shiny.addCustomMessageHandler("resetFileInputHandler", function(x) {
+				var id = "#" + x + "_progress"; 
+				var idBar = id + " .bar"; 
+				$(id).css("visibility", "hidden");
+				$(idBar).css("width", "0%"); 
+				});
+			')
+		)
 	)
 
 scenario_params_panel <- tabPanel(
@@ -26,6 +35,7 @@ scenario_params_panel <- tabPanel(
 	br(),
 	tabsetPanel(
 		tabPanel(
+			id = 'setup_scenario_panel',
 			'Scenario Setup', 
 			fluidRow(
 				column(4,
@@ -53,6 +63,8 @@ scenario_params_panel <- tabPanel(
 					hr(), 
 
 					checkboxInput('write_stand_outputs_chk', 'Write Stand Outputs'),
+
+					selectInput('stand_field', 'Stand Field', choices = NULL, multiple = FALSE, selectize = TRUE), 
 					
 					selectInput('pcp_spm_fields', 'Select Fields to calculate PCP and SPM on', choices = NULL, multiple = TRUE, selectize = TRUE),
 
@@ -68,8 +80,9 @@ scenario_params_panel <- tabPanel(
 
 					selectInput('stand_group_by_field', 'Select Stand Grouping Field', choices = NULL, multiple = FALSE, selectize = TRUE), 
 
-					selectInput('pa_target_field', 'Choose PA Target', choices = NULL, multiple = FALSE, selectize = TRUE), 
-
+					# selectInput('pa_target_field', 'Choose PA Target', choices = NULL, multiple = FALSE, selectize = TRUE), 
+					textInput('pa_target_field', 'Choose PA Target', 'AREA_MAN'),
+					
 					selectInput('pa_unit_field', 'Choose PA Unit', choices = NULL, multiple = FALSE, selectize = TRUE), 
 
 					numericInput('pa_target_multiplier_field', 'Set PA Multiplier', 0.15), 
@@ -115,9 +128,10 @@ scenario_params_panel <- tabPanel(
 					checkboxInput('system_constraint_chk', 'If the constraint is by master nesting unit (i.e. treat the top X planning areas in each national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning area regardless of where it is located), set TRUE.'), 
 					checkboxInput('overwrite_output_chk', 'Overwrite Outputs'),
 
-					hr(), 
+					hr()
 
-					scenario_buttons
+					# scenario_buttons
+					
 					) # column
 				) # fluidRow
 			), # tabPanel
@@ -138,7 +152,7 @@ scenario_planning_main_panel <- navbarMenu(
 		mainPanel(
 			fluidRow(
 				column(6,
-					selectInput('select_scenario', '', c('Scenario 1', 'Scenario 2', 'Other Scenario'), size = 10, selectize = FALSE)
+					selectInput('select_scenario', '', c(), size = 10, selectize = FALSE)
 					),
 				column(6,
 					br(), 
@@ -150,20 +164,22 @@ scenario_planning_main_panel <- navbarMenu(
 			)
 		),
 	tabPanel(
-		id = 'create_scenario_from_scratch_panel',
-		'Create New Scenario From Scratch',
-		scenario_params_panel
-		),
-	tabPanel(
 		id = 'create_scenario_from_config_panel',
 		'Create New Scenario By Uploading Config',
 		fileInput('config_input', 'Select Config File', accept = c('.json'))
 		)
 	)
 
+scenario_setup_panel <- tabPanel(
+	value = 'scenario_setup_panel',
+	'Set Scenario Parameters',
+	scenario_params_panel
+	)
+
 simulation_main_panel <- tabPanel(
 	value = 'simulation_panel', 
-	'Simulation'
+	'Simulation', 
+	textOutput('simulation_output')
 	)
 
 results_main_panel <- tabPanel(
@@ -180,6 +196,7 @@ ui <- fluidPage(
   	id = 'main_nav',
 	title = "ForSys",
 	scenario_planning_main_panel,
+	scenario_setup_panel, 
 	simulation_main_panel,
 	results_main_panel
   )
