@@ -77,13 +77,14 @@ run <- function(
   grouping_variables = c("PA_ID", "Owner"),
   fixed_target = FALSE,
   fixed_area_target = 2000,
-  system_constraint = FALSE,
-  overwrite_output = TRUE
+  overwrite_output = TRUE,
+  shiny_output = FALSE
   ) {
 
 # If a config file has been selected, source it to read in variables
 if (length(config_file) > 1) {
-  configuration_file <- c("/home/robb/PycharmProjects/forsys-git/forsys/config_Idaho.R") # DEBUG! Hard coded
+  # configuration_file <- c("/home/robb/PycharmProjects/forsys-git/forsys/config_Idaho.R") # DEBUG! Hard coded
+  configuration_file <- config_file
   setwd(dirname(configuration_file))
   source(configuration_file)
 } else {
@@ -113,7 +114,7 @@ if (overwrite_output) {
   output_files <- sapply(list.files('output'), function(x) glue('output/{x}'))
   if (length(output_files) > 0) { file.remove(output_files) }
 } else {
-  fname <- paste0('output/pa_all', scenario_name, '.csv')
+  fname <- paste0('output/pa_all_', scenario_name, '.csv')
   if (file.exists(fname)) {
     print(paste0('Warning: Output file ', fname, ' already exists. Appending results.'))
   }
@@ -180,7 +181,7 @@ for (w in 1:nrow(weights)) { # START FOR 0
   all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
   stands_updated <- allStands[, treatedPAArea := 0]
 
-  # TODO Do we have to do parse/eval? Makes me itchy, but I see the utility
+  # TODO Do we have to do parse/eval? 
   # Remove excluded stands (man_alldis == 0, etc.)
   #if(length(include_stands) > 0){
     for(f in 1:length(include_stands)){ # START FOR 3
@@ -224,7 +225,6 @@ for (w in 1:nrow(weights)) { # START FOR 0
   #   selected_stands <- rbind(selected_stands, stands_updated[treat==1,])
   # } # END FOR 4
 
-  # source('R/forsys_functions.R')
   selected_stands <- apply_treatment(
                       treatment_types = treatment_types,
                       stands = stands_updated,
@@ -299,7 +299,7 @@ for (w in 1:nrow(weights)) { # START FOR 0
   # TO DO: Why am I getting identical rows of data outputs? Hack: only export unique rows.
   paOutput <- unique(paOutput)
   print("Adding results to master planning area file")
-  masterPA = paste0("output/pa_all", scenario_name, ".csv")
+  masterPA = paste0("output/pa_all_", scenario_name, ".csv")
   if (file.exists(masterPA)) {
     fwrite(paOutput, file = masterPA, sep = ",", row.names = FALSE, append = TRUE, col.names = FALSE)
   } else {

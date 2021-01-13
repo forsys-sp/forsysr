@@ -6,5 +6,4 @@ source('R/ForSys.R')
 source('ui.R')
 source('server.R')
 
-
 shinyApp(ui, server)

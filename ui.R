@@ -1,3 +1,4 @@
+
 scenario_buttons <- fluidRow(
 	column(4, align = 'center', 
 		# actionButton('save_scenario_but', 'Save Scenario', icon = icon('save'))), 
@@ -49,88 +50,92 @@ scenario_params_panel <- tabPanel(
 								'file_select', 
 								'Select Input Data', 
 								accept = c('.csv', '.shp', '.dbf'))
-							),
-						tabPanel(id = 'gdb_file_panel', 'Geodatabase Input', 
-							br(), 
-							fileInput(
-								'gdb_file_select', 
-								'Select Input Geodatabase', 
-								accept = c('.gdb')),
-							selectInput('gdb_layer_select', 'Choose Layer', choice = NULL, multiple = FALSE, selectize = TRUE)
-							)
+							)#,
+						# tabPanel(id = 'gdb_file_panel', 'Geodatabase Input', 
+						# 	br(), 
+						# 	fileInput(
+						# 		'gdb_file_select', 
+						# 		'Select Input Geodatabase', 
+						# 		accept = c('.gdb')),
+						# 	selectInput('gdb_layer_select', 'Choose Layer', choice = NULL, multiple = FALSE, selectize = TRUE)
+						# 	)
 						),
 
 					hr(), 
 
-					checkboxInput('write_stand_outputs_chk', 'Write Stand Outputs'),
-
-					selectInput('stand_field', 'Stand Field', choices = NULL, multiple = FALSE, selectize = TRUE), 
+					selectInput('stand_id_field', 'Stand ID Field', choices = NULL, multiple = FALSE, selectize = TRUE), 
 					
-					selectInput('pcp_spm_fields', 'Select Fields to calculate PCP and SPM on', choices = NULL, multiple = TRUE, selectize = TRUE),
+					selectInput('pcp_spm_fields', 'Fields to calculate PCP and SPM on', choices = NULL, multiple = TRUE, selectize = TRUE),
 
-					selectInput('land_base_field', 'Select land_base Field', choices = NULL, multiple = FALSE, selectize = TRUE),
+					selectInput('treatment_available_field', 'Available for Treatment Field', choices = NULL, multiple = FALSE, selectize = TRUE),
 
-					selectInput('priorities_fields', 'Select Priorties', choices = NULL, multiple = TRUE, selectize = TRUE), 
+					selectInput('priorities_fields', 'Priorties', choices = NULL, multiple = TRUE, selectize = TRUE), 
 
-					), 
-
-				column(4, 
-
-					br(), 
-
-					selectInput('stand_group_by_field', 'Select Stand Grouping Field', choices = NULL, multiple = FALSE, selectize = TRUE), 
-
-					# selectInput('pa_target_field', 'Choose PA Target', choices = NULL, multiple = FALSE, selectize = TRUE), 
-					textInput('pa_target_field', 'Choose PA Target', 'AREA_MAN'),
-					
-					selectInput('pa_unit_field', 'Choose PA Unit', choices = NULL, multiple = FALSE, selectize = TRUE), 
-
-					numericInput('pa_target_multiplier_field', 'Set PA Multiplier', 0.15), 
-					), 
-					# TODO set up nesting 
-					# selectInput('nesting_field', 'Choose PA Target', choices = NULL, multiple = FALSE, selectize = TRUE), 
-
-				column(4, 
-					br(), 
-					fluidRow(
-						column(4,
-							numericInput('weight_min', 'Minimum Weight', 0, width = '150px')), 
-						column(4,
-							numericInput('weight_max', 'Maximum Weight', 5, width = '150px')), 
-						column(4,
-							numericInput('weight_step', 'Weight Step', 1, width = '150px'))
-					),
 					# fluidRow(
 					# 	column(4,
-					# 		numericInput('weight_min', '', 0, width = '150px')), 
+					# 		numericInput('weight_min', 'Minimum Weight', 0, width = '150px')), 
 					# 	column(4,
 					# 		numericInput('weight_max', 'Maximum Weight', 5, width = '150px')), 
 					# 	column(4,
 					# 		numericInput('weight_step', 'Weight Step', 1, width = '150px'))
 					# ),
 					
-					textInput('thresholds_expr', 'Enter thresholds in the form "Manageable man_alldis == 1"'),
+					div(
+						id = 'weight_items', 
+						numericInput('weight_min', 'Minimum Weight', 0, width = '150px'), 
+						numericInput('weight_max', 'Maximum Weight', 5, width = '150px'), 
+						numericInput('weight_step', 'Weight Step', 1, width = '150px')
+						)
+					), 
+
+				column(4, 
+
+					br(), 
+
+					selectInput('planning_unit_id_field', 'Planning Unit ID', choices = NULL, multiple = FALSE, selectize = TRUE), 
+
+					textInput('pa_target_field', 'Planning Unit Constraint', 'AREA_MAN'),
+					
+
+					tabsetPanel(
+						tabPanel(id = 'variable_target_panel', 'Variable Constraint', 
+							br(),
+							selectInput('pa_unit_field', 'Planning Unit Unit', choices = NULL, multiple = FALSE, selectize = TRUE), 
+							numericInput('pa_target_multiplier_field', 'Planning Unit Multiplier', 0.15)),
+						tabPanel(id = 'fixed_target_panel', 'Fixed Constraint', 
+							br(),
+							numericInput('fixed_target_value', 'Fixed Constraint Amount', 2000))
+						),
+
+					hr(), 
+					checkboxInput('use_au', 'Multiple Administrative Units'), 
+					div(
+						id = 'au_items', 
+						selectInput('au_id_field', 'Administrative Unit ID', choices = NULL, multiple = FALSE, selectize = TRUE), 
+						textInput('au_target_field', 'Administrative Unit Constraint', 'AREA_MAN'), 
+						selectInput('au_unit_field', 'Administrative Unit Unit', choices = NULL, multiple = FALSE, selectize = TRUE), 
+						numericInput('au_target_multiplier', 'Administrative Unit Multiplier', 1.0)
+						),
+					), 
+					
+
+				column(4, 
+					br(), 
+
+					textAreaInput('thresholds_expr', 'Thresholds, one per line in the form "Manageable man_alldis == 1"'),
+					radioButtons('threshold_operator', 'Thresholds Operator', choices = c('AND', 'OR'), inline = TRUE), 
+
+					hr(), 
 
 					selectInput('outputs_select', 'Choose Outputs', choices = NULL, multiple = TRUE, selectize = TRUE), 
 
-					selectInput('grouping_fields', 'Choose fields to group by', choices = NULL, multiple = TRUE, selectize = TRUE),
+					selectInput('output_grouping_fields', 'Aggregate results by', choices = NULL, multiple = TRUE, selectize = TRUE),
 
-					tabsetPanel(
-						tabPanel(id = 'fixed_area_panel', 'Fixed Area', 
-							br(),
-							numericInput('fixed_area_target', 'Fixed Area Target', 2000)),
-						tabPanel(id = 'variable_area_panel', 'Variable Area', 
-							# TODO what do we need to define, if anything, for variable area?
-							br(),
-							numericInput('fixed_area_target', 'Variable Area Param', 2000))
-						),
+					checkboxInput('write_stand_outputs_chk', 'Write Stand Outputs'),
 
-					checkboxInput('system_constraint_chk', 'If the constraint is by master nesting unit (i.e. treat the top X planning areas in each national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning area regardless of where it is located), set TRUE.'), 
 					checkboxInput('overwrite_output_chk', 'Overwrite Outputs'),
 
 					hr()
-
-					# scenario_buttons
 					
 					) # column
 				) # fluidRow
@@ -183,8 +188,24 @@ simulation_main_panel <- tabPanel(
 	)
 
 results_main_panel <- tabPanel(
-	value = 'analysis_panel', 
-	'Analysis', 'contents'
+	value = 'analysis_panel',
+	'Results and Analysis', 
+	sidebarLayout(
+		sidebarPanel(
+			h3('Charts'),
+			p(actionLink('attainment_efficiency', 'Attainment Efficiency')),
+			p(actionLink('attainment_efficiency_by_area','Attainment Efficiency by Area Treated')),
+			p(actionLink('production_frontiers','Production Frontiers')),
+			h3('Maps'),
+			p('Treatment Prioritization'),
+			h3('Data'), 
+			p(actionLink('download_data','Download Data')),
+			p(actionLink('download_pdf','Download Analysis PDF')),
+			),
+		mainPanel(
+			plotOutput('analysis_plot')
+			)
+		)
 	)
 
 
@@ -192,12 +213,14 @@ results_main_panel <- tabPanel(
 
 
 ui <- fluidPage(
-  navbarPage(
-  	id = 'main_nav',
-	title = "ForSys",
-	scenario_planning_main_panel,
-	scenario_setup_panel, 
-	simulation_main_panel,
-	results_main_panel
-  )
+	shinyjs::useShinyjs(), 
+  	navbarPage(
+	  	id = 'main_nav',
+		title = "ForSys",
+
+		scenario_planning_main_panel,
+		scenario_setup_panel, 
+		simulation_main_panel,
+		results_main_panel
+  	)
 )

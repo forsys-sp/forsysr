@@ -29,9 +29,6 @@
 #' @param grouping_variables Include the smaller and larger groups here for grouping of treated stands.
 #' @param fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
 #' @param fixed_area_target TODO
-#' @param system_constraint If the constraint is by master nesting unit (i.e. treat the top X planning areas in each
-#'                          national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning
-#'                          area regardless of where it is located), set TRUE.
 #' @param overwrite_output Toggle to overwrite existing output files
 #' @return A serialized vector of input choices in json format
 #' @export
@@ -59,7 +56,6 @@ write_save_file <- function(
   grouping_variables = c("PA_ID", "Owner"),
   fixed_target = FALSE,
   fixed_area_target = 2000,
-  system_constraint = FALSE,
   overwrite_output = TRUE
   ) {
 
@@ -140,12 +136,12 @@ write_save_file <- function(
 #' @param input input object from a shiny server function
 #' @return A serialized vector of input choices in json format
 #' @export
-write_save_file_helper <- function(input) {
+write_save_file_helper <- function(input, data_path) {
 	weight_values <- weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
 
 	json <- write_save_file(
 		scenario_name = input$scenario_name, 
-		input_standfile = r_data$data_path,
+		input_standfile = data_path,
 		write_stand_outputs = input$write_stand_outputs_chk, 
 		stand_field = input$stand_field,
 		pcp_spm = input$pcp_spm_fields,
