@@ -7,10 +7,6 @@
 ##                                                                    ##
 ########################################################################
 
-initialize <- function(
-  ) {
-
-}
 
 
 #' Run the ForSys treatment planner. Either provide parameters, or define parameters
@@ -44,9 +40,6 @@ initialize <- function(
 #' @param grouping_variables Include the smaller and larger groups here for grouping of treated stands.
 #' @param fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
 #' @param fixed_area_target TODO
-#' @param system_constraint If the constraint is by master nesting unit (i.e. treat the top X planning areas in each
-#'                          national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning
-#'                          area regardless of where it is located), set TRUE.
 #' @param overwrite_output Toggle to overwrite existing output files
 #' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
 #' @export
@@ -181,7 +174,7 @@ for (w in 1:nrow(weights)) { # START FOR 0
   all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
   stands_updated <- allStands[, treatedPAArea := 0]
 
-  # TODO Do we have to do parse/eval? 
+  # TODO Do we have to do parse/eval?
   # Remove excluded stands (man_alldis == 0, etc.)
   #if(length(include_stands) > 0){
     for(f in 1:length(include_stands)){ # START FOR 3
@@ -189,48 +182,12 @@ for (w in 1:nrow(weights)) { # START FOR 0
     } # STOP FOR 3
   #}
 
-  # for(t in 1:length(treatment_types)){ # START FOR 4
-  #   filtered_stands <- stand_filter(stands_updated, all_thresholds[V1 == treatment_types[t], ])
-  #   print(paste0("There are ", nrow(filtered_stands), " stands that meet treatment thresholds for ", treatment_types[t]))
-  #   # Set the target for each bin here:
-  #   print(paste0("Treatment type: ", all_thresholds[t,1]))
-
-  #   if (fixed_target == TRUE) {
-  #     filtered_stands <- set_fixed_area_target(filtered_stands, fixed_area_target) # Target based on fixed field
-  #   } else if (fixed_target == FALSE) {
-  #     filtered_stands <- set_percentage_area_target(filtered_stands, pa_target, pa_target_multiplier) #activate for percentage not fixed area
-  #   }
-
-  #   # The following code splits out the planning area treatments by treatment type and percent of area treated. An area (rather than %)
-  #   # area target can be set by removing the multiplier and replacing AREA_MAN with the area target in hectares (i.e. 2000).
-  #   # if(all_thresholds[t,1] == c("Commercial")){
-  #   #   filtered_stands[, current_area_target := AREA_MAN *.15 - treatedPAArea]
-  #   # }else if(all_thresholds[t,1] == c("HF")){
-  #   #   filtered_stands[, current_area_target := AREA_MAN * .30 - treatedPAArea]
-  #   #   filtered_stands[, weightedPriority := WHPMN_SPM]
-  #   # }else{
-  #   #   print("Missing Threshold Update! Treatment selection is suspect!")
-  #   # }
-  #   treatStands <- select_simple_greedy_algorithm(dt = filtered_stands,
-  #                                         grouped_by = stand_group_by,
-  #                                         prioritize_by = "weightedPriority",
-  #                                         tally_by = pa_unit,
-  #                                         grouped_target = "current_area_target")
-
-  #   # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
-
-  #   area_treatedPA <- update_target(treatStands, stand_group_by, pa_unit)
-  #   stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
-  #   stands_updated <- stands_updated[treatStands, ':='(treatment_type = treatment_types[t], treat = 1), on = stand]
-  #   selected_stands <- rbind(selected_stands, stands_updated[treat==1,])
-  # } # END FOR 4
-
   selected_stands <- apply_treatment(
                       treatment_types = treatment_types,
                       stands = stands_updated,
                       all_thresholds = all_thresholds,
                       stand_group_by = stand_group_by,
-                      stand_field = stand_field, 
+                      stand_field = stand_field,
                       fixed_target = fixed_target,
                       fixed_area_target = fixed_area_target,
                       pa_unit = pa_unit,

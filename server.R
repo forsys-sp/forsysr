@@ -140,8 +140,7 @@ server <- function(input, output, session) {
 		updateSelectInput(session, 'planning_unit_id_field', choices = choices)
 		# updateSelectInput(session, 'pa_target_field', choices = choices) # TODO in the Idaho file, this is "AREA_MAN" which doesn't exist in the data
 		updateSelectInput(session, 'pa_unit_field', choices = choices)
-		updateSelectInput(session, 'pa_target_multiplier_field', choices = choices)
-		updateSelectInput(session, 'grouping_fields', choices = choices)
+		updateSelectInput(session, 'output_grouping_fields', choices = choices)
 		updateSelectInput(session, 'au_id_field', choices = choices)
 		updateSelectInput(session, 'au_target_multiplier', choices = choices)
 
@@ -173,7 +172,7 @@ server <- function(input, output, session) {
 			updateSelectInput(session, 'planning_unit_id_field', selected = r_data$json$stand_group_by)
 			updateTextInput(session, 'pa_target_field', value = r_data$json$pa_target)
 			updateSelectInput(session, 'pa_unit_field', selected = r_data$json$pa_unit)
-			updateNumericInput(session, 'pa_target_multiplier_field', value = r_data$json$pa_target_multiplier)
+			updateNumericInput(session, 'pa_target_multiplier', value = r_data$json$pa_target_multiplier)
 			
 			updateTextInput(session, 'use_au', value = r_data$json$nesting)
 			updateTextInput(session, 'au_id_field', value = r_data$json$nesting_group_by)
@@ -333,26 +332,26 @@ server <- function(input, output, session) {
 				scenario_name = input$scenario_name, 
 				input_standfile = r_data$data_path,
 				write_stand_outputs = input$write_stand_outputs_chk, 
-				stand_id_field = input$stand_id_field,
+				stand_field = input$stand_id_field,
 				pcp_spm = input$pcp_spm_fields,
 				land_base = input$treatment_available_field,
 				priorities = input$priorities_fields, 
 				stand_group_by = input$planning_unit_id_field,
 				pa_target = input$pa_target_field,
 				pa_unit = input$pa_unit_field,
-				pa_target_multiplier = input$pa_target_multiplier_field,
-				nesting = nesting,
+				pa_target_multiplier = input$pa_target_multiplier,
+				nesting = input$use_au,
 				nesting_group_by = nesting_group_by,
 				nesting_target = nesting_target,
 				nesting_unit = nesting_unit,
-				au_target_multiplier = au_target_multiplier,
+				nesting_target_multiplier = au_target_multiplier,
 				# weighting_values = weight_values,
 				# thresholds = input$thresholds_expr,
 				# include_stands = c("man_alldis == 1"), # TODO parse include_stands from thresholds, or the other way around
 				output_fields = input$outputs_select,
-				grouping_variables = input$grouping_fields, # c("PA_ID", "Owner"),
+				grouping_variables = input$output_grouping_fields, # c("PA_ID", "Owner"),
 				fixed_target = FALSE,
-				fixed_target_value = input$fixed_target_value,
+				fixed_area_target = input$fixed_target_value,
 				overwrite_output = input$overwrite_output_chk,
 				shiny_output = TRUE
 				)
@@ -377,7 +376,6 @@ server <- function(input, output, session) {
 		updateSelectInput(session, 'planning_unit_id_field', choices = NULL)
 		updateSelectInput(session, 'pa_target_field', choices = NULL)
 		updateSelectInput(session, 'pa_unit_field', choices = NULL)
-		updateSelectInput(session, 'pa_target_multiplier_field', choices = NULL)
 
 		})
 
@@ -398,10 +396,37 @@ server <- function(input, output, session) {
 
 	########################################################
 
-	results_files <- reactive({
-		output_files <- sapply(list.files('output'), function(x) glue('output/{x}'))
+	# results_files <- reactive({
+	# 	output_files <- sapply(list.files('output'), function(x) glue('output/{x}'))
+	# 	})
+
+	result_data_all_name <- reactive({
+		glue('pa_all_', r_data$json$scenario_name, '.csv')
 		})
 
+	result_data <- reactive({
+		p <- result_data_all_name()
+		d <- read_csv(p)
+		})
+
+
+	observeEvent(input$attainment_efficiency_by_area, {
+
+		})
+
+	observeEvent(input$production_frontiers, {
+		d <- result_data()
+		})
+
+
+	output$download_data <- downloadHandler(
+	    filename = function() {
+	      result_data_all_name()
+	    },
+	    content = function(file) {
+	      write.csv(result_data(), file)
+	    }
+	  )
 	
 
 	

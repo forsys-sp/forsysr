@@ -85,7 +85,6 @@ write_save_file <- function(
 		'grouping_variables', 
 		'fixed_target', 
 		'fixed_area_target', 
-		'system_constraint', 
 		'overwrite_output'
 		)
 
@@ -112,7 +111,6 @@ write_save_file <- function(
 	vector_data$grouping_variables = grouping_variables 
 	vector_data$fixed_target = fixed_target 
 	vector_data$fixed_area_target = fixed_area_target 
-	vector_data$system_constraint = system_constraint 
 	vector_data$overwrite_output = overwrite_output
 
 	json_data <- serializeJSON(vector_data, pretty = TRUE)
@@ -139,23 +137,37 @@ write_save_file <- function(
 write_save_file_helper <- function(input, data_path) {
 	weight_values <- weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
 
+	if (input$use_au) {
+			nesting = TRUE
+			nesting_group_by = input$au_id_field
+			nesting_target = input$au_target_field
+			nesting_unit = input$au_unit_field
+			au_target_multiplier = input$au_target_multiplier
+		} else {
+			nesting = FALSE
+			nesting_group_by = NULL
+			nesting_target = NULL
+			nesting_unit = NULL
+			au_target_multiplier = 1.0
+		}
+
 	json <- write_save_file(
 		scenario_name = input$scenario_name, 
 		input_standfile = data_path,
 		write_stand_outputs = input$write_stand_outputs_chk, 
-		stand_field = input$stand_field,
+		stand_field = input$stand_id_field,
 		pcp_spm = input$pcp_spm_fields,
-		land_base = input$land_base_field,
+		land_base = input$treatment_available_field,
 		priorities = input$priorities_fields, 
-		stand_group_by = input$stand_group_by_field,
+		stand_group_by = input$planning_unit_id_field,
 		pa_target = input$pa_target_field,
 		pa_unit = input$pa_unit_field,
 		pa_target_multiplier = input$pa_target_multiplier,
-		nesting = FALSE,
-		nesting_group_by = NULL,
-		nesting_target = NULL,
-		nesting_unit = NULL,
-		nesting_target_multiplier = 1.0,
+		nesting = input$use_au,
+		nesting_group_by = nesting_group_by,
+		nesting_target = nesting_target,
+		nesting_unit = nesting_unit,
+		nesting_target_multiplier = au_target_multiplier,
 		weighting_values = weight_values,
 		thresholds = input$thresholds_expr,
 		include_stands = c("man_alldis == 1"), # TODO parse include_stands from thresholds, or the other way around
@@ -163,7 +175,6 @@ write_save_file_helper <- function(input, data_path) {
 		grouping_variables = input$grouping_fields, # c("PA_ID", "Owner"),
 		fixed_target = FALSE,
 		fixed_area_target = input$fixed_area_target,
-		system_constraint = input$system_constraint_chk,
 		overwrite_output = input$overwrite_output_chk
 		)
 }

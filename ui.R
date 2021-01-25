@@ -101,7 +101,7 @@ scenario_params_panel <- tabPanel(
 						tabPanel(id = 'variable_target_panel', 'Variable Constraint', 
 							br(),
 							selectInput('pa_unit_field', 'Planning Unit Unit', choices = NULL, multiple = FALSE, selectize = TRUE), 
-							numericInput('pa_target_multiplier_field', 'Planning Unit Multiplier', 0.15)),
+							numericInput('pa_target_multiplier', 'Planning Unit Multiplier', 0.15)),
 						tabPanel(id = 'fixed_target_panel', 'Fixed Constraint', 
 							br(),
 							numericInput('fixed_target_value', 'Fixed Constraint Amount', 2000))
@@ -193,14 +193,14 @@ results_main_panel <- tabPanel(
 	sidebarLayout(
 		sidebarPanel(
 			h3('Charts'),
-			p(actionLink('attainment_efficiency', 'Attainment Efficiency')),
+			# p(actionLink('attainment_efficiency', 'Attainment Efficiency')),
 			p(actionLink('attainment_efficiency_by_area','Attainment Efficiency by Area Treated')),
 			p(actionLink('production_frontiers','Production Frontiers')),
 			h3('Maps'),
 			p('Treatment Prioritization'),
 			h3('Data'), 
-			p(actionLink('download_data','Download Data')),
-			p(actionLink('download_pdf','Download Analysis PDF')),
+			p(downloadLink('download_data','Download Data')),
+			p(downloadLink('download_pdf','Download Analysis PDF')),
 			),
 		mainPanel(
 			plotOutput('analysis_plot')
