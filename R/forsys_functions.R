@@ -329,57 +329,6 @@ apply_treatment <- function(treatment_types,
     stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
     stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_types[t], treat = 1), on = stand_field]
     selected_stands <- rbind(selected_stands, stands_updated[treat==1,])
-import arcpy
-import os
-
-### Don't run this. Add data to Arc and join, then run lookups
-
-#zoneRaster = "evtcmbu_r146_wgs84.tif"
-#zoneRaster = "evtbiocmbu_wgs84.tif"
-#zoneRaster = "evtbiocmb30u.tif"
-zoneRaster = "grpidrp5cmb.tif"
-
-doy = "20210114"
-
-predictions_doy = "rpms-doy-" + doy + "-ex.csv"
-predictions_ndvi = "rpms-ndvi-" + doy + "-ex.csv"
-
-#predictions_doy = "06-18_pred_rpms-doy-" + doy + "-ex.csv"
-#predictions_ndvi = "06-18_pred_rpms-ndvi-" + doy + "-ex.csv"
-
-
-# Replace a layer/table view name with a path to a dataset (which can be a layer file) or create the layer/table view within the script
-# The following inputs are layers or table views: "evtbiocmb30u", "04-23_pred_rpms-doy-20200423.csv"
-try:
-    arcpy.AddJoin_management(in_layer_or_view=zoneRaster, in_field="VALUE", join_table=predictions_doy, join_field="Field1", join_type="KEEP_ALL")
-except:
-    arcpy.AddJoin_management(in_layer_or_view=zoneRaster, in_field=zoneRaster + ".vat.VALUE", join_table=predictions_doy, join_field="Field1", join_type="KEEP_ALL")
-try:
-    arcpy.AddJoin_management(in_layer_or_view=zoneRaster, in_field="VALUE", join_table=predictions_ndvi, join_field="Field1", join_type="KEEP_ALL")
-except:
-    arcpy.AddJoin_management(in_layer_or_view=zoneRaster, in_field=zoneRaster + ".vat.VALUE", join_table=predictions_ndvi, join_field="Field1", join_type="KEEP_ALL")
-
-outpath = "C:\\MCR\\Cowcaster\\preds_tifs\\" + doy + '\\'
-
-if not os.path.exists(outpath):
-    os.makedirs(outpath)
-
-arcpy.gp.Lookup_sa(zoneRaster, predictions_doy + ".doy_mean_mean", outpath + "pred_doy_mean_" + doy + ".tif")
-arcpy.gp.Lookup_sa(zoneRaster, predictions_ndvi + ".ndvi_mean_mean", outpath + "pred_ndvi_mean_" + doy + ".tif")
-
-
-## Integerize all rasters
-
-inRas = "pred_ndvi_mean_" + doy + ".tif"
-#outRas = outpath + "rpms_ndvi_" + doy + "_ex.tif"
-outRas = outpath + "rpms_ndvi_" + doy + ".tif"
-arcpy.gp.Int_sa(inRas, outRas)
-
-inRas = "pred_doy_mean_" + doy + ".tif"
-#outRas = outpath + "rpms_doy_" + doy + "_ex.tif"
-outRas = outpath + "rpms_doy_" + doy + ".tif"
-arcpy.gp.Int_sa(inRas, outRas)
-
   }
 
   return(selected_stands)
@@ -420,8 +369,8 @@ identify_nested_planning_areas <- function(grouped_by_pa) {
   paSubunits$treatment_rank <- seq(1:nrow(paSubunits))
 }
 
-write_stand_outputs_to_file <- function(unique_weights, name, selected_stands) {
-    stand_output_file <- paste0("output/stands", unique_weights, name, ".csv")
+write_stand_outputs_to_file <- function(dir, unique_weights, name, selected_stands) {
+    stand_output_file <- paste0(dir, "/",  name, "_stands", unique_weights, ".csv")
     fwrite(selected_stands, stand_output_file)
 }
 

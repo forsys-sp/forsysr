@@ -90,24 +90,29 @@ source('R/forsys_functions.R')
 ## Load functions, write parameter data out to Arc.
 options(scipen = 9999)
 
+relative_output_path = glue('output/{scenario_name}')
+
 # Check if output directory exists
-if (!dir.exists(file.path(getwd(), "output"))) {
-  print(paste("Making output directory: ", file.path(getwd(), "output")), sep="")
-  dir.create(file.path(getwd(), "output"))
+absolute_output_path = file.path(getwd(), relative_output_path)
+if (!dir.exists(absolute_output_path)) {
+  print(paste0("Making output directory: ", absolute_output_path))
+  dir.create(absolute_output_path, recursive=TRUE)
 } else {
-  print(paste0("output directory, ", file.path(getwd(), "output"), ", already exists"), sep="")
+  print(paste0("output directory, ", absolute_output_path, ", already exists"))
 }
 
 if (overwrite_output) {
   ## Clean up any files left from previous database. Failure to remove the .ini file will cause failures when
   ## table attributes change.
+
+  # These paths or wildcards don't seem to match any more
   unlink("output\\*.csv")
   unlink("output\\*.ini")
 
-  output_files <- sapply(list.files('output'), function(x) glue('output/{x}'))
+  output_files <- sapply(list.files(relative_output_path), function(x) glue('{relative_output_path}/{x}'))
   if (length(output_files) > 0) { file.remove(output_files) }
 } else {
-  fname <- paste0('output/pa_all_', scenario_name, '.csv')
+  fname <- paste0(relative_output_path, '/pa_all_', scenario_name, '.csv')
   if (file.exists(fname)) {
     print(paste0('Warning: Output file ', fname, ' already exists. Appending results.'))
   }
@@ -211,18 +216,15 @@ for (w in 1:nrow(weights)) { # START FOR 0
   }
 
   uniqueWeights <- ""
-  # for (i in 1:ncol(weights)) { # START FOR 5
-  #    uniqueWeights <- paste0(uniqueWeights, "_", weights[[i]][w])
-  # } # END FOR 5
 
   uniqueWeights = paste0(sapply(1:ncol(weights), function(i) {uniqueWeights <- paste0(uniqueWeights, "_", weights[[i]][w])}), collapse='')
 
   print("Producing output files for stands and planning areas")
   if (write_stand_outputs == TRUE) {
-      write_stand_outputs_to_file(uniqueWeights, scenario_name, selected_stands)
+      write_stand_outputs_to_file(relative_output_path, uniqueWeights, scenario_name, selected_stands)
   }
 
-  planningAreaOutputFile <- paste0("output/pa", uniqueWeights, ".csv")
+  planningAreaOutputFile <- paste0(relative_output_path, "/pa_", uniqueWeights, ".csv")
 
   # compile all planning areas and stands
   allPlanningAreas <- compile_planning_areas_and_stands(uniqueWeights, standDT, stand_group_by, output_fields)
@@ -256,7 +258,7 @@ for (w in 1:nrow(weights)) { # START FOR 0
   # TO DO: Why am I getting identical rows of data outputs? Hack: only export unique rows.
   paOutput <- unique(paOutput)
   print("Adding results to master planning area file")
-  masterPA = paste0("output/pa_all_", scenario_name, ".csv")
+  masterPA = paste0(relative_output_path, "/pa_all_", scenario_name, ".csv")
   if (file.exists(masterPA)) {
     fwrite(paOutput, file = masterPA, sep = ",", row.names = FALSE, append = TRUE, col.names = FALSE)
   } else {
@@ -283,7 +285,7 @@ for (w in 1:nrow(weights)) { # START FOR 0
 
 
     print("Adding results to the master planning area subset file.")
-    subPA = paste0("output/pa_subset", scenario_name, ".csv")
+    subPA = paste0(relative_output_path, "/pa_subset_", scenario_name, ".csv")
     if (file.exists(subPA)) {
       fwrite(paSubOutput, file = subPA, sep = ",", row.names = FALSE, append = TRUE, col.names = FALSE)
     } else {
