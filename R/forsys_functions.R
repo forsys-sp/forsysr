@@ -1,9 +1,11 @@
 
-load_dataset <- function(path_to_file, is_dbf=TRUE ) {
+load_dataset <- function(path_to_file) {
+  file_type <- str_sub(path_to_file, start= -3)
   print("Loading Dataset")
-  if (is_dbf == TRUE) {
+  print(file_type)
+  if (file_type == "dbf") {
     standDT <- data.table(read.dbf(path_to_file))
-  } else if (is_csv == TRUE) {
+  } else if (file_type == "csv") {
     standDT <- data.table(fread(path_to_file, header = TRUE))
   } else {
     ('Input format not recognized')

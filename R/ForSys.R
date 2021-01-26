@@ -126,8 +126,7 @@ if (overwrite_output) {
 
 #
 # # # Load data -------------
-
-standDT <- load_dataset(input_standfile, is_dbf)
+standDT <- load_dataset(input_standfile)
 standDT %>%
   calculate_spm_pcp(land_base, pcp_spm) %>%
   # Add target area or volume fields based on a land base here:
