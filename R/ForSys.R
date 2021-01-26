@@ -254,11 +254,7 @@ for (w in 1:nrow(weights)) { # START FOR 0
   }
 
   uniqueWeights <- ""
-  # for (i in 1:ncol(weights)) { # START FOR 5
-  #    uniqueWeights <- paste0(uniqueWeights, "_", weights[[i]][w])
-  # } # END FOR 5
-
-  uniqueWeights = paste0(sapply(1:ncol(weights), function(i) {uniqueWeights <- paste0(uniqueWeights, "_", weights[[i]][w])}), collapse='')
+  uniqueWeights <- paste0(sapply(1:ncol(weights), function(i) {uniqueWeights <- paste0(uniqueWeights, "_", weights[[i]][w])}), collapse='')
 
   print("Producing output files for stands and planning areas")
   if (write_stand_outputs == TRUE) {
