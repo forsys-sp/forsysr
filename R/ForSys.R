@@ -7,10 +7,6 @@
 ##                                                                    ##
 ########################################################################
 
-initialize <- function(
-  ) {
-
-}
 
 
 #' Run the ForSys treatment planner. Either provide parameters, or define parameters
@@ -44,9 +40,6 @@ initialize <- function(
 #' @param grouping_variables Include the smaller and larger groups here for grouping of treated stands.
 #' @param fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
 #' @param fixed_area_target TODO
-#' @param system_constraint If the constraint is by master nesting unit (i.e. treat the top X planning areas in each
-#'                          national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning
-#'                          area regardless of where it is located), set TRUE.
 #' @param overwrite_output Toggle to overwrite existing output files
 #' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
 #' @export
@@ -97,24 +90,29 @@ source('R/forsys_functions.R')
 ## Load functions, write parameter data out to Arc.
 options(scipen = 9999)
 
+relative_output_path = glue('output/{scenario_name}')
+
 # Check if output directory exists
-if (!dir.exists(file.path(getwd(), "output"))) {
-  print(paste("Making output directory: ", file.path(getwd(), "output")), sep="")
-  dir.create(file.path(getwd(), "output"))
+absolute_output_path = file.path(getwd(), relative_output_path)
+if (!dir.exists(absolute_output_path)) {
+  print(paste0("Making output directory: ", absolute_output_path))
+  dir.create(absolute_output_path, recursive=TRUE)
 } else {
-  print(paste0("output directory, ", file.path(getwd(), "output"), ", already exists"), sep="")
+  print(paste0("output directory, ", absolute_output_path, ", already exists"))
 }
 
 if (overwrite_output) {
   ## Clean up any files left from previous database. Failure to remove the .ini file will cause failures when
   ## table attributes change.
+
+  # These paths or wildcards don't seem to match any more
   unlink("output\\*.csv")
   unlink("output\\*.ini")
 
-  output_files <- sapply(list.files('output'), function(x) glue('output/{x}'))
+  output_files <- sapply(list.files(relative_output_path), function(x) glue('{relative_output_path}/{x}'))
   if (length(output_files) > 0) { file.remove(output_files) }
 } else {
-  fname <- paste0('output/pa_all_', scenario_name, '.csv')
+  fname <- paste0(relative_output_path, '/pa_all_', scenario_name, '.csv')
   if (file.exists(fname)) {
     print(paste0('Warning: Output file ', fname, ' already exists. Appending results.'))
   }
@@ -180,7 +178,7 @@ for (w in 1:nrow(weights)) { # START FOR 0
   all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
   stands_updated <- allStands[, treatedPAArea := 0]
 
-  # TODO Do we have to do parse/eval? 
+  # TODO Do we have to do parse/eval?
   # Remove excluded stands (man_alldis == 0, etc.)
   #if(length(include_stands) > 0){
     for(f in 1:length(include_stands)){ # START FOR 3
@@ -188,48 +186,12 @@ for (w in 1:nrow(weights)) { # START FOR 0
     } # STOP FOR 3
   #}
 
-  # for(t in 1:length(treatment_types)){ # START FOR 4
-  #   filtered_stands <- stand_filter(stands_updated, all_thresholds[V1 == treatment_types[t], ])
-  #   print(paste0("There are ", nrow(filtered_stands), " stands that meet treatment thresholds for ", treatment_types[t]))
-  #   # Set the target for each bin here:
-  #   print(paste0("Treatment type: ", all_thresholds[t,1]))
-
-  #   if (fixed_target == TRUE) {
-  #     filtered_stands <- set_fixed_area_target(filtered_stands, fixed_area_target) # Target based on fixed field
-  #   } else if (fixed_target == FALSE) {
-  #     filtered_stands <- set_percentage_area_target(filtered_stands, pa_target, pa_target_multiplier) #activate for percentage not fixed area
-  #   }
-
-  #   # The following code splits out the planning area treatments by treatment type and percent of area treated. An area (rather than %)
-  #   # area target can be set by removing the multiplier and replacing AREA_MAN with the area target in hectares (i.e. 2000).
-  #   # if(all_thresholds[t,1] == c("Commercial")){
-  #   #   filtered_stands[, current_area_target := AREA_MAN *.15 - treatedPAArea]
-  #   # }else if(all_thresholds[t,1] == c("HF")){
-  #   #   filtered_stands[, current_area_target := AREA_MAN * .30 - treatedPAArea]
-  #   #   filtered_stands[, weightedPriority := WHPMN_SPM]
-  #   # }else{
-  #   #   print("Missing Threshold Update! Treatment selection is suspect!")
-  #   # }
-  #   treatStands <- select_simple_greedy_algorithm(dt = filtered_stands,
-  #                                         grouped_by = stand_group_by,
-  #                                         prioritize_by = "weightedPriority",
-  #                                         tally_by = pa_unit,
-  #                                         grouped_target = "current_area_target")
-
-  #   # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
-
-  #   area_treatedPA <- update_target(treatStands, stand_group_by, pa_unit)
-  #   stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
-  #   stands_updated <- stands_updated[treatStands, ':='(treatment_type = treatment_types[t], treat = 1), on = stand]
-  #   selected_stands <- rbind(selected_stands, stands_updated[treat==1,])
-  # } # END FOR 4
-
   selected_stands <- apply_treatment(
                       treatment_types = treatment_types,
                       stands = stands_updated,
                       all_thresholds = all_thresholds,
                       stand_group_by = stand_group_by,
-                      stand_field = stand_field, 
+                      stand_field = stand_field,
                       fixed_target = fixed_target,
                       fixed_area_target = fixed_area_target,
                       pa_unit = pa_unit,
@@ -257,10 +219,10 @@ for (w in 1:nrow(weights)) { # START FOR 0
 
   print("Producing output files for stands and planning areas")
   if (write_stand_outputs == TRUE) {
-      write_stand_outputs_to_file(uniqueWeights, scenario_name, selected_stands)
+      write_stand_outputs_to_file(relative_output_path, uniqueWeights, scenario_name, selected_stands)
   }
 
-  planningAreaOutputFile <- paste0("output/pa", uniqueWeights, ".csv")
+  planningAreaOutputFile <- paste0(relative_output_path, "/pa_", uniqueWeights, ".csv")
 
   # compile all planning areas and stands
   allPlanningAreas <- compile_planning_areas_and_stands(uniqueWeights, standDT, stand_group_by, output_fields)
@@ -294,7 +256,7 @@ for (w in 1:nrow(weights)) { # START FOR 0
   # TO DO: Why am I getting identical rows of data outputs? Hack: only export unique rows.
   paOutput <- unique(paOutput)
   print("Adding results to master planning area file")
-  masterPA = paste0("output/pa_all_", scenario_name, ".csv")
+  masterPA = paste0(relative_output_path, "/pa_all_", scenario_name, ".csv")
   if (file.exists(masterPA)) {
     fwrite(paOutput, file = masterPA, sep = ",", row.names = FALSE, append = TRUE, col.names = FALSE)
   } else {
@@ -321,7 +283,7 @@ for (w in 1:nrow(weights)) { # START FOR 0
 
 
     print("Adding results to the master planning area subset file.")
-    subPA = paste0("output/pa_subset", scenario_name, ".csv")
+    subPA = paste0(relative_output_path, "/pa_subset_", scenario_name, ".csv")
     if (file.exists(subPA)) {
       fwrite(paSubOutput, file = subPA, sep = ",", row.names = FALSE, append = TRUE, col.names = FALSE)
     } else {

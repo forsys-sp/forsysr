@@ -20,10 +20,11 @@ COPY ./R/forsys_input_summarization.R /root/forsys/R/forsys_input_summarization.
 COPY ./R/forsys_libraries.R /root/forsys/R/forsys_libraries.R
 COPY ./R/forsys_scenario_functions.R /root/forsys/R/forsys_scenario_functions.R
 COPY ./R/forsys_xml.R /root/forsys/R/forsys_xml.R
-COPY ./config_Idaho.R /root/forsys/R/config_Idaho.R
-COPY ./server.R /root/forsys/server.R
-COPY ./ui.R /root/forsys/ui.R
+
 COPY ./app.R /root/forsys/app.R
+COPY ./config_Idaho.R /root/forsys/config_Idaho.R
+COPY ./ui.R /root/forsys/ui.R
+COPY ./server.R /root/forsys/server.R
 
 
 EXPOSE 3838

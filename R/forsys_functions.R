@@ -333,7 +333,6 @@ apply_treatment <- function(treatment_types,
     stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
     stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_types[t], treat = 1), on = stand_field]
     selected_stands <- rbind(selected_stands, stands_updated[treat==1,])
-
   }
 
   return(selected_stands)
@@ -374,8 +373,8 @@ identify_nested_planning_areas <- function(grouped_by_pa) {
   paSubunits$treatment_rank <- seq(1:nrow(paSubunits))
 }
 
-write_stand_outputs_to_file <- function(unique_weights, name, selected_stands) {
-    stand_output_file <- paste0("output/stands", unique_weights, name, ".csv")
+write_stand_outputs_to_file <- function(dir, unique_weights, name, selected_stands) {
+    stand_output_file <- paste0(dir, "/",  name, "_stands", unique_weights, ".csv")
     fwrite(selected_stands, stand_output_file)
 }
 

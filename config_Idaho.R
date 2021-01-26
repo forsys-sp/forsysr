@@ -15,12 +15,12 @@ input_standfile <- "data/IDHexnet_North20190523_Final.dbf"
 write_stand_outputs <- FALSE
 
 ## Stand field
-stand <- "Cell_ID"
+stand_field <- "Cell_ID"
 
 ## PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
 pcp_spm <- c("HUSUM_STND", "TVMBF_STND")
 
-## The land base is the area that is used to calculate the PCP and SPM values. 
+## The land base is the area that is used to calculate the PCP and SPM values.
 ## It is currently a single, binary variable that must be computed prior to running the ForSysR script.
 ## A blank field means all lands are included in the calculation.
 land_base <- "man_alldis"
@@ -52,12 +52,12 @@ nesting_target_multiplier <- 1.0
 weighting_values <- "0 5 1"
 
 ## Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
-thresholds <- c("Manageable man_alldis == 1") 
+thresholds <- c("Manageable man_alldis == 1")
 
 ## This defines global threshold values to include stands - i.e. for any threshold type.
 include_stands <- c("man_alldis == 1")#You could put timber under constraints, and exclude unmanageble here
 
-## This should include the desired fields for the planning area treatment files. Planning area id, 
+## This should include the desired fields for the planning area treatment files. Planning area id,
 ## priority weights and treatment rank are added automatically.
 output_fields <- c("AREA_HA", "TVMBF_STND", "TVMBF_PCP", "HUSUM_STND", "HUSUM_PCP")
 
@@ -68,8 +68,8 @@ grouping_variables <- c("PA_ID", "Owner")
 fixed_target <- FALSE
 fixed_area_target <- 2000
 
-## If the constraint is by master nesting unit (i.e. treat the top X planning areas in each 
-## national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning 
+## If the constraint is by master nesting unit (i.e. treat the top X planning areas in each
+## national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning
 ##area regardless of where it is located), set TRUE.
 system_constraint <- FALSE
 
