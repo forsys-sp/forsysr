@@ -104,11 +104,6 @@ if (!dir.exists(absolute_output_path)) {
 if (overwrite_output) {
   ## Clean up any files left from previous database. Failure to remove the .ini file will cause failures when
   ## table attributes change.
-
-  # These paths or wildcards don't seem to match any more
-  unlink("output\\*.csv")
-  unlink("output\\*.ini")
-
   output_files <- sapply(list.files(relative_output_path), function(x) glue('{relative_output_path}/{x}'))
   if (length(output_files) > 0) { file.remove(output_files) }
 } else {

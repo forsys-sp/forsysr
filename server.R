@@ -26,20 +26,30 @@ server <- function(input, output, session) {
 		# Block until file is completely uploaded
 		req(input$file_select)
 
-		# fileInput returns an object with parameters
-		file <- input$file_select
-		ext <- tools::file_ext(file$datapath)
 
-		perm_data_path <- glue('data/', file$name)
-		file.copy(input$file_select$datapath, perm_data_path)
+		print(input$file_select)
+		print(class(input$file_select))
 
-		r_data$data_path <- perm_data_path
-		r_data$ext <- ext
-		
-		# Remember R returns the last thing assigned to, no return needed
-		r_data$data <- switch(ext, 
-			csv = load_dataset(perm_data_path, FALSE), 
-			dbf = load_dataset(perm_data_path, TRUE))
+		apply(input$file_select, 1, function(x) {
+			file <- x
+			ext <- tools::file_ext(x['datapath'])
+
+			perm_data_path <- paste0('data/', x['name'])
+			file.copy(x['datapath'], perm_data_path)
+
+
+			if (stringr::str_detect(ext, 'dbf') | stringr::str_detect(ext, 'csv')) {
+				r_data$data_path <- perm_data_path
+				r_data$ext <- ext
+
+
+				# Remember R returns the last thing assigned to, no return needed
+				r_data$data <- switch(ext, 
+					csv = load_dataset(perm_data_path, FALSE), 
+					dbf = load_dataset(perm_data_path, TRUE))
+				}
+			
+			})
 		})
 
 	########################################################
@@ -401,18 +411,31 @@ server <- function(input, output, session) {
 	# 	})
 
 	result_data_all_name <- reactive({
-		glue('pa_all_', r_data$json$scenario_name, '.csv')
+		paste0(r_data$json$scenario_name, '/pa_all_', r_data$json$scenario_name, '.csv')
 		})
 
 	result_data <- reactive({
 		p <- result_data_all_name()
-		d <- read_csv(p)
+		d <- readr::read_csv(p)
 		})
 
+	reactive_plot_value <- reactiveValues(plot = NULL)
+
+	reactive_attainment_chart_by_target_treated <- reactive({
+		p = 'output/NNA/pa_all_NNA.csv'
+		d = readr::read_csv(p)
+
+		target_field = 'ETrt_AREA_HA'
+		pcp_field = 'ETrt_TVMBF_PCP'
+		priority = 'Pr_1_TVMBF_SPM_SPM'
+
+		attainment_chart_by_target_treated(d, pcp_field, target_field, priority)
+		})
 
 	observeEvent(input$attainment_efficiency_by_area, {
-
+		output$analysis_plot <- renderPlot(reactive_attainment_chart_by_target_treated())
 		})
+
 
 	observeEvent(input$production_frontiers, {
 		d <- result_data()
