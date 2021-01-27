@@ -44,12 +44,13 @@ scenario_params_panel <- tabPanel(
 					textInput('scenario_name', 'Scenario Name'),
 					
 					tabsetPanel(
-						tabPanel(id = 'flat_file_panel', 'Flat File Input', 
+						tabPanel(id = 'flat_file_panel', 'File Input', 
 							br(), 
 							fileInput(
 								'file_select', 
 								'Select Input Data', 
-								accept = c('.csv', '.shp', '.dbf'))
+								accept = c('.csv', '.shp', '.shx', '.dbf'), 
+								multiple = TRUE)
 							)#,
 						# tabPanel(id = 'gdb_file_panel', 'Geodatabase Input', 
 						# 	br(), 
@@ -203,6 +204,7 @@ results_main_panel <- tabPanel(
 			p(downloadLink('download_pdf','Download Analysis PDF')),
 			),
 		mainPanel(
+			# selectInput('')
 			plotOutput('analysis_plot')
 			)
 		)
