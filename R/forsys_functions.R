@@ -1,9 +1,11 @@
 
-load_dataset <- function(path_to_file, is_dbf=TRUE ) {
+load_dataset <- function(path_to_file) {
+  file_type <- str_sub(path_to_file, start= -3)
   print("Loading Dataset")
-  if (is_dbf == TRUE) {
+  print(file_type)
+  if (file_type == "dbf") {
     standDT <- data.table(read.dbf(path_to_file))
-  } else if (is_csv == TRUE) {
+  } else if (file_type == "csv") {
     standDT <- data.table(fread(path_to_file, header = TRUE))
   } else {
     ('Input format not recognized')
@@ -116,16 +118,18 @@ weight_string_to_values <- function(weight_str) {
 #' @param minimum The minimum value of the weighting schema.
 #' @param maximum The maximum value of the weighting schema.
 #' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
-weight_priorities <- function(numPriorities, weights = c("0 10 1")) {
+weight_priorities <- function(numPriorities, weights = c("1 1 1")){
   if(numPriorities == 1)
     return(data.table(1))
   weights <- strtoi(unlist(strsplit(weights, " ")))
   weights <- seq(weights[1], weights[2], weights[3])
-  weightCombinations <- data.table(expand.grid(weights, weights))
-  uniqueWeightCombinations <- data.table(createWeightedPairs(weightCombinations))
-  zero_one <- data.table(Var1 = 0:1,
-                         Var2 = 1:1)
-  uniqueWeightCombinations <- rbind(uniqueWeightCombinations[,c("Var1", "Var2")], zero_one)
+  # Updates by Luke Wilkerson to incorporate multiple priorities.
+  weightPermute <- (permutations(length(weights), numPriorities, weights, repeats.allowed=TRUE))
+  weightprops <- proportions(weightPermute, 1)
+  weightPermute <- data.table(weightPermute)
+  uniqueWeightCombinations <- weightPermute[!duplicated(weightprops) & rowSums(weightPermute) != 0, ]
+
+  return(uniqueWeightCombinations)
 }
 
 createWeightedPairs <- function(dt) {

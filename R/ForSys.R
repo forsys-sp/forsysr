@@ -124,8 +124,7 @@ if (overwrite_output) {
 
 #
 # # # Load data -------------
-
-standDT <- load_dataset(input_standfile, is_dbf)
+standDT <- load_dataset(input_standfile)
 standDT %>%
   calculate_spm_pcp(land_base, pcp_spm) %>%
   # Add target area or volume fields based on a land base here:
@@ -216,8 +215,7 @@ for (w in 1:nrow(weights)) { # START FOR 0
   }
 
   uniqueWeights <- ""
-
-  uniqueWeights = paste0(sapply(1:ncol(weights), function(i) {uniqueWeights <- paste0(uniqueWeights, "_", weights[[i]][w])}), collapse='')
+  uniqueWeights <- paste0(sapply(1:ncol(weights), function(i) {uniqueWeights <- paste0(uniqueWeights, "_", weights[[i]][w])}), collapse='')
 
   print("Producing output files for stands and planning areas")
   if (write_stand_outputs == TRUE) {
