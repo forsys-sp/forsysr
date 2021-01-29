@@ -49,7 +49,7 @@ scenario_params_panel <- tabPanel(
 							fileInput(
 								'file_select', 
 								'Select Input Data', 
-								accept = c('.csv', '.shp', '.shx', '.dbf'), 
+								accept = c('.csv', '.dbf', '.zip'), 
 								multiple = TRUE)
 							)#,
 						# tabPanel(id = 'gdb_file_panel', 'Geodatabase Input', 

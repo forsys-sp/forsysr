@@ -15,5 +15,6 @@ pacman::p_load(
   rgeos,
   roxygen2,
   sp,
-  tidyverse
+  tidyverse,
+  zip
   )
