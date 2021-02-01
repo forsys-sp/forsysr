@@ -37,16 +37,22 @@ server <- function(input, output, session) {
 			perm_data_path <- paste0('data/', x['name'])
 			file.copy(x['datapath'], perm_data_path)
 
+			if (stringr::str_detect(ext, 'zip')) {
+				# First open the zip and make sure it has a 'shp' in it
+				zfiles <- zip_list(x['datapath'])
+				if (has_element(purrr::map(zfiles$filename, function(x) str_detect(x, 'dbf')), TRUE)) {
+					unzip(x['datapath'], exdir=perm_data_path)
+					data_path <- paste0(str_sub(perm_data_path, -3), 'dbf')
+					r_data$data_path <- perm_data_path
+					r_data$ext <- ext
 
-			if (stringr::str_detect(ext, 'dbf') | stringr::str_detect(ext, 'csv')) {
+					r_data$data <- load_dataset(perm_data_path)
+				}
+			} else if (stringr::str_detect(ext, 'dbf') | stringr::str_detect(ext, 'csv')) {
 				r_data$data_path <- perm_data_path
 				r_data$ext <- ext
-
-
-				# Remember R returns the last thing assigned to, no return needed
-				r_data$data <- switch(ext, 
-					csv = load_dataset(perm_data_path, FALSE), 
-					dbf = load_dataset(perm_data_path, TRUE))
+				
+				r_data$data <- load_dataset(perm_data_path)
 				}
 			
 			})
@@ -89,9 +95,7 @@ server <- function(input, output, session) {
 		ext <- tools::file_ext(file)
 		
 		# Update the reactive data elements
-		r_data$data <- switch(ext, 
-			csv = load_dataset(file, FALSE), 
-			dbf = load_dataset(file, TRUE))
+		r_data$data <- load_dataset(file)
 		r_data$data_path <- file
 		r_data$ext <- ext
 		r_data$json <- json_data
