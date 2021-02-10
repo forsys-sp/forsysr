@@ -152,7 +152,7 @@ scenario_params_panel <- tabPanel(
 scenario_planning_main_panel <- navbarMenu(
 	'Scenario Planning', 
 	tabPanel(
-		id = 'select_scenario_panel',
+		value = 'select_scenario_panel',
 		'Access Saved Scenarios',
 		titlePanel('Select from the following scenarios'),
 		mainPanel(
@@ -204,8 +204,11 @@ results_main_panel <- tabPanel(
 			p(downloadLink('download_pdf','Download Analysis PDF')),
 			),
 		mainPanel(
-			# selectInput('')
-			plotOutput('analysis_plot')
+			# selectInput('stand_id_field', 'Stand ID Field', choices = NULL, multiple = FALSE, selectize = TRUE), 
+			selectInput('plot_x_field', 'Select Planning Unit Target', choices = NULL, multiple = FALSE, selectize = TRUE),
+			selectInput('plot_priority', 'Select Priority', choices = NULL, multiple = FALSE, selectize = TRUE),
+			plotOutput('analysis_plot', click = 'results_plot_click')
+
 			)
 		)
 	)

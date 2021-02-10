@@ -58,6 +58,10 @@ server <- function(input, output, session) {
 			})
 		})
 
+	tab_tracker <- observe({
+		print(paste('TAB TRACKER', input$main_nav)) 
+		})
+
 	########################################################
 
 					# Scenario Select Panel
@@ -415,25 +419,45 @@ server <- function(input, output, session) {
 	# 	})
 
 	result_data_all_name <- reactive({
-		paste0(r_data$json$scenario_name, '/pa_all_', r_data$json$scenario_name, '.csv')
+		paste0('output/', r_data$json$scenario_name, '/pa_all_', r_data$json$scenario_name, '.csv')
 		})
 
 	result_data <- reactive({
 		p <- result_data_all_name()
-		d <- readr::read_csv(p)
+		print(p)
+		if (file.exists(result_data_all_name())) {
+			d <- readr::read_csv(p)
+			updateSelectInput(session, 'plot_x_field', choices = get_result_targets(d))
+			updateSelectInput(session, 'plot_priority', choices = get_result_priorities(d))
+
+			reactive_results_values$result_data_pa_all <- d
+		} else {
+			d <- NULL
+		}
 		})
 
-	reactive_plot_value <- reactiveValues(plot = NULL)
+	observe({
+		if (str_detect(input$main_nav, 'analysis_panel')) {
+			req(result_data())
+		}
+		})
+
+
+	reactive_results_values <- reactiveValues(plot = NULL, result_data_pa_all = NULL)
+
 
 	reactive_attainment_chart_by_target_treated <- reactive({
-		p = 'output/NNA/pa_all_NNA.csv'
-		d = readr::read_csv(p)
+		p <- input$plot_priority
+		
+		# target_field = 'ETrt_AREA_HA'
+		target_field = input$plot_x_field
+		pcp_field = get_result_pcp_name(p)
+		priority = priority_column_name(reactive_results_values$result_data_pa_all, p)
 
-		target_field = 'ETrt_AREA_HA'
-		pcp_field = 'ETrt_TVMBF_PCP'
-		priority = 'Pr_1_TVMBF_SPM_SPM'
-
-		attainment_chart_by_target_treated(d, pcp_field, target_field, priority)
+		attainment_chart_by_target_treated(reactive_results_values$result_data_pa_all, 
+										   pcp_field, 
+										   target_field, 
+										   priority)
 		})
 
 	observeEvent(input$attainment_efficiency_by_area, {
@@ -441,8 +465,15 @@ server <- function(input, output, session) {
 		})
 
 
+	reactive_production_frontiers <- reactive({
+		production_frontiers_chart(reactive_results_values$result_data_pa_all, 
+								   'ETrt_TVMBF_PCP', 
+								   'ETrt_HUSUM_PCP', 
+								   'ETrt_AREA_HA')
+		})
+
 	observeEvent(input$production_frontiers, {
-		d <- result_data()
+		output$analysis_plot <- renderPlot(reactive_production_frontiers())
 		})
 
 

@@ -108,9 +108,9 @@ weight_values_to_string <- function(min = 0, max = 5, step =1) {
 
 weight_string_to_values <- function(weight_str) {
   vals <- str_split(weight_str, ' ')
-  print(vals)
+  # print(vals)
   vals <- sapply(vals, as.numeric)
-  print(vals[,1])
+  # print(vals[,1])
 }
 
 #' Weight priorities for selection
