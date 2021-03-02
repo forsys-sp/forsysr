@@ -17,3 +17,5 @@ pacman::p_load(
   sp,
   tidyverse
   )
+
+library(Patchmax)

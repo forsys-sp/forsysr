@@ -2,15 +2,16 @@
 load_dataset <- function(path_to_file) {
   file_type <- str_sub(path_to_file, start= -3)
   print("Loading Dataset")
-  print(file_type)
   if (file_type == "dbf") {
     standDT <- data.table(read.dbf(path_to_file))
+    print("Read stand file from DBF")
   } else if (file_type == "csv") {
     standDT <- data.table(fread(path_to_file, header = TRUE))
+    print("Read stand file from CSV")
   } else {
     ('Input format not recognized')
   }
-  return (standDT)
+  return(standDT)
 }
 
 
@@ -85,6 +86,21 @@ stand_filter <- function(dt, filters) {
   return(dt)
 }
 
+#' Create a new field in a stand table that flags all stands that include a given set of criteria
+#' @param dt A data table with all stand information necessary to determine availability for a specific treatment type.
+#' @param filters A list of strings that are used to filter the stands for treatment availability.
+#' @param field The name of a new field
+#' @return The final data table with stands available for treatment.
+stand_flag <- function(dt, filters, field) {
+  dt[, (field) := 0]
+  for(f in 1:nrow(filters)){
+    filter <- paste0(filters[f,2], " ", filters[f,3], " ", filters[f,4])
+    filter <- str_remove(filter, "'")
+    filter <- str_remove(filter, "'")
+    dt <- dt[ eval(parse(text = filter)), (field) := 1]
+  }
+  return(dt)
+}
 
 #' Create a dataset by subsetting subunits that were selected in the selectSubunits function
 #' and grouping the data by a larger subunit (usually planning areas).
@@ -96,9 +112,9 @@ stand_filter <- function(dt, filters) {
 #' \code{treat_target} as possible.
 create_grouped_dataset <- function(dt,
                                  grouping_vars,
-                                 summing_vars) {
+                                 summing_vars, subset_var) {
   ## Create the grouped data.table by grouping the treated subunits from the previous step.
-  dt <- subset(dt[treat==1])
+  dt <- subset(dt[get(subset_var)==1])
   dt <- group_by_at(dt, vars(grouping_vars))
   dt <- data.table(summarize_at(dt, .vars = vars(summing_vars), .funs = c(sum="sum")))
   names(dt) <- gsub(x = names(dt), pattern = "_sum", replacement = "")
@@ -348,7 +364,7 @@ set_percentage_area_target <- function(stands, pa_target, pa_target_multiplier) 
   stands[, current_area_target := get(pa_target) * pa_target_multiplier]
 }
 
-# Step 3: Identify the best planning areas within each nest.
+
 identify_nested_planning_areas <- function(grouped_by_pa) {
 
   # Step 3: Identify the best planning areas within each nest.
