@@ -1,3 +1,5 @@
+safe_colorblind_palette <- c("#88CCEE", "#CC6677", "#DDCC77", "#117733", "#332288", "#AA4499",
+                             "#44AA99", "#999933", "#882255", "#661100", "#6699CC", "#888888")
 
 # read_results_file <- function(path) {
 #   # TODO check for file type, but probably will be CSV
@@ -16,18 +18,18 @@ cumulate_results <- function(results_data) {
 #' @return List of priorities identified in results file
 get_result_targets <- function(results_data) {
 	targets <- results_data %>%
-				colnames() %>% 
+				colnames() %>%
 				keep(function(x) {str_detect(x, 'ETrt')})
 }
 
-#' Get a list of priorities used in the run. This takes a results file (loaded object) 
+#' Get a list of priorities used in the run. This takes a results file (loaded object)
 #' and parses it, so a loaded scenario isn't necessary. It looks for the ETrt*PCP columns
 #'
 #' @param results_data TODO
 #' @return List of priorities identified in results file
 get_result_priorities <- function(results_data) {
 	targets <- results_data %>%
-				colnames() %>% 
+				colnames() %>%
 				keep(function(x) {str_detect(x, 'ETrt')}) %>%
 				keep(function(x) {str_detect(x, 'PCP')}) %>%
 				map(function(x) {str_sub(x, 6)}) %>%
@@ -51,12 +53,12 @@ get_result_pcp_name <- function(priority) {
 }
 
 attainment_chart_by_target_treated <- function(results_data, pcp_field, target_field, priority) {
-	g <- results_data %>%  
+	g <- results_data %>%
 		filter(get(priority) == 1.0) %>%
-		mutate(x = cumsum(get(target_field))) %>% 
-		mutate(y = cumsum(get(pcp_field))) 
-		
-	g %>% 
+		mutate(x = cumsum(get(target_field))) %>%
+		mutate(y = cumsum(get(pcp_field)))
+
+	g %>%
 		ggplot() %>%
 		+ geom_line(mapping=aes(x, y)) %>%
 		+ labs(title='Attainment By Priority', x=target_field, y=pcp_field) %>%
@@ -68,7 +70,7 @@ production_frontiers_chart <- function(results_data, x_field, y_field, target_fi
 	# First, find the top PA_IDs in terms of target performance
 	# Right now it's set to top 10, maybe make this dynamic?
 	dat <- results_data %>%
-			group_by(PA_ID) %>% 
+			group_by(PA_ID) %>%
 			summarize(sum = sum(get(target_field))) %>%
 			slice_max(n = 10, order_by = sum)
 
@@ -78,12 +80,9 @@ production_frontiers_chart <- function(results_data, x_field, y_field, target_fi
 	# Now, for those top 10, chart the x vs y of them
 	top_pa_ids <- results_data[results_data$PA_ID %in% dat$PA_ID, ]
 
-	# g <- top_pa_ids %>%
-	# 	ggplot() %>%
-	# 	+ aes(x=x_field, y=y_field) %>%
-	# 	+ geom_point() %>%
-	# 	+ labs(title='Production Frontiers', x=x_field, y=y_field) %>%
-	# 	+ theme_set(theme_bw())	
-
-	g <- ggplot(data=top_pa_ids, aes(x=x_field, y=y_field)) + geom_line()
+	# TODO make x scale dynamic (scale_x_continuous)
+	ggplot(top_pa_ids, aes(x = get(x_field), y = get(y_field), group = factor(PA_ID), color = factor(PA_ID))) +
+	  geom_line() + theme_classic() + scale_color_manual(values = safe_colorblind_palette) +
+	  geom_dl(aes(label = factor(PA_ID)), method = list(dl.combine("first.points", "last.points")), cex = 0.8) + scale_x_continuous(expand=c(0, .1)) +
+	  labs(title='Production Frontiers', x = x_field, y = y_field, color = "PA_ID")
 }

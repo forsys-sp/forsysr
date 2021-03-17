@@ -41,6 +41,7 @@
 #' @param fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
 #' @param fixed_area_target TODO
 #' @param overwrite_output Toggle to overwrite existing output files
+#' @param run_with_shiny Sets some output business for better shiny interaction
 #' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
 #' @export
 run <- function(
@@ -71,7 +72,7 @@ run <- function(
   fixed_target = FALSE,
   fixed_area_target = 2000,
   overwrite_output = TRUE,
-  shiny_output = FALSE
+  run_with_shiny = FALSE
   ) {
 
 # If a config file has been selected, source it to read in variables
@@ -95,10 +96,18 @@ relative_output_path = glue('output/{scenario_name}')
 # Check if output directory exists
 absolute_output_path = file.path(getwd(), relative_output_path)
 if (!dir.exists(absolute_output_path)) {
-  print(paste0("Making output directory: ", absolute_output_path))
+  if (run_with_shiny) {
+
+  } else {
+    print(paste0("Making output directory: ", absolute_output_path))
+  }
   dir.create(absolute_output_path, recursive=TRUE)
 } else {
-  print(paste0("output directory, ", absolute_output_path, ", already exists"))
+  if (run_with_shiny) {
+
+  } else {
+    print(paste0("output directory, ", absolute_output_path, ", already exists"))
+  }
 }
 
 if (overwrite_output) {
@@ -109,7 +118,11 @@ if (overwrite_output) {
 } else {
   fname <- paste0(relative_output_path, '/pa_all_', scenario_name, '.csv')
   if (file.exists(fname)) {
-    print(paste0('Warning: Output file ', fname, ' already exists. Appending results.'))
+    if (run_with_shiny) {
+
+    } else {
+      print(paste0('Warning: Output file ', fname, ' already exists. Appending results.'))
+    }
   }
   # TODO add check for grouping files
 }
@@ -145,27 +158,19 @@ print(paste0("These parameters have defined ", nrow(weights), " weighted scenari
 for (w in 1:nrow(weights)) { # START FOR 0
 
   ## Step 0: create the weighted priorities.
-  print(paste0("Creating weighted priorities:",  w, " of ", nrow(weights)))
+  if (run_with_shiny) {
+
+  } else {
+    print(paste0("Creating weighted priorities:",  w, " of ", nrow(weights)))
+  }
 
   allStands$weightedPriority <- 0
   allStands$treat <- 0
   selected_stands <- NULL
 
-  # for (i in 1:ncol(weights)) { # START FOR 1
-  #   curr_weight = weights[[i]][w]
-  #   curr_priority = priorities[[i]][1]
-
-  #   allStands$weightedPriority <- allStands$weightedPriority + curr_weight * allStands[, get(curr_priority)]
-  #   priorityName <- paste0("Pr_", i, "_", curr_priority)
-  #   allStands[, (priorityName) := curr_weight]
-  # } # END FOR 1
-
   allStands <- set_up_priorities(w, priorities, weights, allStands)
 
   ## Step 1: Select stands in each planning area based on stand conditions and priorities:
-  # Filter dataset using threshold information
-  # Convert threshold strings into a data table to produce filters.
-
 
   # TODO Can we make all_thresholds a single statement, and then adjust treatment_types accordingly?
   all_thresholds <- make_thresholds(thresholds)
