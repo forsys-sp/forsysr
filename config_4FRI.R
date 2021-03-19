@@ -5,17 +5,27 @@
 ###       2/23/2021         ###
 ###############################
 
-# This input file defines a single scenario for the Idaho dataset.
-
+###########################
+#                         #
+#  Universal Parameters   #
+#                         #
+###########################
 
 scenario_name <- "4FRI_test"
 
 ## Stand layer
 input_standfile <- "data/4FRI_StandData.dbf"
-write_stand_outputs <- FALSE
+
+## Selection methodology
+# Greedy algorithm
+# Spatial optimization
+selection_type <- "Spatial optimization"
 
 ## Stand field
 stand_field <- "UniqueID"
+
+## Area field
+area_field <- "Area_HA"
 
 ## PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
 pcp_spm <- c("DACF_STD")
@@ -28,26 +38,6 @@ land_base <- "Trt2"
 ## Priorities are named here. If only one priority exists, only a weight of one will be used.
 priorities <- c( "DACF_STD_SPM")
 
-
-## Area-level constraints. Currently this system can handle a two-step constraint system. The first
-## constraint is typically planning areas (PA_ID or PA_ID_New), the second constraint may be forest,
-## ownership, region, or system-wide.
-##'Area' = telling R you want to use a target type of area
-## If you want to treat a set number of hectares, leave this line of code; it will be set below
-## FIELDS BELOW ARE REQUIRED ##
-## Set the constraint variables:
-stand_group_by <- "Forest"
-pa_target <- "AREA_MAN"
-pa_unit <- "Area_HA"
-pa_target_multiplier <- 0.15
-
-# Set for nesting == TRUE, no nesting == FALSE
-nesting <- FALSE
-nesting_group_by <- NULL
-nesting_target <- NULL
-nesting_unit <- NULL
-nesting_target_multiplier <- 1.0
-
 ## Defines the weights and integer steps between weights. The values are for min, max, and step.
 weighting_values <- "1 1 1"
 
@@ -59,10 +49,7 @@ include_stands <- c("Trt2 == 1", "DACF_STD > 0.7")#You could put timber under co
 
 ## This should include the desired fields for the planning area treatment files. Planning area id,
 ## priority weights and treatment rank are added automatically.
-output_fields <- c("Area_HA", "RVal_STD", "RVal_PCP", "DACF_STD", "DACF_PCP")
-
-## Include the smaller and larger groups here for grouping of treated stands.
-grouping_variables <- c("Forest")
+output_fields <- c("Area_HA", "RVal_STD", "RVal_PCP", "DACF_STD", "DACF_PCP2")
 
 ## Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
 fixed_target <- FALSE
@@ -76,12 +63,42 @@ system_constraint <- FALSE
 ## Toggle to overwrite existing output files
 overwrite_output <- TRUE
 
+## Toggle to create stand outputs
+write_stand_outputs <- FALSE
+
+########################################################
+# Parameters for PREPLANNED PLANNING AREA OPTIMIZATION #
+########################################################
+
+## Area-level constraints. Currently this system can handle a two-step constraint system. The first
+## constraint is typically planning areas (PA_ID or PA_ID_New), the second constraint may be forest,
+## ownership, region, or system-wide.
+##'Area' = telling R you want to use a target type of area
+## If you want to treat a set number of hectares, leave this line of code; it will be set below
+## FIELDS BELOW ARE REQUIRED ##
+
+## Set the constraint variables:
+stand_group_by <- "Forest"
+pa_target <- "AREA_MAN"
+pa_unit <- "Area_HA"
+pa_target_multiplier <- 0.15
+
+# Set for nesting == TRUE, no nesting == FALSE
+nesting <- FALSE
+nesting_group_by <- NULL
+nesting_target <- NULL
+nesting_unit <- NULL
+nesting_target_multiplier <- 1.0
+
+## Include the smaller and larger groups here for grouping of treated stands.
+grouping_variables <- c("Forest")
+
 #########################################
 ## Parameters for SPATIAL OPTIMIZATION ##
 #########################################
 
 ## Optimize vs. preplanned areas, TRUE optitimizes spatially
-spatial_optimization <- TRUE
+spatial_optimization <- FALSE
 
 ## If computing new adjacency list from the listed shapefile, TRUE, else FALSE,
 ## If saving adjacency for late use, TRUE
@@ -97,4 +114,4 @@ existing_adjacency <- "/data/az_Adj.csv"
 project_size <- 1000
 
 ## Number of projects
-project_number <- 5
+project_number <- 2

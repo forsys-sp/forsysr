@@ -67,7 +67,7 @@ run <- function(
   # fixed_target = FALSE,
   # fixed_area_target = 2000,
   # overwrite_output = TRUE,
-  optimize = TRUE,
+  # optimize = TRUE,
   shiny_output = FALSE
   ) {
 
@@ -163,7 +163,7 @@ run <- function(
     print(paste0("Creating weighted priorities:",  w, " of ", nrow(weights)))
 
     allStands$weightedPriority <- 0
-    allStands$treat <- 0
+    allStands$selected <- 0
     selected_stands <- NULL
     allStands <- set_up_priorities(w, priorities, weights, allStands)
 
@@ -237,7 +237,8 @@ run <- function(
       # Rename treatment variables and merge into the planning area dataset for output.
       trt_names <- paste0("ETrt_", colnames(groupedByPA[,output_fields, with = FALSE]), sep = "")
       setnames(groupedByPA, c(output_fields), c(trt_names))
-      paOutput <- merge(allPlanningAreas, groupedByPA, by=c(stand_group_by), all.x = TRUE)
+
+      paOutput <- as.data.table(merge(allPlanningAreas, groupedByPA, by=c(stand_group_by), all.x = TRUE))
 
       for (i in 1:ncol(weights)) { # START FOR 6
         priorityName <- paste0("Pr_", i, "_", priorities[[i]][1])
@@ -263,7 +264,7 @@ run <- function(
 
       ## This code creates outputs for datasets that have subcategories within planning areas, such as ownership. It
       ## produces a single row for each planning area/subset combination.
-      if(length(grouping_variables > 1)) {
+      if(length(grouping_variables) > 1) {
         # Rename treatment variables and merge into the planning area dataset for output.
         trt_names <- paste0("ETrt_", colnames(groupedByAll[,output_fields, with = FALSE]), sep = "")
         setnames(groupedByAll, c(output_fields), c(trt_names))
@@ -273,6 +274,7 @@ run <- function(
         print("adding treatment rank")
         paSubOutput <- merge(paSubOutput, paOutput[, c(stand_group_by, "treatment_rank"), with = FALSE], by = c(stand_group_by))
         paSubOutput <- unique(paSubOutput)
+        print(paSubOutput)
 
         for (i in 1:ncol(weights)) { # START FOR 7
           priorityName <- paste0("Pr_", i, "_", priorities[[i]][1])
@@ -301,17 +303,12 @@ run <- function(
                                          St_threshold = stands_updated[, t_and_e],
                                          P_size = project_size,
                                          P_number = project_number,
-                                         St_threshold_value = .9)
+                                         St_threshold_value = .9,
+                                         P_size_slack = 5.0,
+                                         P_constraint = stands_updated[, HaulCost],
+                                         P_constraint_value = 10000)
 
-      ## Post-processing outputs
-      # Add the weights to track multi-weight scenarios
-      weight_scenario <- ""
-      for (i in 1:ncol(weights)) { # START FOR 6
-        priorityName <- paste0("Pr_", i, "_", priorities[[i]][1])
-        select_stands[[2]][, (priorityName) := weights[[i]][w]]
-      }
-
-
+      # Post processing outputs
       # Join the input data to the output stand data
       setkeyv(stands_updated, stand_field)
       setkey(select_stands[[2]], Stands)
@@ -320,13 +317,21 @@ run <- function(
       print("Creating Grouped Dataset")
       groupedByPA <- create_grouped_dataset(full_stand_table,
                                             "Project",
-                                            output_grouped_variables, "DoTreat" )
+                                            output_grouped_variables, "DoTreat")
       trt_names <- paste0("ETrt_", colnames(groupedByPA[,output_fields, with = FALSE]), sep = "")
       setnames(groupedByPA, c(output_fields), c(trt_names))
       projectOutput <- groupedByPA
 
+      # Add the weights to track multi-weight scenarios
+      weight_scenario <- ""
+      for (i in 1:ncol(weights)) { # START FOR 6
+        priorityName <- paste0("Pr_", i, "_", priorities[[i]][1])
+        select_stands[[2]][, (priorityName) := weights[[i]][w]]
+        projectOutput[, (priorityName) := weights [[i]][w]]
+      }
+
       print("Adding results to the stand output file.")
-      spatial_optimal = paste0("output/opt_stands_", scenario_name, ".csv")
+      spatial_optimal = paste0(relative_output_path, "/opt_stands_", scenario_name, ".csv")
       if (file.exists(spatial_optimal)) {
         fwrite(select_stands[[2]], file = spatial_optimal, sep = ",", row.names = FALSE, append = TRUE, col.names = FALSE)
       } else {
@@ -334,7 +339,7 @@ run <- function(
       }
 
       print("Adding results to the project output file.")
-      spatial_optimal = paste0("output/opt_projects_", scenario_name, ".csv")
+      spatial_optimal = paste0(relative_output_path, "/opt_projects_", scenario_name, ".csv")
       if (file.exists(spatial_optimal)) {
         fwrite(projectOutput, file = spatial_optimal, sep = ",", row.names = FALSE, append = TRUE, col.names = FALSE)
       } else {
@@ -343,3 +348,4 @@ run <- function(
     }
   }
 }
+

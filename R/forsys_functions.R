@@ -112,9 +112,12 @@ stand_flag <- function(dt, filters, field) {
 #' \code{treat_target} as possible.
 create_grouped_dataset <- function(dt,
                                  grouping_vars,
-                                 summing_vars, subset_var) {
+                                 summing_vars,
+                                 subset_var = NULL) {
   ## Create the grouped data.table by grouping the treated subunits from the previous step.
-  dt <- subset(dt[get(subset_var)==1])
+  if(!is.null(subset_var)){
+    dt <- subset(dt[get(subset_var)==1])
+  }
   dt <- group_by_at(dt, vars(grouping_vars))
   dt <- data.table(summarize_at(dt, .vars = vars(summing_vars), .funs = c(sum="sum")))
   names(dt) <- gsub(x = names(dt), pattern = "_sum", replacement = "")
@@ -275,7 +278,7 @@ get_priority_output_names <- function(fields) {
 set_up_treatment_types <- function(stands, args=NULL) {
   stands$Commercial <- stands$Commercial*stands$AREA_HA
   stands$PreCommercial <- stands$AREA_HA - stands$Commercial
-  stands$treat <- 0
+  stands$selected <- 0
   stands$treatment_type <- ""
   stands$treatedPAArea <- 0
   return(stands)
@@ -343,25 +346,25 @@ apply_treatment <- function(treatment_types,
     treat_stands <- select_simple_greedy_algorithm(dt = filtered_stands,
                                                    grouped_by = stand_group_by,
                                                    prioritize_by = "weightedPriority",
-                                                   constrain_by = c(1, pa_unit, "current_target"))
+                                                   constrain_by = c(1, pa_unit, "master_target"))
 
     # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
 
     area_treatedPA <- update_target(treat_stands, stand_group_by, pa_unit)
     stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
-    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_types[t], treat = 1), on = stand_field]
-    selected_stands <- rbind(selected_stands, stands_updated[treat==1,])
+    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_types[t], selected = 1), on = stand_field]
+    selected_stands <- rbind(selected_stands, stands_updated[selected==1,])
   }
 
   return(selected_stands)
 }
 
 set_fixed_area_target <- function(stands, fixed_area_target) {
-  stands[, current_area_target := fixed_area_target]
+  stands[, master_target := fixed_area_target]
 }
 
 set_percentage_area_target <- function(stands, pa_target, pa_target_multiplier) {
-  stands[, current_area_target := get(pa_target) * pa_target_multiplier]
+  stands[, master_target := get(pa_target) * pa_target_multiplier]
 }
 
 
@@ -380,7 +383,7 @@ identify_nested_planning_areas <- function(grouped_by_pa) {
     groupedByPA[,harvestTarg := groupedByPA[,get(nesting_target) * get(nesting_unit)]]
   }
 
-  groupedByPA$treat <- 0
+  groupedByPA$selected <- 0
   paSubunits <- select_simple_greedy_algorithm(dt = groupedByPA,
                                             grouped_by = grouping_type,
                                             prioritize_by = "weightedPriority",
@@ -398,8 +401,10 @@ write_stand_outputs_to_file <- function(dir, unique_weights, name, selected_stan
 
 compile_planning_areas_and_stands <- function(unique_weights, stands, group_by, output_fields) {
   group_planning_areas <- stands %>% group_by_at(group_by)
-
   planning_areas <- data.table(summarize_at(group_planning_areas, .vars = vars(output_fields), .funs = c(sum="sum")))
+  if(length(output_fields == 1)){
+    setnames(planning_areas, "sum",  c(output_fields))
+  }
   names(planning_areas) <- gsub(x = names(planning_areas), pattern = "_sum", replacement = "")
   sum_names <- paste0("ESum_", colnames(planning_areas[,output_fields, with = FALSE]), sep = "")
   setnames(planning_areas, c(output_fields), c(sum_names))
