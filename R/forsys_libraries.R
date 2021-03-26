@@ -2,10 +2,12 @@
 #install.packages('pacman')
 pacman::p_load(
   data.table,
+  directlabels,
   foreign,
   glue,
   gtools,
   jsonlite,
+  leaflet,
   maptools,
   shiny,
   shinyBS,
@@ -18,3 +20,5 @@ pacman::p_load(
   tidyverse,
   zip
   )
+
+library(Patchmax)

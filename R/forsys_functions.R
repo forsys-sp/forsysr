@@ -2,15 +2,16 @@
 load_dataset <- function(path_to_file) {
   file_type <- str_sub(path_to_file, start= -3)
   print("Loading Dataset")
-  print(file_type)
   if (file_type == "dbf") {
     standDT <- data.table(read.dbf(path_to_file))
+    print("Read stand file from DBF")
   } else if (file_type == "csv") {
     standDT <- data.table(fread(path_to_file, header = TRUE))
+    print("Read stand file from CSV")
   } else {
     ('Input format not recognized')
   }
-  return (standDT)
+  return(standDT)
 }
 
 
@@ -20,18 +21,19 @@ load_dataset <- function(path_to_file) {
 #' @param grouped_by The management objective that is being prioritized.
 #' @param prioritize_by The stand value for the priority that is used to constrain the results.
 #' Typically Area or Volume.
-#' @param tally_by The variable that is summed to meet the \code{tally_target}.
-#' @param group_target The variable that contains the subunit values which are summed to meet the constraint value.
-#' @param filter_by The variable that contains the values that are filtered by the thresholdVal.
-#' i.e. this value must be greater than the threshold value.
-#' @param filter_threshold The
+#' @param constrain_by This is a list of lists that includes three fields for each constraint. The
+#' first item in each list, default 'apply', is the name of a binary field in which 1 = apply the constraint
+#' and 0 = do not apply the constraint to a given stand. The second item in each list is the name
+#' of the field that is summed to reach the constraint. The third item in each list is the name of
+#' the constraining field.
+#' @param group_target The variable that contains the subunit values which are summed to meet the
+#' constraint value.
 #' @return The selected stands from \code{df}, ordered by \code{prioritize_by}, and selected until the sum of \code{tally_by} is as close to
 #' \code{group_target} as possible.
 select_simple_greedy_algorithm <- function(dt = dbfFile,
                                         grouped_by = 'PA_ID',
                                         prioritize_by = 'TVMBF_SPM',
-                                        tally_by = 'AREA_HA',
-                                        grouped_target = 'AREA_PA10P') {
+                                        constrain_by = c('apply', 'AREA_HA', 'AREA_PA10P')){
   # For each grouped_by:
   # Remove subunits that don't meet threshold:
   # Order by priority:
@@ -41,28 +43,30 @@ select_simple_greedy_algorithm <- function(dt = dbfFile,
   dt[, considerForTreatment := 1]
   dt[, current_target := 0]
   dt[, cumulative_tally_by := 0]
-  dt[, treat := 0]
-  # This recursive function selects subunits until either targets have been met or all available subunits have been checked.
-  #dt <- recursiveSelection(dt, grouped_by, prioritize_by, tally_by, grouped_target)
+  dt[, selected := 0]
+  dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
+  #dt <- dt[, activity_code := do_treat(c(.BY, .SD), constrain_by[2]), by = "PA_ID"]
   # Common issue: if the dataset has na values in the priority field, this will fail.
-  while(sum(dt[,considerForTreatment==1 & treat == 0]) != 0){
+  while(sum(dt[,considerForTreatment==1 & selected == 0]) != 0){
     # Order the data table by the priority.
     dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
     # Determine the current target
     dt[, current_target := 0]
-    dt[treat == 1, current_target := sum(get(tally_by)), by=list(get(grouped_by))]
-    dt[, current_target := get(grouped_target) - max(current_target), by=list(get(grouped_by))]
+    # Sum the treated tally by group
+    dt[selected == 1, current_target := sum(get(constrain_by[2])), by=list(get(grouped_by))]
+    # The current target is the target value less the value of the already treated stands, by group.
+    dt[, current_target := get(constrain_by[3]) - max(current_target), by=list(get(grouped_by))]
     # Compute the cumulative sum for the constrained variable and select subunits
-    dt[considerForTreatment == 1 & treat == 0, cumulative_tally_by := cumsum(get(tally_by)), by=list(get(grouped_by))]
-    dt[considerForTreatment == 1 & treat == 0 & cumulative_tally_by <= current_target, treat := 1 ]
+    dt[considerForTreatment == 1 & selected == 0, cumulative_tally_by := cumsum(get(constrain_by[2])), by=list(get(grouped_by))]
+    dt[considerForTreatment == 1 & selected == 0 & cumulative_tally_by <= current_target, selected := 1 ]
     # Determine the remaining target
     dt[, current_target := 0]
-    dt[treat == 1, current_target := sum(get(tally_by)), by=list(get(grouped_by))]
-    dt[, current_target := get(grouped_target) - max(current_target), by=list(get(grouped_by))]
+    dt[selected == 1, current_target := sum(get(constrain_by[2])), by=list(get(grouped_by))]
+    dt[, current_target := get(constrain_by[3]) - max(current_target), by=list(get(grouped_by))]
     # Remove from treatment consideration if subunit value is greater than total target.
-    dt[considerForTreatment == 1 & treat == 0, considerForTreatment := ifelse(get(tally_by) > current_target, 0, 1 )]
+    dt[considerForTreatment == 1 & selected == 0, considerForTreatment := ifelse(get(constrain_by[2]) > current_target, 0, 1 )]
   }
-  dt <- dt[treat == 1,]
+  dt <- dt[selected == 1,]
   return(dt)
 }
 
@@ -82,6 +86,21 @@ stand_filter <- function(dt, filters) {
   return(dt)
 }
 
+#' Create a new field in a stand table that flags all stands that include a given set of criteria
+#' @param dt A data table with all stand information necessary to determine availability for a specific treatment type.
+#' @param filters A list of strings that are used to filter the stands for treatment availability.
+#' @param field The name of a new field
+#' @return The final data table with stands available for treatment.
+stand_flag <- function(dt, filters, field) {
+  dt[, (field) := 0]
+  for(f in 1:nrow(filters)){
+    filter <- paste0(filters[f,2], " ", filters[f,3], " ", filters[f,4])
+    filter <- str_remove(filter, "'")
+    filter <- str_remove(filter, "'")
+    dt <- dt[ eval(parse(text = filter)), (field) := 1]
+  }
+  return(dt)
+}
 
 #' Create a dataset by subsetting subunits that were selected in the selectSubunits function
 #' and grouping the data by a larger subunit (usually planning areas).
@@ -93,9 +112,12 @@ stand_filter <- function(dt, filters) {
 #' \code{treat_target} as possible.
 create_grouped_dataset <- function(dt,
                                  grouping_vars,
-                                 summing_vars) {
+                                 summing_vars,
+                                 subset_var = NULL) {
   ## Create the grouped data.table by grouping the treated subunits from the previous step.
-  dt <- subset(dt[treat==1])
+  if(!is.null(subset_var)){
+    dt <- subset(dt[get(subset_var)==1])
+  }
   dt <- group_by_at(dt, vars(grouping_vars))
   dt <- data.table(summarize_at(dt, .vars = vars(summing_vars), .funs = c(sum="sum")))
   names(dt) <- gsub(x = names(dt), pattern = "_sum", replacement = "")
@@ -108,9 +130,9 @@ weight_values_to_string <- function(min = 0, max = 5, step =1) {
 
 weight_string_to_values <- function(weight_str) {
   vals <- str_split(weight_str, ' ')
-  print(vals)
+  # print(vals)
   vals <- sapply(vals, as.numeric)
-  print(vals[,1])
+  # print(vals[,1])
 }
 
 #' Weight priorities for selection
@@ -239,7 +261,7 @@ get_priority_output_names <- function(fields) {
 
     if (str_detect(g, 'SPM')) {
       l[i] <- str_replace(g, 'SPM', 'PCP')
-      
+
     } else {
       l[i] <- str_replace(g, 'PCP', 'SPM')
     }
@@ -256,7 +278,7 @@ get_priority_output_names <- function(fields) {
 set_up_treatment_types <- function(stands, args=NULL) {
   stands$Commercial <- stands$Commercial*stands$AREA_HA
   stands$PreCommercial <- stands$AREA_HA - stands$Commercial
-  stands$treat <- 0
+  stands$selected <- 0
   stands$treatment_type <- ""
   stands$treatedPAArea <- 0
   return(stands)
@@ -291,8 +313,8 @@ make_thresholds <- function(thresholds) {
 apply_treatment <- function(treatment_types,
                             stands,
                             all_thresholds,
-                            stand_group_by, 
-                            stand_field, 
+                            stand_group_by,
+                            stand_field,
                             fixed_target, fixed_area_target=NULL,
                             pa_unit=NULL, pa_target=NULL, pa_target_multiplier=NULL) {
   stands_updated <- stands
@@ -322,31 +344,30 @@ apply_treatment <- function(treatment_types,
     #   print("Missing Threshold Update! Treatment selection is suspect!")
     # }
     treat_stands <- select_simple_greedy_algorithm(dt = filtered_stands,
-                                          grouped_by = stand_group_by,
-                                          prioritize_by = "weightedPriority",
-                                          tally_by = pa_unit,
-                                          grouped_target = "current_area_target")
+                                                   grouped_by = stand_group_by,
+                                                   prioritize_by = "weightedPriority",
+                                                   constrain_by = c(1, pa_unit, "master_target"))
 
     # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
 
     area_treatedPA <- update_target(treat_stands, stand_group_by, pa_unit)
     stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
-    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_types[t], treat = 1), on = stand_field]
-    selected_stands <- rbind(selected_stands, stands_updated[treat==1,])
+    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_types[t], selected = 1), on = stand_field]
+    selected_stands <- rbind(selected_stands, stands_updated[selected==1,])
   }
 
   return(selected_stands)
 }
 
 set_fixed_area_target <- function(stands, fixed_area_target) {
-  stands[, current_area_target := fixed_area_target]
+  stands[, master_target := fixed_area_target]
 }
 
 set_percentage_area_target <- function(stands, pa_target, pa_target_multiplier) {
-  stands[, current_area_target := get(pa_target) * pa_target_multiplier]
+  stands[, master_target := get(pa_target) * pa_target_multiplier]
 }
 
-# Step 3: Identify the best planning areas within each nest.
+
 identify_nested_planning_areas <- function(grouped_by_pa) {
 
   # Step 3: Identify the best planning areas within each nest.
@@ -362,7 +383,7 @@ identify_nested_planning_areas <- function(grouped_by_pa) {
     groupedByPA[,harvestTarg := groupedByPA[,get(nesting_target) * get(nesting_unit)]]
   }
 
-  groupedByPA$treat <- 0
+  groupedByPA$selected <- 0
   paSubunits <- select_simple_greedy_algorithm(dt = groupedByPA,
                                             grouped_by = grouping_type,
                                             prioritize_by = "weightedPriority",
@@ -380,8 +401,10 @@ write_stand_outputs_to_file <- function(dir, unique_weights, name, selected_stan
 
 compile_planning_areas_and_stands <- function(unique_weights, stands, group_by, output_fields) {
   group_planning_areas <- stands %>% group_by_at(group_by)
-
   planning_areas <- data.table(summarize_at(group_planning_areas, .vars = vars(output_fields), .funs = c(sum="sum")))
+  if(length(output_fields == 1)){
+    setnames(planning_areas, "sum",  c(output_fields))
+  }
   names(planning_areas) <- gsub(x = names(planning_areas), pattern = "_sum", replacement = "")
   sum_names <- paste0("ESum_", colnames(planning_areas[,output_fields, with = FALSE]), sep = "")
   setnames(planning_areas, c(output_fields), c(sum_names))

@@ -14,13 +14,13 @@ server <- function(input, output, session) {
 	########################################################
 
 
-	# These are the main reactive data collections. 
+	# These are the main reactive data collections.
 	# r_data contains the input data itself, along with some information about the input data.
 	# r_choices acts as a collection of possibe selections from the data to use with selectInput
 	r_data <- reactiveValues(data = NULL, data_path = NULL, ext = NULL, json = '')
 	r_choices <- reactiveValues(priorities = NULL, outputs = NULL)
 
-	# r_data could be populated 2 ways: by user input, or by loading an old scenario. 
+	# r_data could be populated 2 ways: by user input, or by loading an old scenario.
 	# data() handles user uploaded data
 	data <- reactive({
 		# Block until file is completely uploaded
@@ -51,12 +51,35 @@ server <- function(input, output, session) {
 			} else if (stringr::str_detect(ext, 'dbf') | stringr::str_detect(ext, 'csv')) {
 				r_data$data_path <- perm_data_path
 				r_data$ext <- ext
-				
+
 				r_data$data <- load_dataset(perm_data_path)
 				}
-			
+
 			})
 		})
+
+	tab_tracker <- observe({
+		print(paste('TAB TRACKER', input$main_nav))
+		})
+
+	sspa_tracker <- observe({
+		print(paste('TAB TRACKER', input$sspa_nav))
+		})
+
+	extra_help_toggle <- reactive({
+		t <- input$extra_help_chk
+		})
+
+	observeEvent(extra_help_toggle(), {
+		if (extra_help_toggle()) 
+		{
+			shinyjs::show(id = 'extra_help')
+		} else {
+			shinyjs::hide(id = 'extra_help')
+		}
+	})
+
+	
 
 	########################################################
 
@@ -84,7 +107,7 @@ server <- function(input, output, session) {
 			need(input$select_scenario == '', 'Please select a scenario to load')
 			)
 
-		# Block loading dataset until on the right page. It seems like if we're not on the right tab the 
+		# Block loading dataset until on the right page. It seems like if we're not on the right tab the
 		# selected values don't update correctly
 		updateTabsetPanel(session, 'main_nav', selected = 'scenario_setup_panel')
 
@@ -93,13 +116,12 @@ server <- function(input, output, session) {
 
 		file <- json_data$input_standfile
 		ext <- tools::file_ext(file)
-		
+
 		# Update the reactive data elements
 		r_data$data <- load_dataset(file)
 		r_data$data_path <- file
 		r_data$ext <- ext
 		r_data$json <- json_data
-		
 		})
 
 	# Event listener for the delete scenario button
@@ -122,7 +144,7 @@ server <- function(input, output, session) {
 		} else {
 			shinyjs::hide(id = 'au_items')
 		}
-		
+
 		})
 
 
@@ -132,7 +154,7 @@ server <- function(input, output, session) {
 
 	########################################################
 
-	
+
 
 
 	# Generate a preview of the data for the data preview page
@@ -168,7 +190,7 @@ server <- function(input, output, session) {
 			updateSelectInput(session, 'stand_id_field', selected = r_data$json$stand_id_field)
 			updateSelectInput(session, 'pcp_spm_fields', selected = r_data$json$pcp_spm)
 
-			# TODO priorities and grouping doesn't update properly. This probably has something to do with 
+			# TODO priorities and grouping doesn't update properly. This probably has something to do with
 			# execution order of the reactive environments. Find a way around this.
 
 			############################
@@ -187,7 +209,7 @@ server <- function(input, output, session) {
 			updateTextInput(session, 'pa_target_field', value = r_data$json$pa_target)
 			updateSelectInput(session, 'pa_unit_field', selected = r_data$json$pa_unit)
 			updateNumericInput(session, 'pa_target_multiplier', value = r_data$json$pa_target_multiplier)
-			
+
 			updateTextInput(session, 'use_au', value = r_data$json$nesting)
 			updateTextInput(session, 'au_id_field', value = r_data$json$nesting_group_by)
 			updateTextInput(session, 'au_target_field', value = r_data$json$nesting_target)
@@ -198,12 +220,12 @@ server <- function(input, output, session) {
 			updateNumericInput(session, 'weight_min', value = weighting_values[1])
 			updateNumericInput(session, 'weight_max', value = weighting_values[2])
 			updateNumericInput(session, 'weight_step', value = weighting_values[3])
-			
+
 			updateTextInput(session, 'thresholds', value = r_data$json$thresholds)
 			# updateTextInput(session, 'include_stands', value = r_data$json$include_stands) This doesn't exist yet
-			
+
 			############################
-			get_inverse_select <- get_priority_output_names(reactive_priorities_fields()) # Find the 'inverse' target selection 
+			get_inverse_select <- get_priority_output_names(reactive_priorities_fields()) # Find the 'inverse' target selection
 			# Populate outputs now that we have some options
 			choices <- c(colnames(r_data$data), reactive_pcp_spm_fields(), reactive_pa_unit_field()) # Add non-input data options to choices
 			select <- c(reactive_output_field(), get_inverse_select) # Get previous selections if needed and add new
@@ -213,7 +235,7 @@ server <- function(input, output, session) {
 			updateSelectInput(session, 'outputs_select', selected = r_data$json$output_fields)
 			updateSelectInput(session, 'output_grouping_fields', selected = r_data$json$grouping_variables)
 			# updateTextInput(session, 'fixed_target', value = r_data$json$fixed_target)
-			
+
 			updateNumericInput(session, 'fixed_target_value', value = r_data$json$fixed_target_value)
 
 			updateCheckboxInput(session, 'write_stand_outputs_chk', value = r_data$json$write_stand_outputs)
@@ -241,7 +263,7 @@ server <- function(input, output, session) {
 
 	weights <- reactive({
 
-		if (length(reactive_priorities_fields()) <= 1) {
+		if (length(reactive_priorities_fields()) <= 1 | is.na(reactive_priorities_fields())) {
 			shinyjs::hide(id = 'weight_items')
 		} else {
 			shinyjs::show(id = 'weight_items')
@@ -266,7 +288,7 @@ server <- function(input, output, session) {
 	# Event listener for priorities_fields selector. Options are generated from pcp_spm_fields and are not
 	# part of the input data. So, add the created options in addition to input options to outputs_select
 	observeEvent(reactive_priorities_fields(), {
-		get_inverse_select <- get_priority_output_names(reactive_priorities_fields()) # Find the 'inverse' target selection 
+		get_inverse_select <- get_priority_output_names(reactive_priorities_fields()) # Find the 'inverse' target selection
 		# Populate outputs now that we have some options
 		choices <- c(colnames(r_data$data), reactive_pcp_spm_fields(), reactive_pa_unit_field()) # Add non-input data options to choices
 		select <- c(reactive_output_field(), get_inverse_select) # Get previous selections if needed and add new
@@ -292,7 +314,7 @@ server <- function(input, output, session) {
 		}
 		})
 
-	
+
 	# Event listener for saving a scenario but not running. It will serialize user selections and save them to a json file
 	observeEvent(input$save_scenario_but, {
 
@@ -300,7 +322,7 @@ server <- function(input, output, session) {
 			updateNumericInput(session, 'weight_min', value = 1)
 			updateNumericInput(session, 'weight_max', value = 1)
 			updateNumericInput(session, 'weight_step', value = 1)
-		} 
+		}
 
 		json <- write_save_file_helper(input, r_data$data_path)
 
@@ -317,7 +339,7 @@ server <- function(input, output, session) {
 			updateNumericInput(session, 'weight_min', value = 1)
 			updateNumericInput(session, 'weight_max', value = 1)
 			updateNumericInput(session, 'weight_step', value = 1)
-		} 
+		}
 
 		json <- write_save_file_helper(input, r_data$data_path)
 
@@ -343,13 +365,13 @@ server <- function(input, output, session) {
 
 		output$simulation_output <- renderPrint({
 			run(
-				scenario_name = input$scenario_name, 
+				scenario_name = input$scenario_name,
 				input_standfile = r_data$data_path,
-				write_stand_outputs = input$write_stand_outputs_chk, 
+				write_stand_outputs = input$write_stand_outputs_chk,
 				stand_field = input$stand_id_field,
 				pcp_spm = input$pcp_spm_fields,
 				land_base = input$treatment_available_field,
-				priorities = input$priorities_fields, 
+				priorities = input$priorities_fields,
 				stand_group_by = input$planning_unit_id_field,
 				pa_target = input$pa_target_field,
 				pa_unit = input$pa_unit_field,
@@ -367,7 +389,7 @@ server <- function(input, output, session) {
 				fixed_target = FALSE,
 				fixed_area_target = input$fixed_target_value,
 				overwrite_output = input$overwrite_output_chk,
-				shiny_output = TRUE
+				run_with_shiny = TRUE
 				)
 			})
 		})
@@ -415,34 +437,73 @@ server <- function(input, output, session) {
 	# 	})
 
 	result_data_all_name <- reactive({
-		paste0(r_data$json$scenario_name, '/pa_all_', r_data$json$scenario_name, '.csv')
+		paste0('output/', r_data$json$scenario_name, '/pa_all_', r_data$json$scenario_name, '.csv')
 		})
 
 	result_data <- reactive({
 		p <- result_data_all_name()
-		d <- readr::read_csv(p)
+		print(p)
+		if (file.exists(result_data_all_name())) {
+			d <- readr::read_csv(p)
+			updateSelectInput(session, 'plot_x_field', choices = get_result_targets(d))
+			updateSelectInput(session, 'plot_priority', choices = get_result_priorities(d))
+
+			reactive_results_values$result_data_pa_all <- d
+		} else {
+			d <- NULL
+		}
 		})
 
-	reactive_plot_value <- reactiveValues(plot = NULL)
+	observe({
+		if (str_detect(input$main_nav, 'analysis_panel')) {
+			req(result_data())
+		}
+		})
+
+
+	reactive_results_values <- reactiveValues(plot = NULL, result_data_pa_all = NULL)
+
 
 	reactive_attainment_chart_by_target_treated <- reactive({
-		p = 'output/NNA/pa_all_NNA.csv'
-		d = readr::read_csv(p)
+		p <- input$plot_priority
 
-		target_field = 'ETrt_AREA_HA'
-		pcp_field = 'ETrt_TVMBF_PCP'
-		priority = 'Pr_1_TVMBF_SPM_SPM'
+		# target_field = 'ETrt_AREA_HA'
+		target_field = input$plot_x_field
+		pcp_field = get_result_pcp_name(p)
+		priority = priority_column_name(reactive_results_values$result_data_pa_all, p)
 
-		attainment_chart_by_target_treated(d, pcp_field, target_field, priority)
+		attainment_chart_by_target_treated(reactive_results_values$result_data_pa_all,
+										   pcp_field,
+										   target_field,
+										   priority)
 		})
 
 	observeEvent(input$attainment_efficiency_by_area, {
+	  shinyjs::show(id = 'plot_x_field')
+	  shinyjs::show(id = 'plot_priority')
+
 		output$analysis_plot <- renderPlot(reactive_attainment_chart_by_target_treated())
 		})
 
 
+	reactive_production_frontiers <- reactive({
+	  shinyjs::hide(id = 'plot_x_field')
+	  shinyjs::hide(id = 'plot_priority')
+
+	  priority_col_names <- priority_column_name(reactive_results_values$result_data_pa_all, '')
+
+	  if (length(priority_col_names) == 2) {
+	    production_frontiers_chart(reactive_results_values$result_data_pa_all,
+	                               'ETrt_TVMBF_PCP',
+	                               'ETrt_HUSUM_PCP',
+	                               'ETrt_AREA_HA')
+	  }
+
+
+		})
+
 	observeEvent(input$production_frontiers, {
-		d <- result_data()
+		output$analysis_plot <- renderPlot(reactive_production_frontiers())
 		})
 
 
@@ -454,7 +515,7 @@ server <- function(input, output, session) {
 	      write.csv(result_data(), file)
 	    }
 	  )
-	
 
-	
+
+
 }
