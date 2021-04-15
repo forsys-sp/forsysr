@@ -4,7 +4,7 @@
 \alias{weight_priorities}
 \title{Weight priorities for selection}
 \usage{
-weight_priorities(numPriorities, weights = c("0 10 1"))
+weight_priorities(numPriorities, weights = c("1 1 1"))
 }
 \arguments{
 \item{minimum}{The minimum value of the weighting schema.}

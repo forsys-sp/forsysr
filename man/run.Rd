@@ -8,9 +8,8 @@ in a config file and pass the name of the file to this run function.}
 run(
   config_file = "",
   scenario_name = "",
-  is_dbf = TRUE,
-  is_csv = FALSE,
   input_standfile = "",
+  write_stand_outputs = FALSE,
   stand_field = "Cell_ID",
   pcp_spm = c(),
   land_base = "",
@@ -31,8 +30,9 @@ run(
   grouping_variables = c("PA_ID", "Owner"),
   fixed_target = FALSE,
   fixed_area_target = 2000,
-  system_constraint = FALSE,
-  overwrite_output = TRUE
+  overwrite_output = TRUE,
+  spatial_optimization = FALSE,
+  shiny_output = FALSE
 )
 }
 \arguments{
@@ -40,11 +40,9 @@ run(
 
 \item{scenario_name}{A name for this scenario}
 
-\item{is_dbf}{Toggle for reading DBF}
-
-\item{is_csv}{Toggle for reading CSV files}
-
 \item{input_standfile}{TODO}
+
+\item{write_stand_outputs}{TODO}
 
 \item{stand_field}{TODO}
 
@@ -86,10 +84,6 @@ priority weights and treatment rank are added automatically.}
 \item{fixed_target}{Set to have either a fixed area target (TRUE) or a variable area target (FALSE)}
 
 \item{fixed_area_target}{TODO}
-
-\item{system_constraint}{If the constraint is by master nesting unit (i.e. treat the top X planning areas in each
-national forest), set FALSE. If the constraint is by the system (i.e. go to the best planning
-area regardless of where it is located), set TRUE.}
 
 \item{overwrite_output}{Toggle to overwrite existing output files}
 }

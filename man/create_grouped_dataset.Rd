@@ -5,7 +5,7 @@
 \title{Create a dataset by subsetting subunits that were selected in the selectSubunits function
 and grouping the data by a larger subunit (usually planning areas).}
 \usage{
-create_grouped_dataset(dt, grouping_vars, summing_vars)
+create_grouped_dataset(dt, grouping_vars, summing_vars, subset_var = NULL)
 }
 \arguments{
 \item{dt}{A data table with all the subunits and attributes.}

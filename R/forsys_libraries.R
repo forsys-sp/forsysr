@@ -1,11 +1,16 @@
 ('Loading required R packages...')
 #install.packages('pacman')
 pacman::p_load(
+  class,
   data.table,
+  dplyr,
+  doParallel,
   foreign,
   glue,
+  igraph,
   gtools,
   jsonlite,
+  KernSmooth,
   maptools,
   shiny,
   shinyBS,
@@ -15,7 +20,8 @@ pacman::p_load(
   rgeos,
   roxygen2,
   sp,
+  sf,
   tidyverse
   )
 
-library(Patchmax)
+library("Patchmax", lib.loc="C:/Users/Houtmanr/Documents/R/win-library/4.0")

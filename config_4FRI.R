@@ -11,15 +11,11 @@
 #                         #
 ###########################
 
+print("SETTING THE PARAMETERS")
 scenario_name <- "4FRI_test"
 
 ## Stand layer
 input_standfile <- "data/4FRI_StandData.dbf"
-
-## Selection methodology
-# Greedy algorithm
-# Spatial optimization
-selection_type <- "Spatial optimization"
 
 ## Stand field
 stand_field <- "UniqueID"
@@ -115,3 +111,4 @@ project_size <- 1000
 
 ## Number of projects
 project_number <- 2
+

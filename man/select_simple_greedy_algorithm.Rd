@@ -8,8 +8,7 @@ select_simple_greedy_algorithm(
   dt = dbfFile,
   grouped_by = "PA_ID",
   prioritize_by = "TVMBF_SPM",
-  tally_by = "AREA_HA",
-  grouped_target = "AREA_PA10P"
+  constrain_by = c("apply", "AREA_HA", "AREA_PA10P")
 )
 }
 \arguments{
@@ -20,14 +19,14 @@ select_simple_greedy_algorithm(
 \item{prioritize_by}{The stand value for the priority that is used to constrain the results.
 Typically Area or Volume.}
 
-\item{tally_by}{The variable that is summed to meet the \code{tally_target}.}
+\item{constrain_by}{This is a list of lists that includes three fields for each constraint. The
+first item in each list, default 'apply', is the name of a binary field in which 1 = apply the constraint
+and 0 = do not apply the constraint to a given stand. The second item in each list is the name
+of the field that is summed to reach the constraint. The third item in each list is the name of
+the constraining field.}
 
-\item{group_target}{The variable that contains the subunit values which are summed to meet the constraint value.}
-
-\item{filter_by}{The variable that contains the values that are filtered by the thresholdVal.
-i.e. this value must be greater than the threshold value.}
-
-\item{filter_threshold}{The}
+\item{group_target}{The variable that contains the subunit values which are summed to meet the
+constraint value.}
 }
 \value{
 The selected stands from \code{df}, ordered by \code{prioritize_by}, and selected until the sum of \code{tally_by} is as close to

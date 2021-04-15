@@ -401,13 +401,6 @@ write_stand_outputs_to_file <- function(dir, unique_weights, name, selected_stan
 
 compile_planning_areas_and_stands <- function(unique_weights, stands, group_by, output_fields) {
   group_planning_areas <- stands %>% group_by_at(group_by)
-  planning_areas <- data.table(summarize_at(group_planning_areas, .vars = vars(output_fields), .funs = c(sum="sum")))
-  if(length(output_fields == 1)){
-    setnames(planning_areas, "sum",  c(output_fields))
-  }
-  names(planning_areas) <- gsub(x = names(planning_areas), pattern = "_sum", replacement = "")
-  sum_names <- paste0("ESum_", colnames(planning_areas[,output_fields, with = FALSE]), sep = "")
-  setnames(planning_areas, c(output_fields), c(sum_names))
-
+  planning_areas <- data.table(group_planning_areas %>% summarize(across(output_fields, sum, .names = "ESum_{.col}" )))
   return (planning_areas)
 }
