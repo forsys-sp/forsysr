@@ -45,8 +45,6 @@
 run <- function(
   config_file = '',
   scenario_name = '',
-  is_dbf = TRUE,
-  is_csv = FALSE,
   input_standfile = '',
   write_stand_outputs = FALSE,
   stand_field = 'Cell_ID',
@@ -77,7 +75,7 @@ run <- function(
   if (length(config_file) > 0) {
     configuration_file <- config_file
     setwd(dirname(configuration_file))
-    source(configuration_file)
+    source(configuration_file, local = TRUE)
   } else {
 
   }
@@ -107,17 +105,19 @@ if (!dir.exists(absolute_output_path)) {
   }
 }
 
-if (overwrite_output) {
-  ## Clean up any files left from previous database. Failure to remove the .ini file will cause failures when
-  ## table attributes change.
-  output_files <- sapply(list.files(relative_output_path), function(x) glue('{relative_output_path}/{x}'))
-  if (length(output_files) > 0) { file.remove(output_files) }
-} else {
-  fname <- paste0(relative_output_path, '/pa_all_', scenario_name, '.csv')
-  if (file.exists(fname)) {
-    if (run_with_shiny) {
+  if (overwrite_output) {
+    ## Clean up any files left from previous database. Failure to remove the .ini file will cause failures when
+    ## table attributes change.
 
-    } else {
+    # These paths or wildcards don't seem to match any more
+    unlink("output/*.csv")
+    unlink("output/*.ini")
+
+    output_files <- sapply(list.files(relative_output_path), function(x) glue('{relative_output_path}/{x}'))
+    if (length(output_files) > 0) { file.remove(output_files) }
+  } else {
+    fname <- paste0(relative_output_path, '/pa_all_', scenario_name, '.csv')
+    if (file.exists(fname)) {
       print(paste0('Warning: Output file ', fname, ' already exists. Appending results.'))
     }
   }
@@ -128,14 +128,12 @@ if (overwrite_output) {
   #
   # # # Load data -------------
   standDT <- load_dataset(input_standfile)
+  print("data loaded")
   standDT %>%
     calculate_spm_pcp(land_base, pcp_spm) %>%
     # Add target area or volume fields based on a land base here:
     add_target_field(pa_unit, pa_target, pa_target_multiplier, stand_group_by, land_base)
-
-  # Dynamic output variable names
-  output_fields <- as.character(output_fields)
-  output_grouped_variables <- c(output_fields, nesting_target, "weightedPriority")
+  print("target added")
 
   ## Maintain the original stand list. allStands becomes the filtered table.
   allStands <- standDT %>%
@@ -208,20 +206,41 @@ if (overwrite_output) {
                                          pa_target_multiplier = pa_target_multiplier)
 
       # # Step 2: IF NESTING: Group the selected subunits by planning area (based on areas previously selected for treatment)
-      print("Creating Grouped Dataset")
-      groupedByPA <- create_grouped_dataset(selected_stands,
-                                            stand_group_by,
-                                            output_grouped_variables)
-      if(length(grouping_variables > 1)) {
-        groupedByAll <- create_grouped_dataset(selected_stands,
-                                               grouping_variables,
-                                               output_grouped_variables)
-      }
 
       # Step 3: Identify the best planning areas within each nest.
       if(isTRUE(nesting)) {
+        print("Creating Grouped Dataset")
+        # Dynamic output variable names
+        output_fields <- as.character(output_fields)
+        output_grouped_variables <- c(output_fields, nesting_target, "weightedPriority")
+
+        groupedByPA <- create_grouped_dataset(selected_stands,
+                                              stand_group_by,
+                                              output_grouped_variables)
+        if(length(grouping_variables > 1)) {
+          groupedByAll <- create_grouped_dataset(selected_stands,
+                                                 grouping_variables,
+                                                 output_grouped_variables)
+        }
         paSubunits = identify_nested_planning_areas(groupedByPA)
       }
+      else{
+        print("Creating Grouped Dataset")
+        # Dynamic output variable names
+        output_fields <- as.character(output_fields)
+        output_grouped_variables <- c(output_fields, "weightedPriority")
+
+        groupedByPA <- create_grouped_dataset(selected_stands,
+                                              stand_group_by,
+                                              output_grouped_variables)
+        if(length(grouping_variables > 1)) {
+          groupedByAll <- create_grouped_dataset(selected_stands,
+                                                 grouping_variables,
+                                                 output_grouped_variables)
+        }
+      }
+
+      planning_areas <- data.table(groupedByPA %>% summarize(across(output_fields, sum, .names = "ETrt_{.col}" )))
 
       uniqueWeights <- ""
       uniqueWeights <- paste0(sapply(1:ncol(weights), function(i) {uniqueWeights <- paste0(uniqueWeights, "_", weights[[i]][w])}), collapse='')
@@ -235,7 +254,6 @@ if (overwrite_output) {
 
       # compile all planning areas and stands
       allPlanningAreas <- compile_planning_areas_and_stands(uniqueWeights, standDT, stand_group_by, output_fields)
-
       #Test outputs
       #fwrite(allPlanningAreas, file = "output/allPlanningAreas.csv", sep = ",", row.names = FALSE)
 
@@ -244,10 +262,6 @@ if (overwrite_output) {
 
       #Test outputs
       #fwrite(allPlanningAreasSubset, file = "output/allPlanningAreasSubset.csv", sep = ",", row.names = FALSE)
-
-      # Rename treatment variables and merge into the planning area dataset for output.
-      trt_names <- paste0("ETrt_", colnames(groupedByPA[,output_fields, with = FALSE]), sep = "")
-      setnames(groupedByPA, c(output_fields), c(trt_names))
 
       paOutput <- as.data.table(merge(allPlanningAreas, groupedByPA, by=c(stand_group_by), all.x = TRUE))
 
@@ -258,9 +272,9 @@ if (overwrite_output) {
 
       paOutput <- paOutput[order(-paOutput$weightedPriority),]
       print("adding treatment rank")
-      paOutput[,"treatment_rank" := seq(1:nrow(paOutput)),]
+      paOutput[weightedPriority > 0,"treatment_rank" := seq(1:nrow(paOutput[weightedPriority >0,])),]
+      paOutput[weightedPriority > 0, treatment_rank_random := sample(treatment_rank)]
       paOutput[is.na(paOutput)] <- 0
-      paOutput[weightedPriority == 0, "treatment_rank" := 0]
 
       paOutput <- as.data.table(paOutput)
       # TO DO: Why am I getting identical rows of data outputs? Hack: only export unique rows.
@@ -277,15 +291,12 @@ if (overwrite_output) {
       ## produces a single row for each planning area/subset combination.
       if(length(grouping_variables) > 1) {
         # Rename treatment variables and merge into the planning area dataset for output.
-        trt_names <- paste0("ETrt_", colnames(groupedByAll[,output_fields, with = FALSE]), sep = "")
-        setnames(groupedByAll, c(output_fields), c(trt_names))
         paSubOutput <- merge(allPlanningAreasSubset, groupedByAll, by=c(grouping_variables), all.x = TRUE)
         paSubOutput[is.na(paSubOutput)] <- 0
         paSubOutput <- paSubOutput[order(-paSubOutput$weightedPriority),]
         print("adding treatment rank")
-        paSubOutput <- merge(paSubOutput, paOutput[, c(stand_group_by, "treatment_rank"), with = FALSE], by = c(stand_group_by))
+        paSubOutput <- merge(paSubOutput, paOutput[, c(stand_group_by, "treatment_rank", "treatment_rank_random"), with = FALSE], by = c(stand_group_by))
         paSubOutput <- unique(paSubOutput)
-        print(paSubOutput)
 
         for (i in 1:ncol(weights)) { # START FOR 7
           priorityName <- paste0("Pr_", i, "_", priorities[[i]][1])
@@ -329,8 +340,7 @@ if (overwrite_output) {
       groupedByPA <- create_grouped_dataset(full_stand_table,
                                             "Project",
                                             output_grouped_variables, "DoTreat")
-      trt_names <- paste0("ETrt_", colnames(groupedByPA[,output_fields, with = FALSE]), sep = "")
-      setnames(groupedByPA, c(output_fields), c(trt_names))
+      groupedByPA <- data.table(groupedByPA %>% summarize(across(output_fields, sum, .names = "ETrt_{.col}" )))
       projectOutput <- groupedByPA
 
       # Add the weights to track multi-weight scenarios
