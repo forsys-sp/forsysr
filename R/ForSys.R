@@ -39,36 +39,36 @@
 #' @param fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
 #' @param fixed_area_target TODO
 #' @param overwrite_output Toggle to overwrite existing output files
+#' @param run_with_shiny Sets some output business for better shiny interaction
 #' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
 #' @export
 run <- function(
-   config_file = '',
-   scenario_name = '',
-   input_standfile = '',
-   write_stand_outputs = FALSE,
-   stand_field = 'Cell_ID',
-   pcp_spm = c(),
-   land_base = '',
-   priorities = c(),
-   stand_group_by = '',
-   pa_target = '',
-   pa_unit = '',
-   pa_target_multiplier = 0.15,
-   nesting = FALSE,
-   nesting_group_by = NULL,
-   nesting_target = NULL,
-   nesting_unit = NULL,
-   nesting_target_multiplier = 1.0,
-   weighting_values = "0 5 1",
-   thresholds = c("Manageable man_alldis == 1") ,
-   include_stands = c("man_alldis == 1"),
-   output_fields = c("AREA_HA", "TVMBF_STND", "TVMBF_PCP", "HUSUM_STND", "HUSUM_PCP"),
-   grouping_variables = c("PA_ID", "Owner"),
-   fixed_target = FALSE,
-   fixed_area_target = 2000,
-   overwrite_output = TRUE,
-   spatial_optimization = FALSE,
-   shiny_output = FALSE
+  config_file = '',
+  scenario_name = '',
+  input_standfile = '',
+  write_stand_outputs = FALSE,
+  stand_field = 'Cell_ID',
+  pcp_spm = c(),
+  land_base = '',
+  priorities = c(),
+  stand_group_by = '',
+  pa_target = '',
+  pa_unit = '',
+  pa_target_multiplier = 0.15,
+  nesting = FALSE,
+  nesting_group_by = NULL,
+  nesting_target = NULL,
+  nesting_unit = NULL,
+  nesting_target_multiplier = 1.0,
+  weighting_values = "0 5 1",
+  thresholds = c("Manageable man_alldis == 1") ,
+  include_stands = c("man_alldis == 1"),
+  output_fields = c("AREA_HA", "TVMBF_STND", "TVMBF_PCP", "HUSUM_STND", "HUSUM_PCP"),
+  grouping_variables = c("PA_ID", "Owner"),
+  fixed_target = FALSE,
+  fixed_area_target = 2000,
+  overwrite_output = TRUE,
+  run_with_shiny = FALSE
   ) {
 
   # If a config file has been selected, source it to read in variables
@@ -88,14 +88,22 @@ run <- function(
 
   relative_output_path = glue('output/{scenario_name}')
 
-  # Check if output directory exists
-  absolute_output_path = file.path(getwd(), relative_output_path)
-  if (!dir.exists(absolute_output_path)) {
+# Check if output directory exists
+absolute_output_path = file.path(getwd(), relative_output_path)
+if (!dir.exists(absolute_output_path)) {
+  if (run_with_shiny) {
+
+  } else {
     print(paste0("Making output directory: ", absolute_output_path))
-    dir.create(absolute_output_path, recursive=TRUE)
+  }
+  dir.create(absolute_output_path, recursive=TRUE)
+} else {
+  if (run_with_shiny) {
+
   } else {
     print(paste0("output directory, ", absolute_output_path, ", already exists"))
   }
+}
 
   if (overwrite_output) {
     ## Clean up any files left from previous database. Failure to remove the .ini file will cause failures when
@@ -112,7 +120,6 @@ run <- function(
     if (file.exists(fname)) {
       print(paste0('Warning: Output file ', fname, ' already exists. Appending results.'))
     }
-    # TODO add check for grouping files
   }
 
   ## Print a specs document that describes the inputs.
@@ -157,14 +164,18 @@ run <- function(
   # Run selection code for each set of weights
   for (w in 1:nrow(weights)) { # START FOR 0
 
-    ## Step 0: create the weighted priorities.
+  ## Step 0: create the weighted priorities.
+  if (run_with_shiny) {
+
+  } else {
     print(paste0("Creating weighted priorities:",  w, " of ", nrow(weights)))
+  }
 
-    allStands$weightedPriority <- 0
-    allStands$selected <- 0
-    selected_stands <- NULL
-    allStands <- set_up_priorities(w, priorities, weights, allStands)
+  allStands$weightedPriority <- 0
+  allStands$treat <- 0
+  selected_stands <- NULL
 
+  allStands <- set_up_priorities(w, priorities, weights, allStands)
     ## Step 1: Select stands in each planning area based on stand conditions and priorities:
     # Filter dataset using threshold information.
 

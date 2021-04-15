@@ -5,12 +5,14 @@ pacman::p_load(
   data.table,
   dplyr,
   doParallel,
+  directlabels,
   foreign,
   glue,
-  igraph,
   gtools,
+  igraph,
   jsonlite,
   KernSmooth,
+  leaflet,
   maptools,
   shiny,
   shinyBS,
@@ -21,7 +23,8 @@ pacman::p_load(
   roxygen2,
   sp,
   sf,
-  tidyverse
+  tidyverse,
+  zip
   )
 
 library("Patchmax", lib.loc="C:/Users/Houtmanr/Documents/R/win-library/4.0")

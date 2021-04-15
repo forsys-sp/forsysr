@@ -35,7 +35,7 @@
 write_save_file <- function(
   scenario_name = '',
   input_standfile = '',
-  write_stand_outputs = '', 
+  write_stand_outputs = '',
   stand_field = 'Cell_ID',
   pcp_spm = c(),
   land_base = '',
@@ -62,55 +62,55 @@ write_save_file <- function(
 	vector_data <- vector(mode='list', length=25)
 
 	names(vector_data) = c(
-		'scenario_name', 
-		'input_standfile', 
-		'write_stand_outputs', 
-		'stand_field', 
-		'pcp_spm', 
-		'land_base', 
+		'scenario_name',
+		'input_standfile',
+		'write_stand_outputs',
+		'stand_field',
+		'pcp_spm',
+		'land_base',
 		'priorities',
-		'stand_group_by', 
-		'pa_target', 
-		'pa_unit', 
-		'pa_target_multiplier', 
-		'nesting', 
-		'nesting_group_by', 
-		'nesting_target', 
-		'nesting_unit', 
-		'nesting_target_multiplier', 
+		'stand_group_by',
+		'pa_target',
+		'pa_unit',
+		'pa_target_multiplier',
+		'nesting',
+		'nesting_group_by',
+		'nesting_target',
+		'nesting_unit',
+		'nesting_target_multiplier',
 		'weighting_values',
-		'thresholds', 
+		'thresholds',
 		'include_stands',
 		'output_fields',
-		'grouping_variables', 
-		'fixed_target', 
-		'fixed_area_target', 
+		'grouping_variables',
+		'fixed_target',
+		'fixed_area_target',
 		'overwrite_output'
 		)
 
-	vector_data$scenario_name = scenario_name 
-	vector_data$input_standfile = input_standfile 
+	vector_data$scenario_name = scenario_name
+	vector_data$input_standfile = input_standfile
 	vector_data$write_stand_outputs = write_stand_outputs
 	vector_data$stand_field = stand_field
 	vector_data$pcp_spm = pcp_spm
-	vector_data$land_base = land_base 
-	vector_data$priorities = priorities 
-	vector_data$stand_group_by = stand_group_by 
+	vector_data$land_base = land_base
+	vector_data$priorities = priorities
+	vector_data$stand_group_by = stand_group_by
 	vector_data$pa_target = pa_target
 	vector_data$pa_unit = pa_unit
-	vector_data$pa_target_multiplier = pa_target_multiplier  
-	vector_data$nesting = nesting 
-	vector_data$nesting_group_by = nesting_group_by 
-	vector_data$nesting_target = nesting_target 
-	vector_data$nesting_unit = nesting_unit 
-	vector_data$nesting_target_multiplier = nesting_target_multiplier 
+	vector_data$pa_target_multiplier = pa_target_multiplier
+	vector_data$nesting = nesting
+	vector_data$nesting_group_by = nesting_group_by
+	vector_data$nesting_target = nesting_target
+	vector_data$nesting_unit = nesting_unit
+	vector_data$nesting_target_multiplier = nesting_target_multiplier
 	vector_data$weighting_values = weighting_values
-	vector_data$thresholds = thresholds 
+	vector_data$thresholds = thresholds
 	vector_data$include_stands = include_stands
 	vector_data$output_fields = output_fields
-	vector_data$grouping_variables = grouping_variables 
-	vector_data$fixed_target = fixed_target 
-	vector_data$fixed_area_target = fixed_area_target 
+	vector_data$grouping_variables = grouping_variables
+	vector_data$fixed_target = fixed_target
+	vector_data$fixed_area_target = fixed_area_target
 	vector_data$overwrite_output = overwrite_output
 
 	json_data <- serializeJSON(vector_data, pretty = TRUE)
@@ -124,7 +124,7 @@ write_save_file <- function(
 
 	write_json(json_data, output_file_name)
 
-	return(json_data)
+	return(vector_data)
 }
 
 
@@ -152,13 +152,13 @@ write_save_file_helper <- function(input, data_path) {
 		}
 
 	json <- write_save_file(
-		scenario_name = input$scenario_name, 
+		scenario_name = input$scenario_name,
 		input_standfile = data_path,
-		write_stand_outputs = input$write_stand_outputs_chk, 
+		write_stand_outputs = input$write_stand_outputs_chk,
 		stand_field = input$stand_id_field,
 		pcp_spm = input$pcp_spm_fields,
 		land_base = input$treatment_available_field,
-		priorities = input$priorities_fields, 
+		priorities = input$priorities_fields,
 		stand_group_by = input$planning_unit_id_field,
 		pa_target = input$pa_target_field,
 		pa_unit = input$pa_unit_field,
@@ -179,7 +179,7 @@ write_save_file_helper <- function(input, data_path) {
 		)
 }
 
-#' Load a json config file written from the write_save_file function. 
+#' Load a json config file written from the write_save_file function.
 #'
 #' @param filename Relative path and filename to the scenario json
 #' @return A vector of input choices
