@@ -45,6 +45,7 @@
 run <- function(
   config_file = '',
   scenario_name = '',
+  num_reps = 1,
   input_standfile = '',
   write_stand_outputs = FALSE,
   stand_field = 'Cell_ID',
@@ -70,6 +71,8 @@ run <- function(
   overwrite_output = TRUE,
   run_with_shiny = FALSE
   ) {
+
+  set.seed(1)
 
   # If a config file has been selected, source it to read in variables
   if (length(config_file) > 0) {
@@ -273,7 +276,12 @@ if (!dir.exists(absolute_output_path)) {
       paOutput <- paOutput[order(-paOutput$weightedPriority),]
       print("adding treatment rank")
       paOutput[weightedPriority > 0,"treatment_rank" := seq(1:nrow(paOutput[weightedPriority >0,])),]
-      paOutput[weightedPriority > 0, treatment_rank_random := sample(treatment_rank)]
+      tr_list <- NULL
+      for(r in 1:num_reps){
+        treatment_rank_random <- paste0("TR_", r)
+        paOutput[weightedPriority > 0, (treatment_rank_random) := sample(treatment_rank)]
+        tr_list <- append(tr_list, treatment_rank_random)
+      }
       paOutput[is.na(paOutput)] <- 0
 
       paOutput <- as.data.table(paOutput)
@@ -295,7 +303,7 @@ if (!dir.exists(absolute_output_path)) {
         paSubOutput[is.na(paSubOutput)] <- 0
         paSubOutput <- paSubOutput[order(-paSubOutput$weightedPriority),]
         print("adding treatment rank")
-        paSubOutput <- merge(paSubOutput, paOutput[, c(stand_group_by, "treatment_rank", "treatment_rank_random"), with = FALSE], by = c(stand_group_by))
+        paSubOutput <- merge(paSubOutput, paOutput[, c(stand_group_by, "treatment_rank", tr_list), with = FALSE], by = c(stand_group_by))
         paSubOutput <- unique(paSubOutput)
 
         for (i in 1:ncol(weights)) { # START FOR 7
