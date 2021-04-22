@@ -243,7 +243,7 @@ if (!dir.exists(absolute_output_path)) {
         }
       }
 
-      planning_areas <- data.table(groupedByPA %>% summarize(across(output_fields, sum, .names = "ETrt_{.col}" )))
+      groupedByPA <- groupedByPA %>% rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields)
 
       uniqueWeights <- ""
       uniqueWeights <- paste0(sapply(1:ncol(weights), function(i) {uniqueWeights <- paste0(uniqueWeights, "_", weights[[i]][w])}), collapse='')
