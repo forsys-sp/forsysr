@@ -21,11 +21,11 @@
 #   3) Revenue (MBF_VALUE)
 #   4) Forest to Faucets (F2F2_Imp)
 
-scenario_name <- "_WW_10yr_FS_80p"
+scenario_name <- "WW_10yr_FS_80p"
 num_reps <- 30
 
 ## Stand layer
-input_standfile <- c("C:/Users/Houtmanr/Desktop/ForSysR_12102019/data/Hexnet_WestFS.csv")
+input_standfile <- c("../../Dropbox/!!projects/!archive/aa_10yr/data/Hexnet_WestFS.csv")
 writeStandOutputs <- TRUE
 
 # Create pcp and spm values for these fields.
@@ -39,6 +39,8 @@ stand_field <- "CELL_ID"
 
 ## Priorities are named here. If only one priority exists, only a weight of one will be used.
 priorities <- c("aTR_MS_SPM")
+# priorities <- c("aTR_MS_SPM","TVMBF_STND_SPM")
+
 
 ## Area-level constraints. Currently this system can handle a two-step constraint system. The first
 ## constraint is typically planning areas (PA_ID or PA_ID_New), the second constraint may be forest,
@@ -61,6 +63,8 @@ nesting_target_multiplier <- 0.5
 
 ## Defines the weights and integer steps between weights. The values are for min, max, and step.
 weighting_values <- c("1 1 1")
+# weighting_values <- c("0 1 1")
+
 
 ## Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
 thresholds <- c("Commercial western_flag20_NLCD == 1")
@@ -91,6 +95,13 @@ fixed_nest_target <- c(TRUE, 20000)
 system_constraint <- FALSE
 
 #########################################
+## Parameters for FORSYS W/ FIRE       ##
+#########################################
+
+input_stand_fire_intersect <- '../../Dropbox/!!projects/aa_10yr_uncertainity/WW_HexID_FSIM19_30reps_allLands.csv'
+fire_future_i = 1
+
+#########################################
 ## Parameters for SPATIAL OPTIMIZATION ##
 #########################################
 
@@ -103,6 +114,7 @@ calculate_adjacency_list <- FALSE
 stand_shapefile <- ""
 save_adjacency <- TRUE
 adjacency_pathway <- ""
+write_stand_outputs <- TRUE
 
 ## If reading an adjacency list, pathway here:
 existing_adjacency <- ""
@@ -112,3 +124,4 @@ project_size <- 1000
 
 ## Number of projects
 project_number <- 2
+

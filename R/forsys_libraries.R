@@ -27,4 +27,4 @@ pacman::p_load(
   zip
   )
 
-library("Patchmax", lib.loc="C:/Users/Houtmanr/Documents/R/win-library/4.0")
+# library("Patchmax", lib.loc="C:/Users/Houtmanr/Documents/R/win-library/4.0")

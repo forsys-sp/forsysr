@@ -281,22 +281,24 @@ set_up_treatment_types <- function(stands, args=NULL) {
   stands$selected <- 0
   stands$treatment_type <- ""
   stands$treatedPAArea <- 0
+  stands$weightedPriority <- 0
+  stands$treat <- 0
   return(stands)
 }
 
-set_up_priorities_helper <- function(i, stands, weight, priority) {
+set_up_priorities_helper <- function(stands, i, weight, priority) {
   stands$weightedPriority <- stands$weightedPriority + weight * stands[, get(priority)]
   priorityName <- paste0("Pr_", i, "_", priority)
   stands[, (priorityName) := weight]
 }
 
-set_up_priorities <- function(w, priorities, weights, stands) {
+set_up_priorities <- function(stands, w, priorities, weights) {
 
   for (i in 1:ncol(weights)) { # START FOR 1
     curr_weight = weights[[i]][w]
     curr_priority = priorities[[i]][1]
 
-    stands <- set_up_priorities_helper(i, stands, curr_weight, curr_priority)
+    stands <- set_up_priorities_helper(stands, i, curr_weight, curr_priority)
   } # END FOR 1
 
 
@@ -310,8 +312,8 @@ make_thresholds <- function(thresholds) {
   })
 }
 
-apply_treatment <- function(treatment_types,
-                            stands,
+apply_treatment <- function(stands,
+                            treatment_types,
                             all_thresholds,
                             stand_group_by,
                             stand_field,
@@ -394,12 +396,12 @@ identify_nested_planning_areas <- function(grouped_by_pa) {
   paSubunits$treatment_rank <- seq(1:nrow(paSubunits))
 }
 
-write_stand_outputs_to_file <- function(dir, unique_weights, name, selected_stands) {
-    stand_output_file <- paste0(dir, "/",  name, "_stands", unique_weights, ".csv")
-    fwrite(selected_stands, stand_output_file)
+write_stand_outputs_to_file <- function(dir, unique_weights, name, selected_stands, write_fields) {
+    stand_output_file <- paste0(dir, "/stnd_",  name, "_Pr", unique_weights, ".csv")
+    fwrite(selected_stands %>% dplyr::select(write_fields), stand_output_file)
 }
 
-compile_planning_areas_and_stands <- function(unique_weights, stands, group_by, output_fields) {
+compile_planning_areas_and_stands <- function(stands, unique_weights, group_by, output_fields) {
   group_planning_areas <- stands %>% group_by_at(group_by)
   planning_areas <- data.table(group_planning_areas %>% summarize(across(output_fields, sum, .names = "ESum_{.col}" )))
   return (planning_areas)
