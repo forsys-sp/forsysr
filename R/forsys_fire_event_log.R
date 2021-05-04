@@ -7,11 +7,70 @@
 # reassigned, or treatments will be proactively reshuffled to address future
 # fire.
 
-s_df <- read_delim('output/_WW_10yr_FS_80p/_WW_10yr_FS_80p_stands_1.csv', delim=',')
-p_df <- read_delim('output/_WW_10yr_FS_80p/pa_all__WW_10yr_FS_80p.csv', delim=',')
+s_df <- read_delim('output/WW_10yr_FS_80p/stnd_WW_10yr_FS_80p_Pr1.csv', delim=',')
+p_df <- read_delim('output/WW_10yr_FS_80p/proj_WW_10yr_FS_80p.csv', delim=',')
 f_df <- read_delim(input_stand_fire_intersect, delim=',')
 
 s_df <- s_df %>% left_join(p_df %>% dplyr::select(PA_ID, treatment_rank)) %>% filter(treatment_rank > 0)
+
+# annual treatment target
+annual_constraint = 800000
+
+p_df <- p_df %>% mutate(ETRT_YR = cumsum(ETrt_AREA_HA) %/% !!annual_constraint + 1)
+
+outcome <- 'ETrt_aTR_MS'
+pdat <- p_df %>% group_by(ETRT_YR) %>% summarize_at(vars(outcome), sum)
+pdat %>% ggplot(aes(x = ETRT_YR, y = cumsum(get(outcome)))) + geom_line() + ylab(outcome)
+
+# classify events for selected stands
+out_s <- 1:30 %>% map(function(x){
+  print(x)
+  ss <- s_df %>%
+    left_join(p_df %>% dplyr::select(PA_ID, ETRT_YR)) %>%
+    full_join(f_df %>% filter(OWNER == 'USFS', SCN_ID == x)) %>%
+    # left_join(f_df %>% filter(SCN_ID == x) %>% dplyr::select(CELL_ID, SCN_ID, FIRE_YR, FIRE_NUMBER)) %>%
+    mutate(EVENT = case_when(
+      ETRT_YR <= FIRE_YR ~ 'etrt_fire',
+      FIRE_YR < ETRT_YR ~ 'fire_etrt',
+      is.na(ETRT_YR) & !is.na(FIRE_YR) ~ 'fire',
+      is.na(FIRE_YR) & !is.na(ETRT_YR) ~ 'etrt',
+      is.na(ETRT_YR) & is.na(FIRE_YR) ~ 'none'
+    ))
+  suppressWarnings(
+    ss$YEAR <- ss %>% dplyr::select(ETRT_YR, FIRE_YR) %>% apply(1, min, na.rm=T)
+  )
+
+  selected_df <- ss %>% filter(ETRT_YR %>% is.na() == FALSE)
+  events_df <- ss %>% dplyr::select(SCN_ID, CELL_ID, PA_ID, YEAR, ETRT_YR, FIRE_YR, FIRE_NUMBER, EVENT)
+
+  return(list(selected_stands = selected_df, events = events_df))
+})
+
+# summarize project areas for specified outcomes by event type
+outcome_vars = c('AREA_HA', 'aTR_MS_PCP')
+
+out_p <- out_s %>% map(1) %>% map(function(x){
+  cat('.')
+  p_df2 <- x %>%
+    group_by(SCN_ID, PA_ID, EVENT, YEAR) %>%
+    summarize_at(vars(output_fields), sum) %>%
+    pivot_wider(id_cols = c(SCN_ID, PA_ID, YEAR), names_from = EVENT, values_from = !!(outcome_vars), values_fill=0) %>%
+    arrange(YEAR)
+  return(p_df2)
+})
+
+save(s_df, p_df, f_df, out_s, out_p, file = 'event_data.Rdata')
+
+out_p[[1]] %>% apply(2, sum)
+out_p[[1]]$YEAR %>% summary()
+
+ # ARCHIVED TEST BELOW....
+
+
+
+
+
+
 p_df <- p_df %>% filter(treatment_rank > 0) %>%
   left_join(s_df %>% group_by(PA_ID) %>% summarize(s_cnt = n())) %>%
   mutate(pct_area_ETrt = ETrt_AREA_HA / ESum_AREA_HA)

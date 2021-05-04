@@ -107,6 +107,8 @@ fire_future_i = 1
 
 ## Optimize vs. preplanned areas, TRUE optitimizes spatially
 spatial_optimization <- FALSE
+random_stands <- FALSE
+random_projects <- FALSE
 
 ## If computing new adjacency list from the listed shapefile, TRUE, else FALSE,
 ## If saving adjacency for late use, TRUE

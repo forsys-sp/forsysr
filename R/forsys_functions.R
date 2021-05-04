@@ -91,6 +91,7 @@ stand_filter <- function(dt, filters) {
 #' @param filters A list of strings that are used to filter the stands for treatment availability.
 #' @param field The name of a new field
 #' @return The final data table with stands available for treatment.
+#'
 stand_flag <- function(dt, filters, field) {
   dt[, (field) := 0]
   for(f in 1:nrow(filters)){
@@ -310,6 +311,9 @@ make_thresholds <- function(thresholds) {
   all_thresholds <- sapply(1:length(thresholds), function(i) {
     all_thresholds <- rbind(all_thresholds, strsplit(thresholds[i], " ")[1])
   })
+  treatment_types <- unique(sapply(all_thresholds, function(x) x[1]))
+  all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
+  return(list(types = treatment_types, thresholds = all_thresholds))
 }
 
 apply_treatment <- function(stands,
@@ -322,36 +326,28 @@ apply_treatment <- function(stands,
   stands_updated <- stands
   selected_stands <- NULL
 
+  # for each treatment type
   for (t in 1:length(treatment_types)) {
-    filtered_stands <- stand_filter(stands, all_thresholds[V1 == treatment_types[t], ])
-    print(paste0("There are ", nrow(filtered_stands), " stands that meet treatment thresholds for ", treatment_types[t]))
-    # Set the target for each bin here:
-    print(paste0("Treatment type: ", all_thresholds[t,1]))
 
-    # TODO insert checks for proper fixed vs pa variables
+    # filter stands by threshold type criteria
+    filtered_stands <- stand_filter(stands, all_thresholds[V1 == treatment_types[t], ])
+
+    print(paste0("There are ", nrow(filtered_stands), " stands that meet treatment thresholds for ", treatment_types[t]))
+
+    # set project target
     if (fixed_target == TRUE) {
-      filtered_stands <- set_fixed_area_target(filtered_stands, fixed_area_target) # Target based on fixed field
+      filtered_stands <- filtered_stands %>% set_fixed_area_target(fixed_area_target) # Target based on fixed field
     } else if (fixed_target == FALSE) {
-      filtered_stands <- set_percentage_area_target(filtered_stands, pa_target, pa_target_multiplier) # Activate for percentage not fixed area
+      filtered_stands <- filtered_stands %>% set_percentage_area_target(pa_target, pa_target_multiplier) # Activate for percentage not fixed area
     }
 
-    # The following code splits out the planning area treatments by treatment type and percent of area treated. An area (rather than %)
-    # area target can be set by removing the multiplier and replacing AREA_MAN with the area target in hectares (i.e. 2000).
-    # if(all_thresholds[t,1] == c("Commercial")){
-    #   filtered_stands[, current_area_target := AREA_MAN *.15 - treatedPAArea]
-    # }else if(all_thresholds[t,1] == c("HF")){
-    #   filtered_stands[, current_area_target := AREA_MAN * .30 - treatedPAArea]
-    #   filtered_stands[, weightedPriority := WHPMN_SPM]
-    # }else{
-    #   print("Missing Threshold Update! Treatment selection is suspect!")
-    # }
+    # select stands for treatment type t
     treat_stands <- select_simple_greedy_algorithm(dt = filtered_stands,
                                                    grouped_by = stand_group_by,
                                                    prioritize_by = "weightedPriority",
                                                    constrain_by = c(1, pa_unit, "master_target"))
 
     # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
-
     area_treatedPA <- update_target(treat_stands, stand_group_by, pa_unit)
     stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
     stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_types[t], selected = 1), on = stand_field]

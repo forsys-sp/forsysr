@@ -127,139 +127,141 @@
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # # # Load data -------------
-    standDT <- load_dataset(input_standfile)
+    stands <- load_dataset(input_standfile)
 
     # Calculate SPM & PCP values
-    standDT <- standDT %>%
+    stands <- stands %>%
       calculate_spm_pcp(filter = land_base,
                         fields = pcp_spm)
 
     # Add target area or volume fields based on a land base here:
-    standDT <- standDT %>%
+    stands <- stands %>%
       add_target_field(pa_unit = pa_unit,
                        pa_target = pa_target,
                        pa_target_multiplier = pa_target_multiplier,
                        stand_group_by = stand_group_by,
                        land_base = land_base)
 
+    # Read fire-stand intersect data
+    f_df <- fread(input_stand_fire_intersect)
+
     # set up weighting scenarios
     weights <- weight_priorities(numPriorities = length(priorities), weights = weighting_values[1])
 
     # Run selection code for each set of weights
-    for (w in 1:nrow(weights)) { # START FOR 0
+    for (w in 1:nrow(weights)) { # START WEIGHTING INSTANCE
 
-    ## Step 0: create the weighted priorities.
-    if (run_with_shiny) {
-    } else {
-      print(paste0("Creating weighted priorities:",  w, " of ", nrow(weights)))
-    }
+      ## Step 0: create the weighted priorities.
+      if (run_with_shiny) {
+      } else {
+        print(paste0("Creating weighted priorities:",  w, " of ", nrow(weights)))
+      }
 
-    # prep stand data
-    allStands <- standDT %>%
-      set_up_treatment_types() %>%
-      set_up_priorities(w = w,
-                        priorities = priorities,
-                        weights = weights)
+      # prep stand data
+      stands_all <- stands %>%
+        set_up_treatment_types() %>%
+        set_up_priorities(w = w,
+                          priorities = priorities,
+                          weights = weights)
 
+      if(random_stands){
+        warning('!! Stand weights were randomized')
+        scenario_name <- paste0(scenario_name, '_srand')
+        stands_all$weightedPriority <- sample(stands_all$weightedPriority, nrow(stands_all))
+      }
 
-    selected_stands <- NULL
-    stands_updated <- allStands[, treatedPAArea := 0]
+      stands_select <- NULL
+      stands_updated <- stands_all[, treatedPAArea := 0]
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!!! 2. SELECT STANDS !!!!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # !!!! 2. SELECT STANDS !!!!!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    # specify thresholds
-    all_thresholds <- make_thresholds(thresholds = thresholds)
-    treatment_types <- unique(sapply(all_thresholds, function(x) x[1]))
-    all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
+      # specify thresholds
+      thresholds <- make_thresholds(thresholds = thresholds)
 
-    # select stands from project areas until target reached while filtering by threshold
-    selected_stands <- stands_updated %>%
-      apply_treatment(
-        treatment_types = treatment_types,
-        all_thresholds = all_thresholds,
-        stand_group_by = stand_group_by,
-        stand_field = stand_field,
-        fixed_target = fixed_target,
-        fixed_area_target = fixed_area_target,
-        pa_unit = pa_unit,
-        pa_target = pa_target,
-        pa_target_multiplier = pa_target_multiplier
-      )
+      # select stands from project areas until target reached while filtering by threshold
+      stands_select <- stands_updated %>%
+        apply_treatment(
+          treatment_types = thresholds$types,
+          all_thresholds = thresholds$thresholds,
+          stand_group_by = stand_group_by,
+          stand_field = stand_field,
+          fixed_target = fixed_target,
+          fixed_area_target = fixed_area_target,
+          pa_unit = pa_unit,
+          pa_target = pa_target,
+          pa_target_multiplier = pa_target_multiplier
+        )
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!! 3. SELECT PROJECTS !!!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # !!! 3. RANK PROJECTS !!!!!!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    # group selected stands by project
-    groupedByPA <- selected_stands %>%
-      create_grouped_dataset(grouping_vars = stand_group_by,
-                             summing_vars = c(output_fields, "weightedPriority")) %>%
-      rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields)
+      # group selected stands by project
+      etrt_by_pa <- stands_select %>%
+        create_grouped_dataset(grouping_vars = stand_group_by,
+                               summing_vars = c(output_fields, "weightedPriority")) %>%
+        rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields)
 
+      # group all candidate stands by project
+      esum_by_pa <- stands %>%
+        compile_planning_areas_and_stands(unique_weights = uniqueWeights,
+                                          group_by = stand_group_by,
+                                          output_fields = output_fields)
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!! 4. RANK PROJECTS !!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # combine etrt and esum
+      projects <- esum_by_pa %>%
+        left_join(etrt_by_pa, by=stand_group_by) %>%
+        replace(is.na(.), 0) %>%
+        arrange(-weightedPriority) %>%
+        mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), 0))
 
-    # compile all planning areas and stands
-    paOutput <- standDT %>%
-      compile_planning_areas_and_stands(unique_weights = uniqueWeights,
-                                        group_by = stand_group_by,
-                                        output_fields = output_fields) %>%
-      left_join(groupedByPA, by=stand_group_by) %>%
-      arrange(-weightedPriority) %>%
-      mutate(rank = ifelse(weightedPriority > 0, 1:n(), 0)) %>%
-      replace(is.na(.), 0)
+      if(random_projects){
+        warning('!! Project weights were randomized')
+        scenario_name <- paste0(scenario_name, '_prand')
+        projects <- projects %>%
+          mutate(weightedPriority = sample(weightedPriority)) %>%
+          arrange(-weightedPriority) %>%
+          mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), 0))
+      }
 
-
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!!!! 4. WRITE DATA !!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    # WRITE: write stands to file ---------------
-
-    print("Producing output files for stands and planning areas")
-    if(write_stand_outputs) {
-      stand_fields_to_write = c(stand_field, stand_group_by, output_fields)
-      write_stand_outputs_to_file(dir = relative_output_path,
-                                  unique_weights = paste0(weights[w,], collapse = '_'),
-                                  name = scenario_name,
-                                  selected_stands = selected_stands,
-                                  write_fields = stand_fields_to_write)
-    }
-
-    # WRITE: write project to file ---------------
-
-    masterPA = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
-    paOutput[,paste0('Pr_', 1:length(priorities), '_', priorities)] = weights[1,]
-    if(file.exists(masterPA)) {
-      fwrite(paOutput, file = masterPA, sep = ",", row.names = FALSE, append = TRUE, col.names = FALSE)
-    } else {
-      fwrite(paOutput, file = masterPA, sep = ",", row.names = FALSE)
-    }
-
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!! 5. SCHEDULE PROJECTS !!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # !!! 4. SCHEDULE PROJECTS !!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # !!! 5. DETECT EVENTS !!!!!!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!! 6. DETECT EVENTS !!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # !!!!! 4. WRITE DATA !!!!!!!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+      # WRITE: write stands to file ---------------
 
+      print("Producing output files for stands and planning areas")
+      if(write_stand_outputs) {
+        stand_fields_to_write = c(stand_field, stand_group_by, output_fields)
+        write_stand_outputs_to_file(dir = relative_output_path,
+                                    unique_weights = paste0(weights[w,], collapse = '_'),
+                                    name = scenario_name,
+                                    selected_stands = stands_select,
+                                    write_fields = stand_fields_to_write)
+      }
 
+      # WRITE: write project to file ---------------
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!! 7. RE-SELECT STANDS !!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+      masterPA = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
+      projects[,paste0('Pr_', 1:length(priorities), '_', priorities)] = weights[1,]
+      if(file.exists(masterPA)) {
+        fwrite(projects, file = masterPA, sep = ",", row.names = FALSE, append = TRUE, col.names = FALSE)
+      } else {
+        fwrite(projects, file = masterPA, sep = ",", row.names = FALSE)
+      }
 
-
-
-    } # END WEIGHT LOOP
-  } # END RUN
+      } # END WEIGHT LOOP
+  }
 
