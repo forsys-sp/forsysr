@@ -98,8 +98,11 @@ system_constraint <- FALSE
 ## Parameters for FORSYS W/ FIRE       ##
 #########################################
 
+# dynamic_forsys = TRUE
 input_stand_fire_intersect <- '../../Dropbox/!!projects/aa_10yr_uncertainity/WW_HexID_FSIM19_30reps_allLands.csv'
-fire_future_i = 1
+# fire_scenario = 1
+annual_project_target = 450000 # # 1.1 M Acres treated per year
+planning_years = 20
 
 #########################################
 ## Parameters for SPATIAL OPTIMIZATION ##

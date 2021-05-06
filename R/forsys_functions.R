@@ -332,7 +332,7 @@ apply_treatment <- function(stands,
     # filter stands by threshold type criteria
     filtered_stands <- stand_filter(stands, all_thresholds[V1 == treatment_types[t], ])
 
-    print(paste0("There are ", nrow(filtered_stands), " stands that meet treatment thresholds for ", treatment_types[t]))
+    print(paste0(nrow(filtered_stands), " stands meet treatment thresholds for ", treatment_types[t]))
 
     # set project target
     if (fixed_target == TRUE) {
@@ -392,8 +392,8 @@ identify_nested_planning_areas <- function(grouped_by_pa) {
   paSubunits$treatment_rank <- seq(1:nrow(paSubunits))
 }
 
-write_stand_outputs_to_file <- function(dir, unique_weights, name, selected_stands, write_fields) {
-    stand_output_file <- paste0(dir, "/stnd_",  name, "_Pr", unique_weights, ".csv")
+write_stand_outputs_to_file <- function(selected_stands, dir, name, write_fields) {
+    stand_output_file <- paste0(dir, "/stnd_",  name, ".csv")
     fwrite(selected_stands %>% dplyr::select(write_fields), stand_output_file)
 }
 
