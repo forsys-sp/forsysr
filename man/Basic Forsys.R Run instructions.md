@@ -1,5 +1,5 @@
 # Basic Forsys.R Run instructions
-1. Clone the git repository from https://github.com/forsys-sp/forsysr/v1.0
+1. Clone the git repository from https://github.com/forsys-sp/forsysr/releases/tag/v1.0
 
 2. Open the ForSys.R and forsys_functions.R scripts in RStudio and source them.
 
