@@ -8,6 +8,6 @@ source('R/ForSys.R')
 source('ui.R')
 source('server.R')
 
-run('configs/config_TenYearPlan_WW_FS.R')
+run('config_TenYearPlan_WW_FS.R', dynamic_forsys = T)
 
 shinyApp(ui, server)

@@ -25,7 +25,7 @@ scenario_name <- "WW_10yr_FS_80p"
 num_reps <- 30
 
 ## Stand layer
-input_standfile <- c("../../Dropbox/!!projects/!archive/aa_10yr/data/Hexnet_WestFS.csv")
+input_standfile <- c("data/hexnet_west_fs.csv")
 writeStandOutputs <- TRUE
 
 # Create pcp and spm values for these fields.
@@ -63,8 +63,6 @@ nesting_target_multiplier <- 0.5
 
 ## Defines the weights and integer steps between weights. The values are for min, max, and step.
 weighting_values <- c("1 1 1")
-# weighting_values <- c("0 1 1")
-
 
 ## Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
 thresholds <- c("Commercial western_flag20_NLCD == 1")
@@ -98,10 +96,11 @@ system_constraint <- FALSE
 ## Parameters for FORSYS W/ FIRE       ##
 #########################################
 
-# dynamic_forsys = TRUE
-input_stand_fire_intersect <- '../../Dropbox/!!projects/aa_10yr_uncertainity/WW_HexID_FSIM19_30reps_allLands.csv'
-annual_project_target = 450000 # # 1.1 M Acres treated per year
-planning_years = 20
+# dynamic_forsys = FALSE
+# random_projects = TRUE
+# input_stand_fire_intersect <- 'data/hexnet_west_fsim19_30reps_intersect.csv'
+# annual_project_target = 450000 # # 1.1 M Acres treated per year
+# planning_years = 20
 
 #########################################
 ## Parameters for SPATIAL OPTIMIZATION ##

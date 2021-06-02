@@ -1,15 +1,15 @@
 
 load_dataset <- function(path_to_file) {
   file_type <- str_sub(path_to_file, start= -3)
-  print("Loading Dataset")
+  message("Loading Dataset")
   if (file_type == "dbf") {
     standDT <- data.table(read.dbf(path_to_file))
-    print("Read stand file from DBF")
+    message("Read stand file from DBF")
   } else if (file_type == "csv") {
     standDT <- data.table(fread(path_to_file, header = TRUE))
-    print("Read stand file from CSV")
+    message("Read stand file from CSV")
   } else {
-    ('Input format not recognized')
+    message('Input format not recognized')
   }
   return(standDT)
 }
@@ -131,9 +131,9 @@ weight_values_to_string <- function(min = 0, max = 5, step =1) {
 
 weight_string_to_values <- function(weight_str) {
   vals <- str_split(weight_str, ' ')
-  # print(vals)
+  # message(vals)
   vals <- sapply(vals, as.numeric)
-  # print(vals[,1])
+  # message(vals[,1])
 }
 
 #' Weight priorities for selection
@@ -332,7 +332,7 @@ apply_treatment <- function(stands,
     # filter stands by threshold type criteria
     filtered_stands <- stand_filter(stands, all_thresholds[V1 == treatment_types[t], ])
 
-    print(paste0(nrow(filtered_stands), " stands meet treatment thresholds for ", treatment_types[t]))
+    message(paste0(nrow(filtered_stands), " stands meet treatment thresholds for ", treatment_types[t]))
 
     # set project target
     if (fixed_target == TRUE) {
@@ -369,7 +369,7 @@ set_percentage_area_target <- function(stands, pa_target, pa_target_multiplier) 
 identify_nested_planning_areas <- function(grouped_by_pa) {
 
   # Step 3: Identify the best planning areas within each nest.
-  print("Selecting planning area subunits")
+  message("Selecting planning area subunits")
   groupedByPA$system <- 1
 
   if (system_constraint == TRUE) {
@@ -388,7 +388,7 @@ identify_nested_planning_areas <- function(grouped_by_pa) {
                                             tally_by = nesting_unit,
                                             grouped_target = "harvestTarg")
   paSubunits <- paSubunits[order(-paSubunits$weightedPriority),]
-  print("adding treatment rank")
+  message("adding treatment rank")
   paSubunits$treatment_rank <- seq(1:nrow(paSubunits))
 }
 
