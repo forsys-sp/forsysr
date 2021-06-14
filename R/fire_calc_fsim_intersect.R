@@ -12,7 +12,6 @@ hex_dat <- hex %>% dplyr::select(CELLID = CELL_ID, OWNER = OwnerCat, PA_ID, AREA
 
 # load fire perimeters from fSIM geodatabase
 fp <- st_read('~/Dropbox/!gis/FSim19_RND600years_WestUS.gdb/', 'Perimeters_R1_R6')
-fp <- st_read('~/Dropbox/!gis/Ecoregion_futures.gdb/', 'Perims')
 
 # divide FSIM years into 20 years folds (n = 30)
 set.seed(1); fsim_yrs <-  unique(fp$YEAR)[createFolds(unique(fp$YEAR)) %>% unlist() %>% as.numeric()]
@@ -28,18 +27,17 @@ fsim_ww <- 1:30 %>% map(function(i){
 
   print(i)
 
-  # identify fsim years for scenario i
-  fsim_yrs_i <- fsim_yrs[1:20 + 20*(i-1)]
-
   # pull future fire perimeters
   fp_i <- fp %>%
-    filter(YEAR %in% fsim_yrs_i) %>%
-    mutate(FIRE_YR = factor(YEAR, fsim_yrs_i) %>% as.numeric()) %>%
+    # filter(YEAR %in% fsim_yrs_i) %>%
+    filter(Scenario == i) %>%
+    # mutate(FIRE_YR = factor(YEAR, fsim_yrs_i) %>% as.numeric()) %>%
+    mutate(FIRE_YR = factor(YEAR) %>% as.numeric()) %>%
     arrange(FIRE_YR, START_DAY) %>%
     mutate(SCN_ID = !!i) %>%
     mutate(FIRE_NU = paste0(Pyrome, FIRE_NUMBE) %>% as.numeric())
 
-  # convert fire future into raster stack
+   # convert fire future into raster stack
   fpr_i <- fasterize(fp_i, r, field = 'FIRE_NU', fun = 'first', by='FIRE_YR')
 
   # intersect fire data and cell id
@@ -80,3 +78,11 @@ fsim_ww %>% map_dfr(function(x){
     arrange(SCN_ID, CELL_ID, FIRE_YR)
 }) %>% write.csv('data/hexnet_west_fsim19_30reps_intersect.csv', row.names = F)
 
+tmp <- fsim_ww %>% map_dfr(function(x){
+  out <- x %>% dplyr::select(SCN_ID, CELL_ID = CELLID, PA_ID, FIRE_YR, FIRE_NUMBER, OWNER, AREA_HA) %>%
+    arrange(SCN_ID, CELL_ID, FIRE_YR)
+})
+
+tmp %>% group_by(SCN_ID) %>% summarize(AREA_HA = sum(AREA_HA)) %>% arrange(AREA_HA) %>% ggplot(aes(x=factor(SCN_ID), y=AREA_HA)) + geom_point()
+
+# highest = sc

@@ -6,7 +6,11 @@ logisticFunc = function(yr, mid = 5, normalize = T, start = 0, end = 1){
 }
 
 process_outputs <- function(
-  config_file=''
+  config_file='',
+  project_tag='proj',
+  stand_tag='stnd',
+  write_tags=NULL,
+  fires_dat
   ) {
 
   # If a config file has been selected, source it to read in variables
@@ -18,32 +22,20 @@ process_outputs <- function(
 
   }
 
-  relative_output_path = glue('output/{scenario_name}')
+  relative_output_path = glue('output/{scenario_name}{write_tags}')
+  files <- list.files(relative_output_path, full.names = T) %>%
+    stringr::str_subset('combined', negate = T)
 
   # combine stand level outputs & tag w/ forsys type
-  list.files(relative_output_path, pattern = 'stnd', full.names = T) %>%
-    map_dfr(~read.csv(.)) %>% relocate(SCN_ID) %>%
-    # process_stand_outputs(forsys_type = 'Dyn') %>%
-    write.csv(paste0(relative_output_path, '/stnd_combined.csv'), row.names = F)
+  stnd_out <- files %>%
+    stringr::str_subset(paste0(stand_tag, '.*', write_tags)) %>%
+    map_dfr(~data.table::fread(.))
 
-  # combine project level outputs & tag w/ forsys type
-  list.files(relative_output_path, pattern = 'proj', full.names = T) %>%
-    map_dfr(~read.csv(.)) %>% relocate(SCN_ID) %>%
-    write.csv(paste0(relative_output_path, '/proj_combined.csv'), row.names = F)
-
-}
-
-process_stand_outputs <- function(lf, forsys_type){
-
-  if(exists('f_df') == FALSE) f_df <- data.table::fread('data/hexnet_west_fsim19_30reps_intersect.csv')
-  if(exists('hex') == FALSE) hex <- fread('data/hexnet_west_fs.csv')
-
-  out <- lf %>%
-    purrr::map_dfr(read.csv) %>%
-    dplyr::select(-AREA_HA, -aTR_MS) %>%
-    full_join(f_df %>% filter(OWNER == 'USFS', SCN_ID %in% c(1:10))) %>%
-    left_join(hex %>% dplyr::select(CELL_ID, AREA_HA, aTR_MS)) %>%
-    mutate(TYPE = !!forsys_type) %>%
+  # classify events
+  stnd_out <- stnd_out %>% dplyr::select(-AREA_HA, -aTR_MS) %>%
+    full_join(fires_dat) %>%
+    left_join(hex %>% dplyr::select(CELL_ID, OWNER = OwnerCat, AREA_HA, aTR_MS), by='CELL_ID') %>%
+    mutate(tag = write_tags) %>%
     mutate(EVENT = case_when(
       ETrt_YR <= FIRE_YR ~ 'T_F', # treatment then fire
       FIRE_YR < ETrt_YR ~ 'F_T', # fire then treatment
@@ -52,20 +44,15 @@ process_stand_outputs <- function(lf, forsys_type){
       is.na(ETrt_YR) & is.na(FIRE_YR) ~ 'N' # no event
     ))
 
-  # take first event as event year
-  suppressWarnings(
-    out$YEAR <- out %>% dplyr::select(ETrt_YR, FIRE_YR) %>% apply(1, min, na.rm=T)
-  )
+  stnd_out %>% data.table::fwrite(paste0(relative_output_path, '/_stnd', write_tags, '_combined.csv'), row.names = F)
 
-  # simplify data before writing to csv
-  out <- out %>%
-    arrange(TYPE, SCN_ID, YEAR, PA_ID, CELL_ID) %>%
-    dplyr::select(-AREA_HA, -aTR_MS, -OWNER) %>%
-    left_join(hex %>% dplyr::select(CELL_ID, AREA_HA, aTR_MS)) %>%
-    mutate(AREA_HA = round(AREA_HA), aTR_MS = round(aTR_MS, 6)) %>%
-    relocate(TYPE, SCN_ID, YEAR, PA_ID)
+  # combine project level outputs & tag w/ forsys type
+  proj_out <- files %>%
+    stringr::str_subset(paste0(project_tag, '.*', write_tags)) %>%
+    map_dfr(~data.table::fread(.)) %>% mutate(tag = write_tags)
 
-  return(out)
+  proj_out %>% data.table::fwrite(paste0(relative_output_path, '/_proj', write_tags, '_combined.csv'), row.names = F)
+
 }
 
 addImg <- function(
@@ -147,7 +134,7 @@ plotHexPt2 <- function(hex_ps, field=NULL, adjSize=NULL, plotSt=NULL,...){
     if(is.null(field)){
       plot(hex_ps %>% st_geometry(), add=T, ...)
     } else {
-      plot(hex_ps[,field], pch=15, cex=size, add=T, ...)
+      plot(hex_ps[,field], pch=16, cex=size, add=T, ...)
     }
 
   } else {
@@ -155,7 +142,7 @@ plotHexPt2 <- function(hex_ps, field=NULL, adjSize=NULL, plotSt=NULL,...){
     if(is.null(field)){
       plot(hex_ps %>% st_geometry(), ...)
     } else {
-      plot(hex_ps[,field], pch=15, cex=size, ...)
+      plot(hex_ps[,field], pch=16, cex=size, ...)
     }
   }
 }

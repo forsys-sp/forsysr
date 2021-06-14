@@ -23,10 +23,14 @@ states <- ne_states(country = 'united states of america', returnclass = 'sf') %>
   dplyr::select(postal) %>%
   st_transform(5070)
 
-usfs <- st_read('../../Dropbox/!gis/boundaries/usfs_boundaries_western.shp') %>%
-  st_geometry() %>% st_transform(5070)
+usfs <- st_read('../../Dropbox/!gis/boundaries/S_USA.AdministrativeForest.shp') %>%
+  summarize() %>% st_geometry() %>% st_transform(5070)
 
 prj <- st_read('../../Dropbox/!gis/Firesheds_CONUS.gdb/', 'ProjectAreas') %>%
   st_geometry() %>% st_transform(5070)
 
 ny <- st_read('../../Dropbox/!gis/north_yuba_watershed.geojson')
+
+roads <- st_read('../../Dropbox/!gis/natural_earth_10m.gpkg', 'ne_10m_roads_north_america') %>% st_transform(5070) %>% filter(type == 'Freeway')
+
+pa <- st_read('../../Dropbox/!gis/Firesheds_CONUS.gdb/', 'ProjectAreas') %>% st_transform(5070)
