@@ -59,11 +59,11 @@ server <- function(input, output, session) {
 		})
 
 	tab_tracker <- observe({
-		print(paste('TAB TRACKER', input$main_nav))
+		print(paste('TAB TRACKER tab_tracker', input$main_nav))
 		})
 
 	sspa_tracker <- observe({
-		print(paste('TAB TRACKER', input$sspa_nav))
+		print(paste('TAB TRACKER sspa_tracker', input$sspa_nav))
 		})
 
 	extra_help_toggle <- reactive({
@@ -79,6 +79,15 @@ server <- function(input, output, session) {
 		}
 	})
 
+	# On the app landing page, this is the "Load Scenario" button function
+	observeEvent(input$go_to_saved_scenario_but, {
+		updateTabsetPanel(session, 'main_nav', selected = 'select_scenario_panel')
+	})
+
+	# On the app landing page, this is the "New Scenario" button function
+	observeEvent(input$go_to_new_scenario_but, {
+		updateTabsetPanel(session, 'main_nav', selected = 'scenario_setup_panel_advanced')
+	})
 	
 
 	########################################################
@@ -497,7 +506,7 @@ server <- function(input, output, session) {
 	                               'ETrt_TVMBF_PCP',
 	                               'ETrt_HUSUM_PCP',
 	                               'ETrt_AREA_HA')
-	  }
+	  	}
 
 
 		})
