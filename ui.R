@@ -2,16 +2,16 @@ welcome_panel <- tabPanel(
 'Welcome',
 mainPanel(
 	fluidRow(
-		h1('Welcome to forsys.app'), 
+		h1('Welcome to forsys.app'),
 		p('forsys.app implements Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam porta augue vitae leo imperdiet accumsan. Suspendisse viverra ullamcorper suscipit. Nunc quis massa augue. Integer bibendum porta pellentesque. Proin volutpat mi auctor cursus convallis. Vestibulum sit amet lorem nunc. Sed sit amet lacus at urna feugiat hendrerit. Nulla dapibus lacinia sapien, nec commodo turpis rhoncus vitae. Sed vehicula fermentum enim sit amet suscipit. Nunc dictum augue vel nulla malesuada, eget eleifend libero bibendum. Suspendisse at neque consequat, interdum metus id, suscipit ante. Nam eu lobortis purus, nec pretium massa. Pellentesque nulla dolor, porttitor sit amet sapien nec, lobortis porta diam.')
 		),
 	br(),
 	fluidRow(
-		column(4, align = 'center', 
-			actionButton('go_to_saved_scenario_but', 'Load Scenario', icon=icon('save'))), 
-		column(4, align = 'center', 
-			actionButton('go_to_new_scenario_but', 'New Scenario', icon=icon('plus-square'))), 
-		column(4, align = 'center', 
+		column(4, align = 'center',
+			actionButton('go_to_saved_scenario_but', 'Load Scenario', icon=icon('save'))),
+		column(4, align = 'center',
+			actionButton('go_to_new_scenario_but', 'New Scenario', icon=icon('plus-square'))),
+		column(4, align = 'center',
 			actionButton('get_help_but', 'Get Help', icon=icon('question')))
 		)
 	)
@@ -48,7 +48,7 @@ scenario_buttons_text<- fluidRow(
 	)
 
 scenario_setup_panel_simple <- tabPanel(
-	value = 'scenario_setup_panel_simple', 
+	value = 'scenario_setup_panel_simple',
 	'Simple Mode',
 	# hr(),
 	scenario_buttons_text,
@@ -152,20 +152,20 @@ scenario_setup_panel_simple <- tabPanel(
 
 
 scenario_setup_panel_advanced <- tabPanel(
-	value = 'scenario_setup_panel_advanced', 
+	value = 'scenario_setup_panel_advanced',
 	'Guided Mode',
 	# hr(),
 	scenario_buttons_text,
 	br(),
 	fluidRow(
-		checkboxInput('extra_help_chk', 'Extra Help')
+		# checkboxInput('extra_help_chk', 'Extra Help')
 		),
 	tabsetPanel(
-		id = 'sspa_nav', 
+		id = 'sspa_nav',
 		tabPanel(
 			'Basics',
-			value = 'sspa_basics', 
-			br(), 
+			value = 'sspa_basics',
+			br(),
 			div(
 				class = 'extra_help',
 				p('Start Here. Enter a name for your scenario and select a data file to upload.')
@@ -190,8 +190,8 @@ scenario_setup_panel_advanced <- tabPanel(
 			),
 		tabPanel(
 			'Priorities',
-			value = 'sspa_priorities', 
-			br(), 
+			value = 'sspa_priorities',
+			br(),
 			selectInput('stand_id_field', 'Stand ID Field', choices = NULL, multiple = FALSE, selectize = TRUE),
 			selectInput('pcp_spm_fields', 'Fields to calculate PCP and SPM on', choices = NULL, multiple = TRUE, selectize = TRUE),
 			selectInput('treatment_available_field', 'Available for Treatment Field', choices = NULL, multiple = FALSE, selectize = TRUE),
@@ -205,9 +205,9 @@ scenario_setup_panel_advanced <- tabPanel(
 					)
 				),
 		tabPanel(
-			'Planning Areas', 
-			value = 'sspa_pa', 
-			br(), 
+			'Planning Areas',
+			value = 'sspa_pa',
+			br(),
 			selectInput('planning_unit_id_field', 'Planning Unit ID', choices = NULL, multiple = FALSE, selectize = TRUE),
 
 			textInput('pa_target_field', 'Planning Unit Constraint', 'AREA_MAN'),
@@ -224,9 +224,9 @@ scenario_setup_panel_advanced <- tabPanel(
 				),
 			),
 		tabPanel(
-			'Nesting', 
-			value = 'sspa_nesting', 
-			br(), 
+			'Administrative Units',
+			value = 'sspa_nesting',
+			br(),
 			checkboxInput('use_au', 'Multiple Administrative Units'),
 			div(
 				id = 'au_items',
@@ -237,21 +237,21 @@ scenario_setup_panel_advanced <- tabPanel(
 				),
 			),
 		tabPanel(
-			'Thresholds', 
-			value = 'sspa_thresholds', 
-			br(), 
+			'Thresholds',
+			value = 'sspa_thresholds',
+			br(),
 			textAreaInput('thresholds_expr', 'Thresholds, one per line in the form "Manageable man_alldis == 1"'),
 			radioButtons('threshold_operator', 'Thresholds Operator', choices = c('AND', 'OR'), inline = TRUE),
 			),
 		tabPanel(
 			'Output',
-			value = 'sspa_output', 
-			br(), 
+			value = 'sspa_output',
+			br(),
 			selectInput('outputs_select', 'Choose Outputs', choices = NULL, multiple = TRUE, selectize = TRUE),
 			selectInput('output_grouping_fields', 'Aggregate results by', choices = NULL, multiple = TRUE, selectize = TRUE),
 			checkboxInput('write_stand_outputs_chk', 'Write Stand Outputs'),
 			checkboxInput('overwrite_output_chk', 'Overwrite Outputs'),
-			) 
+			)
 		) # tabsetPanel
 	)
 
@@ -277,8 +277,8 @@ scenario_select_main_panel <- navbarMenu(
 	)
 
 scenario_setup_main_panel <- navbarMenu(
-	'Scenario Setup', 
-	scenario_setup_panel_simple,
+	'Scenario Setup',
+	# scenario_setup_panel_simple,
 	scenario_setup_panel_advanced)
 
 simulation_main_panel <- tabPanel(
