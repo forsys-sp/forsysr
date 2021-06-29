@@ -190,6 +190,7 @@
           replace(is.na(.), 0) %>%
           arrange(-weightedPriority) %>%
           mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA))
+        fwrite(projects_selected, "prioritized_projects.csv")
 
         # randomize project rank if desired
         if(fire_random_projects){
@@ -200,10 +201,10 @@
             mutate(weightedPriority = sample(weightedPriority)) %>%
             dplyr::select(PA_ID, weightedPriority)
 
-          projects_selected <- projects_selected %>% dplyr::select(-weightedPriority) %>%
-            left_join(p_weights_shuffled, by = !!stand_group_by) %>%
-            arrange(-weightedPriority) %>%
-            mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA))
+           projects_selected <- projects_selected %>% dplyr::select(-weightedPriority) %>%
+             left_join(p_weights_shuffled, by = stand_group_by) %>%
+             arrange(-weightedPriority) %>%
+             mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA))
         }
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -260,6 +261,9 @@
           if(fire_dynamic_forsys == TRUE) {
             stands_available <- stands_available %>% filter(CELL_ID %in% stands_burned$CELL_ID == FALSE)
           }
+
+          # order planning areas for treatment post-fire to identify decision-shifts.
+
         }
       } # END YEAR LOOP
 
@@ -280,7 +284,7 @@
       stand_fields_to_write = c(stand_field, stand_group_by, 'ETrt_YR', 'AREA_HA', 'aTR_MS', names(tibble(...)))
       if(!is.null(fire_intersect_table)) {
         stand_fields_to_write <- c(stand_fields_to_write, 'FIRE_YR')
-        stands_selected_out <- stands_selected_out %>% full_join(fires)
+        stands_selected_out <- stands_selected_out %>% merge(fires, all.x = TRUE)
       }
 
       stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, write_tags, ".csv")
@@ -288,9 +292,10 @@
 
       # WRITE: write project to file ...........
 
+
       # group *selected* stands by project
       projects_etrt_out <- stands_selected_out %>%
-        left_join(stands_prioritized %>% dplyr::select(output_fields, 'weightedPriority')) %>%
+        merge(stands_prioritized %>% dplyr::select('CELL_ID', output_fields, 'weightedPriority'), by = c('AREA_HA', 'aTR_MS', 'CELL_ID', 'weightedPriority'), all.x = TRUE) %>%
         create_grouped_dataset(grouping_vars = c(stand_group_by, 'ETrt_YR'), summing_vars = c(output_fields, 'weightedPriority')) %>%
         arrange(ETrt_YR, -weightedPriority) %>%
         rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields) %>%
