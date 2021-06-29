@@ -25,8 +25,8 @@ hex_ps <- hex_p %>%
   dplyr::select(CELL_ID) %>%
   left_join(pdat) %>%
   left_join(hex %>% dplyr::select(CELL_ID, OwnerCat, AREA_HA))
-plotBg(state = st, bbox=bbox)
-hex_ps %>% plotHexPt2('EVENT', adjSize = adj, col='red', add=T)
+plotBg(bbox=bbox)
+hex_ps %>% plotHexPt2('FIRE_YR', adjSize = adj, col='red', add=T)
 
 # Misc animations examples .......
 

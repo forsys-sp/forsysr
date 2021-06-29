@@ -277,15 +277,19 @@
       # WRITE: write stands to file ...........
 
       # tag stands with specific scenario attributes
-      stands_selected_out <- stands_treated %>% dplyr::select(CELL_ID,  ETrt_YR) %>%
-        left_join(stands_prioritized %>% dplyr::select(CELL_ID, PA_ID, weightedPriority, AREA_HA, aTR_MS)) %>%
-        bind_cols(...)
-
+      stands_selected_out <- stands_treated %>% dplyr::select(CELL_ID,  ETrt_YR)
       stand_fields_to_write = c(stand_field, stand_group_by, 'ETrt_YR', 'AREA_HA', 'aTR_MS', names(tibble(...)))
+
       if(!is.null(fire_intersect_table)) {
         stand_fields_to_write <- c(stand_fields_to_write, 'FIRE_YR')
         stands_selected_out <- stands_selected_out %>% merge(fires, all.x = TRUE)
       }
+
+      stands_selected_out <- stands_selected_out %>%
+        left_join(stands_prioritized %>%
+                    dplyr::select(CELL_ID, PA_ID, weightedPriority, AREA_HA, aTR_MS) %>%
+                    mutate(AREA_HA = round(AREA_HA))) %>%
+        bind_cols(...)
 
       stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, write_tags, ".csv")
       fwrite(stands_selected_out %>% dplyr::select(stand_fields_to_write), stand_fn, row.names = FALSE)
