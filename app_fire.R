@@ -25,15 +25,16 @@ source('server.R')
 source('R/fire_misc_func.R')
 
 input_stand_fire_intersect <- 'data/west_usfs_hexnet_fsim19_omernik6x_deciles5x_futures20x_intersect.csv'
+#input_stand_fire_intersect <- 'data/hexnet_west_fsim19_30reps_intersect.csv'
+
 
 input_stand <- 'data/hexnet_west_fs.csv'
 
-if(exists('f_df') == FALSE) f_df <- data.table::fread(input_stand_fire_intersect)
+if(exists('f_df') == FALSE) f_df <- fread(input_stand_fire_intersect)
 if(exists('hex') == FALSE) hex <- fread(input_stand)
 
-
 # number of simulation years
-planning_years = 20
+planning_years = 5
 
 # 10-year ramp-up
 #annual_project_target = logisticFunc(1:10, start= 0, end=1.228e6)
@@ -49,7 +50,8 @@ annual_project_target = max_rx_rate * logisticFunc(yr = 1:10, mid = 5, normalize
 ## Run FORSYS W/ FIRE                  ##
 #########################################
 
-run(config_file = 'config_TenYearPlan_WW_FS.R', fire_dynamic_forsys = TRUE, fire_random_projects = FALSE, fire_intersect_table = f_df %>% filter(DECILE == 5, FUTURE == 1))
+run('config_TenYearPlan_WW_FS.R', fire_dynamic_forsys = TRUE, write_tags = '_Dyn_3x', fire_intersect_table = f_df %>% filter(FUTURE == 10))
+run('config_TenYearPlan_WW_FS.R', fire_dynamic_forsys = TRUE, fire_intersect_table = f_df %>% filter(DECILE == 5, FUTURE == 1))
 
 # run multiple scenarios using purrr ...
 
@@ -80,8 +82,8 @@ process_outputs('config_TenYearPlan_WW_FS.R',
 #########################################
 
 # see R/fire_misc_animations.R
-
 tmp <- fread('output/WW_10yr_FS_80p/_stnd_combined.csv')
 tmp %>% group_by(DECILE, FUTURE) %>% summarize(AREA_HA = sum(AREA_HA, na.rm=T))
+
 
 
