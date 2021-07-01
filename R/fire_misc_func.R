@@ -9,7 +9,8 @@ process_outputs <- function(
   config_file='',
   project_tag='proj',
   stand_tag='stnd',
-  write_tags=NULL,
+  scenario_param_columns = NULL,
+  write_tags = NULL,
   fires_dat
   ) {
 
@@ -22,8 +23,8 @@ process_outputs <- function(
 
   }
 
-  relative_output_path = glue('output/{scenario_name}{write_tags}')
-  files <- list.files(relative_output_path, full.names = T) %>%
+  relative_output_path = glue('output/{scenario_name}')
+  files <- list.files(relative_output_path, full.names = T, recursive = T) %>%
     stringr::str_subset('combined', negate = T)
 
   # combine stand level outputs & tag w/ forsys type
@@ -32,10 +33,12 @@ process_outputs <- function(
     map_dfr(~data.table::fread(.))
 
   # classify events
-  stnd_out <- stnd_out %>% dplyr::select(-AREA_HA, -aTR_MS) %>%
+  stnd_out <- stnd_out %>% dplyr::select(CELL_ID, ETrt_YR, FIRE_YR, scenario_param_columns) %>%
     full_join(fires_dat) %>%
-    left_join(hex %>% dplyr::select(CELL_ID, OWNER = OwnerCat, AREA_HA, aTR_MS), by='CELL_ID') %>%
-    mutate(tag = write_tags) %>%
+    left_join(hex %>% dplyr::select(CELL_ID, OWNER = OwnerCat, AREA_HA, aTR_MS)) %>%
+    mutate(aTR_MS_log10 = round(log10(aTR_MS),3)) %>%
+    dplyr::select(-aTR_MS) %>%
+    mutate(AREA_HA = round(AREA_HA)) %>%
     mutate(EVENT = case_when(
       ETrt_YR <= FIRE_YR ~ 'T_F', # treatment then fire
       FIRE_YR < ETrt_YR ~ 'F_T', # fire then treatment
@@ -49,7 +52,7 @@ process_outputs <- function(
   # combine project level outputs & tag w/ forsys type
   proj_out <- files %>%
     stringr::str_subset(paste0(project_tag, '.*', write_tags)) %>%
-    map_dfr(~data.table::fread(.)) %>% mutate(tag = write_tags)
+    map_dfr(~data.table::fread(.))
 
   proj_out %>% data.table::fwrite(paste0(relative_output_path, '/_proj', write_tags, '_combined.csv'), row.names = F)
 

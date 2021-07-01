@@ -73,8 +73,7 @@
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
     fire_intersect_table = NULL,
-    write_tags = '',
-    ...
+    write_tags = ''
     ) {
 
     set.seed(1)
@@ -84,15 +83,18 @@
       configuration_file <- config_file
       setwd(dirname(configuration_file))
       source(configuration_file, local = TRUE)
-    } else {
-
     }
 
     source('R/forsys_libraries.R')
     source('R/forsys_functions.R')
 
+    # collapse write tags into string if provided as data.frame
+    if(write_tags %>% length > 1 & !names(write_tags) %>% is.null){
+      write_tags_txt <- paste(names(write_tags), write_tags, sep='_', collapse = '_')
+    } else write_tags_txt <- write_tags
+
     options(scipen = 9999)
-    relative_output_path = glue('output/{scenario_name}{write_tags}')
+    relative_output_path = glue('output/{scenario_name}/{write_tags_txt}')
 
     # Check if output directory exists
     absolute_output_path = file.path(getwd(), relative_output_path)
@@ -137,7 +139,8 @@
     threshold_dat <- make_thresholds(thresholds = thresholds)
 
     # set up weighting scenarios
-    weights <- weight_priorities(numPriorities = length(priorities), weights = weighting_values[1])
+    weights <- weight_priorities(numPriorities = length(priorities),
+                                 weights = weighting_values[1])
 
     # Run selection code for each set of weights
     for (w in 1:nrow(weights)) { # START WEIGHT LOOP
@@ -185,7 +188,8 @@
 
         # group selected stands by project
         projects_selected <- stands_selected %>%
-          create_grouped_dataset(grouping_vars = stand_group_by, summing_vars = c(output_fields, "weightedPriority")) %>%
+          create_grouped_dataset(grouping_vars = stand_group_by,
+                                 summing_vars = c(output_fields, "weightedPriority")) %>%
           rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields) %>%
           replace(is.na(.), 0) %>%
           arrange(-weightedPriority) %>%
@@ -229,8 +233,6 @@
           dplyr::select(CELL_ID, PA_ID, ETrt_YR, treatment_rank, weightedPriority) %>%
           bind_rows(stands_treated)
 
-        # if(simulate_fires) stands_treated <- stands_treated %>% left_join(fires %>% dplyr::select(CELL_ID, FIRE_YR, FIRE_NUMBER))
-
         # remove stands or project areas that were treated from available stands
         stands_available <- stands_available %>%
           filter((CELL_ID %in% stands_treated$CELL_ID == FALSE) & (PA_ID %in% stands_treated$PA_ID == FALSE))
@@ -241,9 +243,7 @@
                     stands_treated %>% filter(ETrt_YR == yr) %>% pull(PA_ID) %>% n_distinct(),
                     'projects'))
 
-
         if(!is.null(fire_intersect_table)) {
-          # stands_treated <- stands_treated %>% left_join(fires %>% dplyr::select(CELL_ID, FIRE_YR, FIRE_NUMBER), by=stand_field)
 
           # record stands that burned this year
           stands_burned <- stands %>%
@@ -271,36 +271,34 @@
       # 5. WRITE DATA -------------
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      message('Writing output files for stands and planning areas')
-      write_tags <- paste0(write_tags, '_', paste(names(tibble(...)), as.numeric(tibble(...)), sep = '', collapse = '_'))
-
       # WRITE: write stands to file ...........
+      message('Writing output files for stands and planning areas')
 
       # tag stands with specific scenario attributes
-      stands_selected_out <- stands_treated %>% dplyr::select(CELL_ID,  ETrt_YR)
-      stand_fields_to_write = c(stand_field, stand_group_by, 'ETrt_YR', 'AREA_HA', 'aTR_MS', names(tibble(...)))
+      stands_selected_out <- stands_treated %>% dplyr::select(!!stand_field, !!stand_group_by, ETrt_YR)
 
-      if(!is.null(fire_intersect_table)) {
-        stand_fields_to_write <- c(stand_fields_to_write, 'FIRE_YR')
-        stands_selected_out <- stands_selected_out %>% merge(fires, all.x = TRUE)
-      }
+      if(!is.null(fire_intersect_table))
+        stands_selected_out <- stands_selected_out %>%
+          left_join(fires %>% dplyr::select(CELL_ID, FIRE_YR, FIRE_NUMBER), by=stand_field)
 
+      # write out minimal stand information
+      stands_selected_out <- stands_selected_out %>% bind_cols(write_tags)
       stands_selected_out <- stands_selected_out %>%
-        left_join(stands_prioritized %>%
-                    dplyr::select(CELL_ID, PA_ID, weightedPriority, AREA_HA, aTR_MS) %>%
-                    mutate(AREA_HA = round(AREA_HA))) %>%
-        bind_cols(...)
+        left_join(stands_prioritized %>% dplyr::select(!!stand_field, output_fields),
+                  by = stand_field)
 
-      stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, write_tags, ".csv")
-      fwrite(stands_selected_out %>% dplyr::select(stand_fields_to_write), stand_fn, row.names = FALSE)
+      stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', write_tags_txt, ".csv")
+      fwrite(stands_selected_out, stand_fn, row.names = FALSE)
 
       # WRITE: write project to file ...........
 
-
       # group *selected* stands by project
       projects_etrt_out <- stands_selected_out %>%
-        merge(stands_prioritized %>% dplyr::select('CELL_ID', output_fields, 'weightedPriority'), by = c('AREA_HA', 'aTR_MS', 'CELL_ID', 'weightedPriority'), all.x = TRUE) %>%
-        create_grouped_dataset(grouping_vars = c(stand_group_by, 'ETrt_YR'), summing_vars = c(output_fields, 'weightedPriority')) %>%
+        dplyr::select(!!stand_field, ETrt_YR) %>%
+        left_join(stands_prioritized %>% dplyr::select(stand_field, stand_group_by, output_fields, 'weightedPriority'),
+                  by = stand_field) %>%
+        create_grouped_dataset(grouping_vars = c(stand_group_by, 'ETrt_YR'),
+                               summing_vars = c(output_fields, 'weightedPriority')) %>%
         arrange(ETrt_YR, -weightedPriority) %>%
         rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields) %>%
         replace(is.na(.), 0)
@@ -315,18 +313,17 @@
       projects_selected_out <- projects_etrt_out %>%
         inner_join(projects_esum_out, by=stand_group_by) %>%
         replace(is.na(.), 0) %>%
-        dplyr::select(-ETrt_YR, ETrt_YR) %>%
         arrange(ETrt_YR, -weightedPriority) %>%
         mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA))
 
       # tag project with specific scenario attributes
-      projects_selected_out <- projects_selected_out %>% bind_cols(...)
+      projects_selected_out <- projects_selected_out %>% bind_cols(write_tags)
 
       # assign weight scenario values to project out
       projects_selected_out[,paste0('Pr_', 1:length(priorities), '_', priorities)] = weights[1,]
 
       # write tag for selection scenario
-      project_fn = paste0(relative_output_path, "/proj_", scenario_name, write_tags,".csv")
+      project_fn = paste0(relative_output_path, "/proj_", scenario_name,  '_', write_tags_txt,".csv")
       fwrite(projects_selected_out, file = project_fn, sep = ",", row.names = FALSE)
 
       } # END WEIGHT LOOP
