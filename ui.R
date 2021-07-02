@@ -189,6 +189,10 @@ scenario_setup_panel_advanced <- tabPanel(
 
 			),
 		tabPanel(
+			'Data Preview',
+			dataTableOutput('input_data')
+			), #tabPanel
+		tabPanel(
 			'Priorities',
 			value = 'sspa_priorities',
 			br(),
@@ -232,10 +236,17 @@ scenario_setup_panel_advanced <- tabPanel(
 				id = 'au_items',
 				selectInput('au_id_field', 'Administrative Unit ID', choices = NULL, multiple = FALSE, selectize = TRUE),
 				textInput('au_target_field', 'Administrative Unit Constraint', 'AREA_MAN'),
-				selectInput('au_unit_field', 'Administrative Unit Unit', choices = NULL, multiple = FALSE, selectize = TRUE),
-				numericInput('au_target_multiplier', 'Administrative Unit Multiplier', 1.0)
+				tabsetPanel(
+					tabPanel(id = 'au_variable_target_panel', 'Variable Constraint',
+						br(),
+						selectInput('au_unit_field', 'Administrative Unit Unit', choices = NULL, multiple = FALSE, selectize = TRUE),
+						numericInput('au_target_multiplier', 'Administrative Unit Constraint Multiplier', 1.0)),
+					tabPanel(id = 'au_fixed_target_panel', 'Fixed Constraint',
+						br(),
+						numericInput('au_fixed_target_value', 'Fixed Constraint Amount', 2000))
 				),
 			),
+		),
 		tabPanel(
 			'Thresholds',
 			value = 'sspa_thresholds',

@@ -69,22 +69,14 @@
     fixed_target = FALSE,
     fixed_area_target = 2000,
     overwrite_output = TRUE,
-    run_with_shiny = FALSE,
+    run_with_shiny = FALSE
     ) {
 
-    set.seed(1)
-
-    # If a config file has been selected, source it to read in variables
-    if (length(config_file) > 0) {
-      configuration_file <- config_file
-      setwd(dirname(configuration_file))
-      source(configuration_file, local = TRUE)
-    } else {
-
-    }
 
     source('R/forsys_libraries.R')
     source('R/forsys_functions.R')
+
+    annual_project_target = 450000
 
     options(scipen = 9999)
     relative_output_path = glue('output/{scenario_name}')
@@ -151,7 +143,7 @@
 
       planning_years = 1
       print(paste('Running static version of ForSys'))
-      
+
 
       for(yr in 1:planning_years){ # BEGIN YEAR LOOP
 
@@ -200,7 +192,7 @@
         satnds_w_select <- stands_w_select %>%
           left_join(projects_w_select %>% dplyr::select(PA_ID, ETrt_YR), by='PA_ID')
 
-        
+
 
       } # END YEAR LOOP
 
@@ -223,7 +215,7 @@
 
         # stand_fields_to_write = c("SCN_ID", stand_field, stand_group_by, 'ETrt_YR', 'FIRE_YR', 'FIRE_NUMBER', 'AREA_HA', 'aTR_MS')
         stands_w_select_out %>%
-          mutate(SCN_ID = !!fire_scenario) %>%
+          # mutate(SCN_ID = !!fire_scenario) %>%
           write_stand_outputs_to_file(dir = relative_output_path,
                                     name = paste0(scenario_name),
                                     write_fields = stand_fields_to_write)
