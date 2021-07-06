@@ -23,22 +23,11 @@ source('server.R')
 
 source('R/fire_misc_func.R')
 
-input_stand <- 'data/hexnet_west_fs.csv'
-if(exists('hex') == FALSE) hex <- fread(input_stand)
-
 #input_stand_fire_intersect <- 'data/hexnet_west_fsim19_30reps_intersect.csv'
 input_stand_fire_intersect <- 'data/west_usfs_hexnet_fsim19_omernik6x_deciles5x_futures20x_intersect.csv'
 if(exists('f_df') == FALSE) f_df <- fread(input_stand_fire_intersect)
 
-# number of simulation years
-planning_years = 20
-
-# 10-year ramp (6.6 M ha treated)
-max_rx_rate = 1200000 # maximum 1.2 million ha per year
-annual_project_target = max_rx_rate * logisticFunc(yr = 1:10, mid = 5, normalize = T)
-
-# 20-year plan w/ 10-year ramp-up
-#annual_project_target = logisticFunc(seq(1,10,length.out=10), start=0, end=4.332e5); annual_project_target[11:20] <- 4.332e5
+# !! planning_years, annual_project_target, annual_target_field defined in the config file
 
 #########################################
 ## Run FORSYS W/ FIRE                  ##
