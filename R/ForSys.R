@@ -23,9 +23,9 @@
   #'                  A blank field means all lands are included in the calculation.
   #' @param priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
   #' @param stand_group_by TODO
-  #' @param pa_target TODO
-  #' @param pa_unit TODO
-  #' @param pa_target_multiplier TODO
+  #' @param proj_target TODO
+  #' @param proj_unit TODO
+  #' @param proj_target_multiplier TODO
   #' @param nesting TODO
   #' @param nesting_group_by TODO
   #' @param nesting_target TODO
@@ -48,14 +48,16 @@
     num_reps = 1,
     input_standfile = '',
     write_stand_outputs = FALSE,
-    stand_field = 'Cell_ID',
+    stand_field = 'CELL_ID',
     pcp_spm = c(),
     land_base = '',
     priorities = c(),
     stand_group_by = '',
-    pa_target = '',
-    pa_unit = '',
-    pa_target_multiplier = 0.15,
+    proj_unit = '',
+    proj_target = '',
+    proj_target_multiplier = 0.15,
+    proj_fixed_target = FALSE,
+    proj_fixed_area_target = NULL,
     nesting = FALSE,
     nesting_group_by = NULL,
     nesting_target = NULL,
@@ -66,20 +68,35 @@
     include_stands = c("man_alldis == 1"),
     output_fields = c("AREA_HA", "TVMBF_STND", "TVMBF_PCP", "HUSUM_STND", "HUSUM_PCP"),
     grouping_variables = c("PA_ID", "Owner"),
-    fixed_target = FALSE,
-    fixed_area_target = 2000,
     overwrite_output = TRUE,
-    run_with_shiny = FALSE
+    run_with_shiny = FALSE,
+    fire_intersect_table = NULL,
+    fire_planning_years = 1,
+    fire_annual_target_field = NULL,
+    fire_annual_target = Inf,
+    fire_dynamic_forsys = FALSE,
+    fire_random_projects = FALSE,
+    write_tags = ''
     ) {
 
+
+    # If a config file has been selected, source it to read in variables
+    if (length(config_file) > 0) {
+      configuration_file <- config_file
+      setwd(dirname(configuration_file))
+      source(configuration_file, local = TRUE)
+    }
 
     source('R/forsys_libraries.R')
     source('R/forsys_functions.R')
 
-    annual_project_target = 450000
+    # collapse write tags into string if provided as data.frame
+    if(write_tags %>% length > 1 & !names(write_tags) %>% is.null){
+      write_tags_txt <- paste(names(write_tags), write_tags, sep='_', collapse = '_')
+    } else write_tags_txt <- write_tags
 
     options(scipen = 9999)
-    relative_output_path = glue('output/{scenario_name}')
+    relative_output_path = glue('output/{scenario_name}/{write_tags_txt}')
 
     # Check if output directory exists
     absolute_output_path = file.path(getwd(), relative_output_path)
@@ -87,39 +104,45 @@
       if (run_with_shiny) {
 
       } else {
-        print(paste0("Making output directory: ", absolute_output_path))
+        message(paste0("Making output directory: ", absolute_output_path))
       }
       dir.create(absolute_output_path, recursive=TRUE)
     } else {
       if (run_with_shiny) {
 
       } else {
-        print(paste0("output directory, ", absolute_output_path, ", already exists"))
+        message(paste0("output directory, ", absolute_output_path, ", already exists"))
       }
     }
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # !!!!! 1. PREP STANDS !!!!!!
+    # 1. PREP STANDS ------------
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    # # # Load data -------------
+    # # # Load data
     stands <- load_dataset(input_standfile)
+    if(!is.null(fire_intersect_table)) fires <- fire_intersect_table
 
     # Calculate SPM & PCP values
     stands <- stands %>%
       calculate_spm_pcp(filter = land_base,
                         fields = pcp_spm) %>%
-      add_target_field(pa_unit = pa_unit,
-                       pa_target = pa_target,
-                       pa_target_multiplier = pa_target_multiplier,
+      add_target_field(proj_unit = proj_unit,
+                       proj_target = proj_target,
+                       proj_target_multiplier = proj_target_multiplier,
                        stand_group_by = stand_group_by,
                        land_base = land_base)
+
+    # create objects for tracking treated and burnt stands
+    stands_treated <- NULL
+    stands_burned <- NULL
 
     # specify thresholds
     threshold_dat <- make_thresholds(thresholds = thresholds)
 
     # set up weighting scenarios
-    weights <- weight_priorities(numPriorities = length(priorities), weights = weighting_values[1])
+    weights <- weight_priorities(numPriorities = length(priorities),
+                                 weights = weighting_values[1])
 
     # Run selection code for each set of weights
     for (w in 1:nrow(weights)) { # START WEIGHT LOOP
@@ -127,118 +150,186 @@
       ## Step 0: create the weighted priorities.
       if (run_with_shiny) {
       } else {
-        print(paste0("Creating weighted priorities:",  w, " of ", nrow(weights)))
+        message(paste0("Creating weighted priorities:",  w, " of ", nrow(weights)))
       }
 
       # prep stand data
-      stands_w_available <- stands %>%
+      stands_prioritized <- stands %>%
         set_up_treatment_types() %>%
         set_up_priorities(w = w,
                           priorities = priorities,
                           weights = weights)
 
+      stands_available <- stands_prioritized
+
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-      # !!!! 2. SELECT STANDS !!!!!
+      # 2. SELECT STANDS ------------
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      planning_years = 1
-      print(paste('Running static version of ForSys'))
+      # threshold = filter
+      # constraint = target
 
+      for(yr in 1:fire_planning_years){ # BEGIN YEAR LOOP
 
-      for(yr in 1:planning_years){ # BEGIN YEAR LOOP
-
-        print(paste('Year', yr, '...'))
+        message(paste('---------------\nYear', yr, '\n---------------'))
 
         # select stands from project areas until target reached while filtering by threshold
-        stands_w_select <- stands_w_available %>%
+        stands_selected <- stands_available %>%
           apply_treatment(
-            treatment_types = threshold_dat$types,
-            all_thresholds = threshold_dat$thresholds,
-            stand_group_by = stand_group_by,
+            treatment_type = threshold_dat$type,
+            treatment_threshold = threshold_dat$threshold,
             stand_field = stand_field,
-            fixed_target = fixed_target,
-            fixed_area_target = fixed_area_target,
-            pa_unit = pa_unit,
-            pa_target = pa_target,
-            pa_target_multiplier = pa_target_multiplier
+            stand_group_by = stand_group_by,
+            proj_fixed_target = proj_fixed_target,
+            proj_fixed_area_target = proj_fixed_area_target,
+            proj_unit = proj_unit,
+            proj_target = proj_target,
+            proj_target_multiplier = proj_target_multiplier
           )
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # !!! 3. RANK PROJECTS !!!!!!
+        # 3. RANK PROJECTS ----------
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # group selected stands by project
-        projects_w_select <- stands_w_select %>%
+        projects_selected <- stands_selected %>%
           create_grouped_dataset(grouping_vars = stand_group_by,
                                  summing_vars = c(output_fields, "weightedPriority")) %>%
           rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields) %>%
           replace(is.na(.), 0) %>%
           arrange(-weightedPriority) %>%
-          mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), 0))
+          mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA)) %>%
+          drop_na(treatment_rank)
 
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # !!! 5. DETECT EVENTS !!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # randomize project rank if desired
+        if(fire_random_projects){
+          message('!! Randomizing projects')
 
+          shuffled_weights <- projects_selected %>%
+            filter(treatment_rank %>% is.na == FALSE) %>%
+            mutate(weightedPriority = sample(weightedPriority)) %>%
+            dplyr::select(PA_ID, weightedPriority)
 
+           projects_selected <- projects_selected %>% dplyr::select(-weightedPriority) %>%
+             left_join(shuffled_weights, by = stand_group_by) %>%
+             arrange(-weightedPriority) %>%
+             mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA)) %>%
+             drop_na(treatment_rank)
+        }
 
-        # if using static forsys, we run only need to run the stand selection
-        # routine once, build projects, then schedule these projects by year
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # 4. UPDATE AVAILABILITY ----------
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        projects_w_select <- projects_w_select %>%
-          mutate(ETrt_YR = cumsum(ETrt_AREA_HA) %/% !!annual_project_target + yr) %>%
-          mutate(ETrt_YR = ifelse(weightedPriority == 0, NA, ETrt_YR))
+        # set annual target
+        fire_annual_target_i = fire_annual_target[yr]
+        if(is.na(fire_annual_target_i)) fire_annual_target_i = 0 # if no target available, set to 0
 
-        satnds_w_select <- stands_w_select %>%
-          left_join(projects_w_select %>% dplyr::select(PA_ID, ETrt_YR), by='PA_ID')
+        # schedule projects from year yr into the future based on annual constraint
+        projects_scheduled <- projects_selected %>%
+          mutate(ETrt_YR = cumsum(get(fire_annual_target_field)) %/% !!fire_annual_target_i + 1) %>%
+          mutate(ETrt_YR = ifelse(weightedPriority == 0, NA, ETrt_YR)) %>%
+          dplyr::select(PA_ID, ETrt_YR, treatment_rank) %>%
+          filter(ETrt_YR == 1) %>%
+          mutate(ETrt_YR = !!yr)
 
+        # record stands scheduled for treatment in current year
+        stands_treated <- stands_selected %>%
+          inner_join(projects_scheduled, by=stand_group_by) %>%
+          dplyr::select(CELL_ID, PA_ID, ETrt_YR, treatment_rank, weightedPriority) %>%
+          bind_rows(stands_treated)
 
+        # remove stands or project areas that were treated from available stands
+        stands_available <- stands_available %>%
+          filter((CELL_ID %in% stands_treated$CELL_ID == FALSE) & (PA_ID %in% stands_treated$PA_ID == FALSE))
 
+        # report yearly work
+        message(paste(stands_treated %>% filter(ETrt_YR == yr) %>% pull(CELL_ID) %>% n_distinct(),
+                    'stands treated in',
+                    stands_treated %>% filter(ETrt_YR == yr) %>% pull(PA_ID) %>% n_distinct(),
+                    'projects'))
+
+        if(!is.null(fire_intersect_table)) {
+
+          # record stands that burned this year
+          stands_burned <- stands %>%
+            left_join(projects_scheduled, by = stand_group_by) %>%
+            left_join(stands_selected %>% dplyr::select(CELL_ID, weightedPriority), by = stand_field) %>%
+            left_join(fires %>% dplyr::select(CELL_ID, FIRE_YR, FIRE_NUMBER), by = stand_field) %>%
+            filter(FIRE_YR == !!yr) %>%
+            dplyr::select(CELL_ID, PA_ID, ETrt_YR, FIRE_YR, FIRE_NUMBER, treatment_rank, weightedPriority) %>%
+            bind_rows(stands_burned)
+
+          # report yearly fire
+          message(paste(stands_burned %>% filter(FIRE_YR == yr) %>% pull(CELL_ID) %>% n_distinct(), 'stands burned'))
+
+          # remove burnt stands from future selection only if running dynamic forsys
+          if(fire_dynamic_forsys == TRUE) {
+            stands_available <- stands_available %>% filter(CELL_ID %in% stands_burned$CELL_ID == FALSE)
+          }
+
+          # order planning areas for treatment post-fire to identify decision-shifts.
+
+        }
       } # END YEAR LOOP
 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-      # !!!!! 4. WRITE DATA !!!!!!!
+      # 5. WRITE DATA -------------
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      # WRITE: write stands to file ---------------
+      # WRITE: write stands to file ...........
+      message('Writing output files for stands and planning areas')
 
-      # if using static forsys, we run only need to run the stand selection
-      # routine once
+      # tag stands with specific scenario attributes
+      stands_selected_out <- stands_treated %>% dplyr::select(!!stand_field, !!stand_group_by, ETrt_YR)
 
-      stands_w_select_out <- stands_w_select
-      projects_w_select_out <- projects_w_select
+      if(!is.null(fire_intersect_table))
+        stands_selected_out <- stands_selected_out %>%
+          left_join(fires %>% dplyr::select(CELL_ID, FIRE_YR, FIRE_NUMBER), by=stand_field)
 
-      print("Producing output files for stands and planning areas")
-      if(write_stand_outputs) {
+      # write out minimal stand information
+      stands_selected_out <- stands_selected_out %>% bind_cols(write_tags)
+      stands_selected_out <- stands_selected_out %>%
+        left_join(stands_prioritized %>% dplyr::select(!!stand_field, output_fields), by = stand_field)
 
-        stand_fields_to_write = c(stand_field, stand_group_by, output_fields)
+      stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', write_tags_txt, ".csv")
+      fwrite(stands_selected_out, stand_fn, row.names = FALSE)
 
-        # stand_fields_to_write = c("SCN_ID", stand_field, stand_group_by, 'ETrt_YR', 'FIRE_YR', 'FIRE_NUMBER', 'AREA_HA', 'aTR_MS')
-        stands_w_select_out %>%
-          # mutate(SCN_ID = !!fire_scenario) %>%
-          write_stand_outputs_to_file(dir = relative_output_path,
-                                    name = paste0(scenario_name),
-                                    write_fields = stand_fields_to_write)
-      }
+      # WRITE: write project to file ...........
 
-      # WRITE: write project to file ---------------
+      # group *selected* stands by project
+      projects_etrt_out <- stands_selected_out %>%
+        dplyr::select(!!stand_field, ETrt_YR) %>%
+        left_join(stands_prioritized %>% dplyr::select(stand_field, stand_group_by, output_fields, 'weightedPriority'),
+                  by = stand_field) %>%
+        create_grouped_dataset(grouping_vars = c(stand_group_by, 'ETrt_YR'),
+                               summing_vars = c(output_fields, 'weightedPriority')) %>%
+        arrange(ETrt_YR, -weightedPriority) %>%
+        rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields) %>%
+        replace(is.na(.), 0)
 
-      # group all candidate stands by project
-      projects_w_select_out <- stands %>%
+      # group *all* stands by project
+      projects_esum_out <- stands %>%
         compile_planning_areas_and_stands(unique_weights = uniqueWeights,
                                           group_by = stand_group_by,
-                                          output_fields = output_fields) %>%
-        inner_join(projects_w_select_out, by='PA_ID') %>%
-        replace(is.na(.), 0) # %>%
-        # dplyr::select(-ETrt_YR, ETrt_YR)
+                                          output_fields = output_fields)
 
-      masterPA = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
-      projects_w_select[,paste0('Pr_', 1:length(priorities), '_', priorities)] = weights[1,]
-      if(file.exists(masterPA)) {
-        fwrite(projects_w_select_out, file = masterPA, sep = ",", row.names = FALSE, col.names = FALSE)
-      } else {
-        fwrite(projects_w_select_out, file = masterPA, sep = ",", row.names = FALSE)
-      }
+      # combine etrt w/ esum
+      projects_selected_out <- projects_etrt_out %>%
+        inner_join(projects_esum_out, by=stand_group_by) %>%
+        replace(is.na(.), 0) %>%
+        arrange(ETrt_YR, -weightedPriority) %>%
+        mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA))
+
+      # tag project with specific scenario attributes
+      projects_selected_out <- projects_selected_out %>% bind_cols(write_tags)
+
+      # assign weight scenario values to project out
+      projects_selected_out[,paste0('Pr_', 1:length(priorities), '_', priorities)] = weights[1,]
+
+      # write tag for selection scenario
+      project_fn = paste0(relative_output_path, "/proj_", scenario_name,  '_', write_tags_txt,".csv")
+      fwrite(projects_selected_out, file = project_fn, sep = ",", row.names = FALSE)
 
       } # END WEIGHT LOOP
   }
