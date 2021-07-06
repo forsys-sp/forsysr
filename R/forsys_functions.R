@@ -332,7 +332,7 @@ apply_treatment <- function(stands,
     # filter stands by threshold type criteria
     filtered_stands <- stand_filter(stands, treatment_threshold[V1 == treatment_type[t], ])
 
-    message(paste0(nrow(filtered_stands), " stands meet treatment thresholds for ", treatment_type[t]))
+    message(paste0(round(nrow(filtered_stands)/nrow(stands)*100), "% of stands met threshold for ", treatment_type[t]))
 
     # set project target
     if (proj_fixed_target == TRUE) {

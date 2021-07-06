@@ -98,12 +98,12 @@ system_constraint <- FALSE
 # random_projects = TRUE
 # input_stand_fire_intersect <- 'data/hexnet_west_fsim19_30reps_intersect.csv'
 # annual_project_target = 450000 # # 1.1 M Acres treated per year
-fire_planning_years = 5
+fire_planning_years = 1
 fire_annual_target_field = 'ETrt_AREA_HA'
 
 # 10-year ramp (6.6 M ha treated)
 max_rx_rate = 1200000 # maximum 1.2 million ha per year
-fire_annual_target = max_rx_rate * logisticFunc(yr = 1:10, mid = 5, normalize = T)
+# fire_annual_target = max_rx_rate * logisticFunc(yr = 1:10, mid = 5, normalize = T)
 
 # 20-year plan w/ 10-year ramp-up
 #annual_project_target = logisticFunc(seq(1,10,length.out=10), start=0, end=4.332e5); annual_project_target[11:20] <- 4.332e5

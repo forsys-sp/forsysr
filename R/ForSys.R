@@ -68,13 +68,12 @@
     include_stands = c("man_alldis == 1"),
     output_fields = c("AREA_HA", "TVMBF_STND", "TVMBF_PCP", "HUSUM_STND", "HUSUM_PCP"),
     grouping_variables = c("PA_ID", "Owner"),
-
     overwrite_output = TRUE,
     run_with_shiny = FALSE,
     fire_intersect_table = NULL,
     fire_planning_years = 1,
     fire_annual_target_field = NULL,
-    fire_annual_target = NULL,
+    fire_annual_target = Inf,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
     write_tags = ''
@@ -200,7 +199,8 @@
           rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields) %>%
           replace(is.na(.), 0) %>%
           arrange(-weightedPriority) %>%
-          mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA))
+          mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA)) %>%
+          drop_na(treatment_rank)
 
         # randomize project rank if desired
         if(fire_random_projects){
@@ -214,7 +214,8 @@
            projects_selected <- projects_selected %>% dplyr::select(-weightedPriority) %>%
              left_join(shuffled_weights, by = stand_group_by) %>%
              arrange(-weightedPriority) %>%
-             mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA))
+             mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA)) %>%
+             drop_na(treatment_rank)
         }
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
