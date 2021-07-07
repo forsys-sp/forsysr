@@ -216,6 +216,7 @@ scenario_setup_panel_advanced <- tabPanel(
 
 			textInput('pa_target_field', 'Planning Unit Constraint', 'AREA_MAN'),
 
+			radioButtons('variable_fixed_select', label = NULL, choices = c('Variable', 'Fixed'), inline = TRUE),
 
 			tabsetPanel(
 				tabPanel(id = 'variable_target_panel', 'Variable Constraint',

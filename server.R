@@ -39,15 +39,19 @@ server <- function(input, output, session) {
 
 			if (stringr::str_detect(ext, 'zip')) {
 				# First open the zip and make sure it has a 'shp' in it
-				zfiles <- zip_list(x['datapath'])
-				if (has_element(purrr::map(zfiles$filename, function(x) str_detect(x, 'dbf')), TRUE)) {
-					unzip(x['datapath'], exdir=perm_data_path)
-					data_path <- paste0(str_sub(perm_data_path, -3), 'dbf')
-					r_data$data_path <- perm_data_path
-					r_data$ext <- ext
+				zfiles <- unzip(x['datapath'], list=TRUE)
 
-					r_data$data <- load_dataset(perm_data_path)
-				}
+				out_dir = str_sub(perm_data_path, end=-5)
+
+				unzip(perm_data_path, exdir=out_dir)
+
+				data_path <- paste0(out_dir, '/', str_sub(x['name'], end=-4), 'dbf')
+
+				r_data$data_path <- data_path
+				r_data$ext <- ext
+
+				r_data$data <- load_dataset(data_path)
+
 			} else if (stringr::str_detect(ext, 'dbf') | stringr::str_detect(ext, 'csv')) {
 				r_data$data_path <- perm_data_path
 				r_data$ext <- ext
@@ -118,7 +122,7 @@ server <- function(input, output, session) {
 
 		# Block loading dataset until on the right page. It seems like if we're not on the right tab the
 		# selected values don't update correctly
-		updateTabsetPanel(session, 'main_nav', selected = 'scenario_setup_panel')
+		updateTabsetPanel(session, 'main_nav', selected = 'scenario_setup_panel_advanced')
 
 		# Read in the scenario data
 		json_data = read_save_file(input$select_scenario)
@@ -339,7 +343,7 @@ server <- function(input, output, session) {
 
 		available_scenarios <- list_scenarios()
 		updateSelectInput(session, 'select_scenario', choices = available_scenarios)
-		updateTabsetPanel(session, 'main_nav', selected = 'simulation_panel')
+		# updateTabsetPanel(session, 'main_nav', selected = 'simulation_panel')
 		})
 
 	observeEvent(input$save_and_run_but, {
@@ -372,7 +376,7 @@ server <- function(input, output, session) {
 			au_target_multiplier = 1.0
 		}
 
-		output$simulation_output <- renderPrint({
+		output$simulation_output <- withProgress(message = 'Running Forsys', value = 0, {
 			run(
 				scenario_name = input$scenario_name,
 				input_standfile = r_data$data_path,
@@ -382,9 +386,9 @@ server <- function(input, output, session) {
 				land_base = input$treatment_available_field,
 				priorities = input$priorities_fields,
 				stand_group_by = input$planning_unit_id_field,
-				pa_target = input$pa_target_field,
-				pa_unit = input$pa_unit_field,
-				pa_target_multiplier = input$pa_target_multiplier,
+				proj_target = input$pa_target_field,
+				proj_unit = input$pa_unit_field,
+				proj_target_multiplier = input$pa_target_multiplier,
 				nesting = input$use_au,
 				nesting_group_by = nesting_group_by,
 				nesting_target = nesting_target,
@@ -395,8 +399,8 @@ server <- function(input, output, session) {
 				# include_stands = c("man_alldis == 1"), # TODO parse include_stands from thresholds, or the other way around
 				output_fields = input$outputs_select,
 				grouping_variables = input$output_grouping_fields, # c("PA_ID", "Owner"),
-				fixed_target = FALSE,
-				fixed_area_target = input$fixed_target_value,
+				proj_fixed_target = FALSE,
+				proj_fixed_area_target = input$fixed_target_value,
 				overwrite_output = input$overwrite_output_chk,
 				run_with_shiny = TRUE
 				)

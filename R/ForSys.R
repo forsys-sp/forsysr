@@ -73,7 +73,7 @@
     fire_intersect_table = NULL,
     fire_planning_years = 1,
     fire_annual_target_field = NULL,
-    fire_annual_target = Inf,
+    fire_annual_target = NA,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
     write_tags = ''
@@ -81,7 +81,7 @@
 
 
     # If a config file has been selected, source it to read in variables
-    if (length(config_file) > 0) {
+    if (length(config_file) > 1) {
       configuration_file <- config_file
       setwd(dirname(configuration_file))
       source(configuration_file, local = TRUE)

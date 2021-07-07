@@ -23,8 +23,7 @@ pacman::p_load(
   roxygen2,
   sp,
   sf,
-  tidyverse,
-  zip
+  tidyverse
   )
 
 # library("Patchmax", lib.loc="C:/Users/Houtmanr/Documents/R/win-library/4.0")

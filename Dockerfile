@@ -5,19 +5,25 @@ RUN mkdir /root/forsys
 RUN mkdir /root/forsys/data
 RUN mkdir /root/forsys/R
 
+RUN R -e "install.packages('class')"
+RUN R -e "install.packages('data.table')"
+RUN R -e "install.packages('directlabels')"
+RUN R -e "install.packages('doParallel')"
 RUN R -e "install.packages('foreign')"
 RUN R -e "install.packages('gtools')"
+RUN R -e "install.packages('igraph')"
+RUN R -e "install.packages('leaflet')"
 RUN R -e "install.packages('maptools')"
 RUN R -e "install.packages('pacman')"
+RUN R -e "install.packages('raster')"
 RUN R -e "install.packages('rgdal')"
 RUN R -e "install.packages('rgeos')"
 RUN R -e "install.packages('roxygen2')"
 RUN R -e "install.packages('shiny')"
 RUN R -e "install.packages('shinyBS')"
 RUN R -e "install.packages('shinyjs')"
-RUN R -e "install.packages('zip')"
+RUN R -e "install.packages('tidyverse')"
 
-COPY ./data/IDHexnet_North20190523_Final.dbf /root/forsys/data/IDHexnet_North20190523_Final.dbf
 COPY ./R/ForSys.R /root/forsys/R/ForSys.R
 COPY ./R/forsys_functions.R /root/forsys/R/forsys_functions.R
 COPY ./R/forsys_libraries.R /root/forsys/R/forsys_libraries.R
@@ -25,7 +31,6 @@ COPY ./R/forsys_results_functions.R /root/forsys/R/forsys_results_functions.R
 COPY ./R/forsys_scenario_functions.R /root/forsys/R/forsys_scenario_functions.R
 
 COPY ./app.R /root/forsys/app.R
-COPY ./config_Idaho.R /root/forsys/config_Idaho.R
 COPY ./server.R /root/forsys/server.R
 COPY ./ui.R /root/forsys/ui.R
 
