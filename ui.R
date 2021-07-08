@@ -47,109 +47,6 @@ scenario_buttons_text<- fluidRow(
 		)
 	)
 
-scenario_setup_panel_simple <- tabPanel(
-	value = 'scenario_setup_panel_simple',
-	'Simple Mode',
-	# hr(),
-	scenario_buttons_text,
-	br(),
-	tabsetPanel(
-		# tabPanel(
-		# 	id = 'setup_scenario_panel',
-		# 	'Scenario Setup',
-		# 	fluidRow(
-		# 		column(4,
-		# 			br(),
-		# 			textInput('scenario_name', 'Scenario Name'),
-
-		# 			tabsetPanel(
-		# 				tabPanel(id = 'flat_file_panel', 'File Input',
-		# 					br(),
-		# 					fileInput(
-		# 						'file_select',
-		# 						'Select Input Data',
-		# 						accept = c('.csv', '.dbf', '.zip'),
-		# 						multiple = TRUE)
-		# 					)
-		# 				),
-
-		# 			hr(),
-
-		# 			selectInput('stand_id_field', 'Stand ID Field', choices = NULL, multiple = FALSE, selectize = TRUE),
-
-		# 			selectInput('pcp_spm_fields', 'Fields to calculate PCP and SPM on', choices = NULL, multiple = TRUE, selectize = TRUE),
-
-		# 			selectInput('treatment_available_field', 'Available for Treatment Field', choices = NULL, multiple = FALSE, selectize = TRUE),
-
-		# 			selectInput('priorities_fields', 'Priorties', choices = NULL, multiple = TRUE, selectize = TRUE),
-
-		# 			div(
-		# 				id = 'weight_items',
-		# 				numericInput('weight_min', 'Minimum Weight', 0, width = '150px'),
-		# 				numericInput('weight_max', 'Maximum Weight', 5, width = '150px'),
-		# 				numericInput('weight_step', 'Weight Step', 1, width = '150px')
-		# 				)
-		# 			),
-
-		# 		column(4,
-
-		# 			br(),
-
-		# 			selectInput('planning_unit_id_field', 'Planning Unit ID', choices = NULL, multiple = FALSE, selectize = TRUE),
-
-		# 			textInput('pa_target_field', 'Planning Unit Constraint', 'AREA_MAN'),
-
-
-		# 			tabsetPanel(
-		# 				tabPanel(id = 'variable_target_panel', 'Variable Constraint',
-		# 					br(),
-		# 					selectInput('pa_unit_field', 'Planning Unit Unit', choices = NULL, multiple = FALSE, selectize = TRUE),
-		# 					numericInput('pa_target_multiplier', 'Planning Unit Multiplier', 0.15)),
-		# 				tabPanel(id = 'fixed_target_panel', 'Fixed Constraint',
-		# 					br(),
-		# 					numericInput('fixed_target_value', 'Fixed Constraint Amount', 2000))
-		# 				),
-
-		# 			hr(),
-		# 			checkboxInput('use_au', 'Multiple Administrative Units'),
-		# 			div(
-		# 				id = 'au_items',
-		# 				selectInput('au_id_field', 'Administrative Unit ID', choices = NULL, multiple = FALSE, selectize = TRUE),
-		# 				textInput('au_target_field', 'Administrative Unit Constraint', 'AREA_MAN'),
-		# 				selectInput('au_unit_field', 'Administrative Unit Unit', choices = NULL, multiple = FALSE, selectize = TRUE),
-		# 				numericInput('au_target_multiplier', 'Administrative Unit Multiplier', 1.0)
-		# 				),
-		# 			),
-
-
-		# 		column(4,
-		# 			br(),
-
-		# 			textAreaInput('thresholds_expr', 'Thresholds, one per line in the form "Manageable man_alldis == 1"'),
-		# 			radioButtons('threshold_operator', 'Thresholds Operator', choices = c('AND', 'OR'), inline = TRUE),
-
-		# 			hr(),
-
-		# 			selectInput('outputs_select', 'Choose Outputs', choices = NULL, multiple = TRUE, selectize = TRUE),
-
-		# 			selectInput('output_grouping_fields', 'Aggregate results by', choices = NULL, multiple = TRUE, selectize = TRUE),
-
-		# 			checkboxInput('write_stand_outputs_chk', 'Write Stand Outputs'),
-
-		# 			checkboxInput('overwrite_output_chk', 'Overwrite Outputs'),
-
-		# 			hr()
-
-		# 			) # column
-		# 		) # fluidRow
-		# 	), # tabPanel
-		tabPanel(
-			'Data Preview',
-			dataTableOutput('input_data')
-			) #tabPanel
-		) # tabsetPanel
-	) # tabPanel
-
 
 scenario_setup_panel_advanced <- tabPanel(
 	value = 'scenario_setup_panel_advanced',
@@ -252,9 +149,9 @@ scenario_setup_panel_advanced <- tabPanel(
 			'Thresholds',
 			value = 'sspa_thresholds',
 			br(),
-			textAreaInput('thresholds_expr', 'Thresholds, one per line in the form "Manageable man_alldis == 1"'),
-			radioButtons('threshold_operator', 'Thresholds Operator', choices = c('AND', 'OR'), inline = TRUE),
-			),
+			textAreaInput('thresholds_expr', label = 'Thresholds', placeholder = 'Manageable man_alldis == 1'),
+			radioButtons('thresholds_op', label = 'Thresholds Operator', choices = c('AND', 'OR'), inline = TRUE),
+			), 
 		tabPanel(
 			'Output',
 			value = 'sspa_output',
