@@ -73,7 +73,7 @@
     fire_intersect_table = NULL,
     fire_planning_years = 1,
     fire_annual_target_field = NULL,
-    fire_annual_target = Inf,
+    fire_annual_target = NA,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
     write_tags = ''
