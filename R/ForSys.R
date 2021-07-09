@@ -223,15 +223,21 @@
 
         # set annual target
         fire_annual_target_i = fire_annual_target[yr]
-        if(is.na(fire_annual_target_i)) fire_annual_target_i = 0 # if no target available, set to 0
+        if(is.na(fire_annual_target_i)) fire_annual_target_i = Inf # if no target available, set to Inf
 
         # schedule projects from year yr into the future based on annual constraint
-        projects_scheduled <- projects_selected %>%
-          mutate(ETrt_YR = cumsum(get(fire_annual_target_field)) %/% !!fire_annual_target_i + 1) %>%
-          mutate(ETrt_YR = ifelse(weightedPriority == 0, NA, ETrt_YR)) %>%
-          dplyr::select(PA_ID, ETrt_YR, treatment_rank) %>%
-          filter(ETrt_YR == 1) %>%
-          mutate(ETrt_YR = !!yr)
+        if(fire_annual_target_field %>% is.null){
+          projects_scheduled <- projects_selected %>%
+            mutate(ETrt_YR = 1) %>%
+            dplyr::select(PA_ID, ETrt_YR, treatment_rank)
+        } else {
+          projects_scheduled <- projects_selected %>%
+            mutate(ETrt_YR = ifelse(cumsum(get(fire_annual_target_field)) %/% !!fire_annual_target_i + 1)) %>%
+            mutate(ETrt_YR = ifelse(weightedPriority == 0, NA, ETrt_YR)) %>%
+            dplyr::select(PA_ID, ETrt_YR, treatment_rank) %>%
+            filter(ETrt_YR == 1) %>%
+            mutate(ETrt_YR = !!yr)
+        }
 
         # record stands scheduled for treatment in current year
         stands_treated <- stands_selected %>%
@@ -244,10 +250,9 @@
           filter((CELL_ID %in% stands_treated$CELL_ID == FALSE) & (PA_ID %in% stands_treated$PA_ID == FALSE))
 
         # report yearly work
-        message(paste(stands_treated %>% filter(ETrt_YR == yr) %>% pull(CELL_ID) %>% n_distinct(),
-                    'stands treated in',
-                    stands_treated %>% filter(ETrt_YR == yr) %>% pull(PA_ID) %>% n_distinct(),
-                    'projects'))
+        s_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(CELL_ID) %>% n_distinct()
+        p_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(PA_ID) %>% n_distinct()
+        message(paste0(s_n, ' stands (', round(s_n/nrow(stands_prioritized) * 100, 2), '%) treated in ', p_n, ' projects'))
 
         if(!is.null(fire_intersect_table)) {
 
