@@ -98,8 +98,8 @@ system_constraint <- FALSE
 # random_projects = TRUE
 # input_stand_fire_intersect <- 'data/hexnet_west_fsim19_30reps_intersect.csv'
 # annual_project_target = 450000 # # 1.1 M Acres treated per year
-fire_planning_years = 1
-fire_annual_target_field = 'ETrt_AREA_HA'
+# fire_planning_years = 1
+# fire_annual_target_field = 'ETrt_AREA_HA'
 
 # 10-year ramp (6.6 M ha treated)
 max_rx_rate = 1200000 # maximum 1.2 million ha per year
