@@ -24,8 +24,8 @@ source('server.R')
 source('R/fire_misc_func.R')
 
 #input_stand_fire_intersect <- 'data/hexnet_west_fsim19_30reps_intersect.csv'
-input_stand_fire_intersect <- 'data/west_usfs_hexnet_fsim19_omernik6x_deciles5x_futures20x_intersect.csv'
-if(exists('f_df') == FALSE) f_df <- fread(input_stand_fire_intersect)
+fire_intersect_table <- 'data/west_usfs_hexnet_fsim19_omernik6x_deciles5x_futures20x_intersect.csv'
+if(exists('f_df') == FALSE) f_df <- fread(fire_intersect_table)
 
 # !! planning_years, annual_project_target, annual_target_field defined in the config file
 
