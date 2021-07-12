@@ -233,9 +233,9 @@
             dplyr::select(stand_group_by, weightedPriority, ETrt_YR, treatment_rank)
         } else {
           projects_scheduled <- projects_selected %>%
-            mutate(ETrt_YR = ifelse(cumsum(get(fire_annual_target_field)) %/% !!fire_annual_target_i + 1)) %>%
+            mutate(ETrt_YR = cumsum(get(fire_annual_target_field)) %/% !!fire_annual_target_i + 1) %>%
             mutate(ETrt_YR = ifelse(weightedPriority == 0, NA, ETrt_YR)) %>%
-            dplyr::select(stand_group_by, ETrt_YR, treatment_rank) %>%
+            dplyr::select(stand_group_by, ETrt_YR, weightedPriority, treatment_rank) %>%
             filter(ETrt_YR == 1) %>%
             mutate(ETrt_YR = !!yr)
         }
@@ -251,15 +251,15 @@
           filter((.data[[stand_field]] %in% stands_treated[[stand_field]] == FALSE) & (.data[[stand_group_by]] %in% stands_treated[[stand_group_by]] == FALSE))
 
         # report yearly work
-        s_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(CELL_ID) %>% n_distinct()
-        p_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(PA_ID) %>% n_distinct()
-        message(paste0(s_n, ' stands (', round(s_n/nrow(stands_prioritized) * 100, 2), '%) treated in ', p_n, ' projects'))
+        s_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(stand_field) %>% n_distinct()
+        p_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(stand_group_by) %>% n_distinct()
+        message(paste0(s_n, ' stands (', round(s_n/nrow(stands_treated) * 100, 2), '%) treated in ', p_n, ' projects'))
 
         if(!is.null(fire_intersect_table)) {
           # record stands that burned this year
           stands_burned <- stands %>%
             left_join(projects_scheduled, by=stand_group_by) %>%
-            left_join(stands_selected %>% dplyr::select(stand_field), by=stand_field) %>%
+            left_join(stands_treated %>% dplyr::select(stand_field), by=stand_field) %>%
             left_join(fires %>% dplyr::select(stand_field, FIRE_YR, FIRE_NUMBER), by=stand_field) %>%
             filter(FIRE_YR == !!yr) %>%
             dplyr::select(stand_field, stand_group_by, ETrt_YR, FIRE_YR, FIRE_NUMBER, treatment_rank, weightedPriority) %>%
