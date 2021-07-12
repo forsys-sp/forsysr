@@ -23,9 +23,9 @@
   #'                  A blank field means all lands are included in the calculation.
   #' @param priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
   #' @param stand_group_by TODO
-  #' @param pa_target TODO
-  #' @param pa_unit TODO
-  #' @param pa_target_multiplier TODO
+  #' @param proj_target TODO
+  #' @param proj_unit TODO
+  #' @param proj_target_multiplier TODO
   #' @param nesting TODO
   #' @param nesting_group_by TODO
   #' @param nesting_target TODO
@@ -48,14 +48,16 @@
     num_reps = 1,
     input_standfile = '',
     write_stand_outputs = FALSE,
-    stand_field = 'Cell_ID',
+    stand_field = 'CELL_ID',
     pcp_spm = c(),
     land_base = '',
     priorities = c(),
     stand_group_by = '',
-    pa_target = '',
-    pa_unit = '',
-    pa_target_multiplier = 0.15,
+    proj_unit = '',
+    proj_target = '',
+    proj_target_multiplier = 0.15,
+    proj_fixed_target = FALSE,
+    proj_fixed_area_target = NULL,
     nesting = FALSE,
     nesting_group_by = NULL,
     nesting_target = NULL,
@@ -66,13 +68,14 @@
     include_stands = c("man_alldis == 1"),
     output_fields = c("AREA_HA", "TVMBF_STND", "TVMBF_PCP", "HUSUM_STND", "HUSUM_PCP"),
     grouping_variables = c("PA_ID", "Owner"),
-    fixed_target = FALSE,
-    fixed_area_target = 2000,
     overwrite_output = TRUE,
     run_with_shiny = FALSE,
+    fire_intersect_table = NULL,
+    fire_planning_years = 1,
+    fire_annual_target_field = NULL,
+    fire_annual_target = NA,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
-    fire_intersect_table = NULL,
     write_tags = ''
     ) {
 
@@ -125,9 +128,9 @@
     stands <- stands %>%
       calculate_spm_pcp(filter = land_base,
                         fields = pcp_spm) %>%
-      add_target_field(pa_unit = pa_unit,
-                       pa_target = pa_target,
-                       pa_target_multiplier = pa_target_multiplier,
+      add_target_field(proj_unit = proj_unit,
+                       proj_target = proj_target,
+                       proj_target_multiplier = proj_target_multiplier,
                        stand_group_by = stand_group_by,
                        land_base = land_base)
 
@@ -164,22 +167,25 @@
       # 2. SELECT STANDS ------------
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      for(yr in 1:planning_years){ # BEGIN YEAR LOOP
+      # threshold = filter
+      # constraint = target
+
+      for(yr in 1:fire_planning_years){ # BEGIN YEAR LOOP
 
         message(paste('---------------\nYear', yr, '\n---------------'))
 
         # select stands from project areas until target reached while filtering by threshold
         stands_selected <- stands_available %>%
           apply_treatment(
-            treatment_types = threshold_dat$types,
-            all_thresholds = threshold_dat$thresholds,
-            stand_group_by = stand_group_by,
+            treatment_type = threshold_dat$type,
+            treatment_threshold = threshold_dat$threshold,
             stand_field = stand_field,
-            fixed_target = fixed_target,
-            fixed_area_target = fixed_area_target,
-            pa_unit = pa_unit,
-            pa_target = pa_target,
-            pa_target_multiplier = pa_target_multiplier
+            stand_group_by = stand_group_by,
+            proj_fixed_target = proj_fixed_target,
+            proj_fixed_area_target = proj_fixed_area_target,
+            proj_unit = proj_unit,
+            proj_target = proj_target,
+            proj_target_multiplier = proj_target_multiplier
           )
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -193,21 +199,23 @@
           rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields) %>%
           replace(is.na(.), 0) %>%
           arrange(-weightedPriority) %>%
-          mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA))
+          mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA)) %>%
+          drop_na(treatment_rank)
 
         # randomize project rank if desired
         if(fire_random_projects){
           message('!! Randomizing projects')
 
-          p_weights_shuffled <- projects_selected %>%
+          shuffled_weights <- projects_selected %>%
             filter(treatment_rank %>% is.na == FALSE) %>%
             mutate(weightedPriority = sample(weightedPriority)) %>%
             dplyr::select(stand_group_by, weightedPriority)
 
            projects_selected <- projects_selected %>% dplyr::select(-weightedPriority) %>%
-             left_join(p_weights_shuffled, by = stand_group_by) %>%
+             left_join(shuffled_weights, by = stand_group_by) %>%
              arrange(-weightedPriority) %>%
-             mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA))
+             mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA)) %>%
+             drop_na(treatment_rank)
         }
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -215,16 +223,22 @@
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # set annual target
-        annual_project_target_i = annual_project_target[yr]
-        if(is.na(annual_project_target_i)) annual_project_target_i = 0 # if no target available, set to 0
+        fire_annual_target_i = fire_annual_target[yr]
+        if(is.na(fire_annual_target_i)) fire_annual_target_i = Inf # if no target available, set to Inf
 
         # schedule projects from year yr into the future based on annual constraint
-        projects_scheduled <- projects_selected %>%
-          mutate(ETrt_YR = cumsum(ETrt_AREA_HA) %/% !!annual_project_target_i + 1) %>%
-          mutate(ETrt_YR = ifelse(weightedPriority == 0, NA, ETrt_YR)) %>%
-          dplyr::select(stand_group_by, ETrt_YR, weightedPriority, treatment_rank) %>%
-          filter(ETrt_YR == 1) %>%
-          mutate(ETrt_YR = !!yr)
+        if(fire_annual_target_field %>% is.null){
+          projects_scheduled <- projects_selected %>%
+            mutate(ETrt_YR = 1) %>%
+            dplyr::select(stand_group_by, weightedPriority, ETrt_YR, treatment_rank)
+        } else {
+          projects_scheduled <- projects_selected %>%
+            mutate(ETrt_YR = ifelse(cumsum(get(fire_annual_target_field)) %/% !!fire_annual_target_i + 1)) %>%
+            mutate(ETrt_YR = ifelse(weightedPriority == 0, NA, ETrt_YR)) %>%
+            dplyr::select(stand_group_by, ETrt_YR, treatment_rank) %>%
+            filter(ETrt_YR == 1) %>%
+            mutate(ETrt_YR = !!yr)
+        }
 
         # record stands scheduled for treatment in current year
         stands_treated <- stands_selected %>%
@@ -237,10 +251,9 @@
           filter((.data[[stand_field]] %in% stands_treated[[stand_field]] == FALSE) & (.data[[stand_group_by]] %in% stands_treated[[stand_group_by]] == FALSE))
 
         # report yearly work
-        message(paste(stands_treated %>% filter(ETrt_YR == yr) %>% pull(stand_field) %>% n_distinct(),
-                    'stands treated in',
-                    stands_treated %>% filter(ETrt_YR == yr) %>% pull(stand_group_by) %>% n_distinct(),
-                    'projects'))
+        s_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(CELL_ID) %>% n_distinct()
+        p_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(PA_ID) %>% n_distinct()
+        message(paste0(s_n, ' stands (', round(s_n/nrow(stands_prioritized) * 100, 2), '%) treated in ', p_n, ' projects'))
 
         if(!is.null(fire_intersect_table)) {
           # record stands that burned this year
@@ -282,8 +295,7 @@
       # write out minimal stand information
       stands_selected_out <- stands_selected_out %>% bind_cols(write_tags)
       stands_selected_out <- stands_selected_out %>%
-        left_join(stands_prioritized %>% dplyr::select(!!stand_field, output_fields),
-                  by = stand_field)
+        left_join(stands_prioritized %>% dplyr::select(!!stand_field, output_fields), by = stand_field)
 
       stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', write_tags_txt, ".csv")
       fwrite(stands_selected_out, stand_fn, row.names = FALSE)

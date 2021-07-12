@@ -7,7 +7,7 @@
 ###############################
 
 # This configuration file includes the parameters for an all-lands, western regions scenario.
-# The treateable landbase is
+# The treatable landbase is
 #   1) manageable lands that have not been disturbed (man_alldis == 1),
 #   2) forested lands (forest_flg == 1),
 #   3) FVS conifer designations (western_flg == 1)
@@ -22,7 +22,6 @@
 #   4) Forest to Faucets (F2F2_Imp)
 
 scenario_name <- "WW_10yr_FS_80p"
-num_reps <- 30
 
 ## Stand layer
 input_standfile <- c("data/hexnet_west_fs.csv")
@@ -36,11 +35,15 @@ land_base <- "western_flag20_NLCD"
 
 ## Stand field
 stand_field <- "CELL_ID"
+include_stands <- c("aTR_MS > 0")
+## This defines global threshold values to include stands - i.e. for any threshold type.
+#"Conif_Maj == 1", "forest_fla == 1",
+# Echo fields are values that should be included *without* aggregation.
+#echo_fields <- c("FSHED_ID")
 
 ## Priorities are named here. If only one priority exists, only a weight of one will be used.
 priorities <- c("aTR_MS_SPM")
 # priorities <- c("aTR_MS_SPM","TVMBF_STND_SPM")
-
 
 ## Area-level constraints. Currently this system can handle a two-step constraint system. The first
 ## constraint is typically planning areas (PA_ID or PA_ID_New), the second constraint may be forest,
@@ -50,9 +53,10 @@ priorities <- c("aTR_MS_SPM")
 ## FIELDS BELOW ARE REQUIRED ##
 ## Set the constraint variables:
 stand_group_by <- "PA_ID"
-pa_target <- "aTR_MS_Tot"
-pa_unit <- "aTR_MS"
-pa_target_multiplier <- 0.8
+proj_target <- "aTR_MS_Tot"
+proj_unit <- "aTR_MS"
+proj_target_multiplier <- 0.8
+# proj_unit * proj_target_multiplier
 
 # Set for nesting == TRUE, no nesting == FALSE
 nesting <- FALSE
@@ -67,12 +71,6 @@ weighting_values <- c("1 1 1")
 ## Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
 thresholds <- c("Commercial western_flag20_NLCD == 1")
 #thresholds <- c("Commercial Manage_new > 1;Commercial TVMBF_STND > 1")#Example with two constraints
-
-## This defines global threshold values to include stands - i.e. for any threshold type.
-include_stands <- c("aTR_MS > 0")#You could put timber under constraints, and exclude unmanageble here
-#"Conif_Maj == 1", "forest_fla == 1",
-# Echo fields are values that should be included *without* aggregation.
-#echo_fields <- c("FSHED_ID")
 
 ## This should include the desired fields for the planning area treatment files. Planning area id,
 ## priority weights and treatment rank are added automatically.
@@ -100,7 +98,15 @@ system_constraint <- FALSE
 # random_projects = TRUE
 # input_stand_fire_intersect <- 'data/hexnet_west_fsim19_30reps_intersect.csv'
 # annual_project_target = 450000 # # 1.1 M Acres treated per year
-# planning_years = 20
+# fire_planning_years = 1
+# fire_annual_target_field = 'ETrt_AREA_HA'
+
+# 10-year ramp (6.6 M ha treated)
+max_rx_rate = 1200000 # maximum 1.2 million ha per year
+# fire_annual_target = max_rx_rate * logisticFunc(yr = 1:10, mid = 5, normalize = T)
+
+# 20-year plan w/ 10-year ramp-up
+#annual_project_target = logisticFunc(seq(1,10,length.out=10), start=0, end=4.332e5); annual_project_target[11:20] <- 4.332e5
 
 #########################################
 ## Parameters for SPATIAL OPTIMIZATION ##
