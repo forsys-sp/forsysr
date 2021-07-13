@@ -1,28 +1,25 @@
-FROM gcr.io/forsyse/shinybase:latest
+FROM gcr.io/forsyse/shinybase:1.12
 
 ## app folder
 RUN mkdir /root/forsys
 RUN mkdir /root/forsys/data
 RUN mkdir /root/forsys/R
 
-RUN R -e "install.packages('class')"
-RUN R -e "install.packages('data.table')"
-RUN R -e "install.packages('directlabels')"
-RUN R -e "install.packages('doParallel')"
-RUN R -e "install.packages('foreign')"
-RUN R -e "install.packages('gtools')"
-RUN R -e "install.packages('igraph')"
-RUN R -e "install.packages('leaflet')"
-RUN R -e "install.packages('maptools')"
-RUN R -e "install.packages('pacman')"
-RUN R -e "install.packages('raster')"
-RUN R -e "install.packages('rgdal')"
-RUN R -e "install.packages('rgeos')"
-RUN R -e "install.packages('roxygen2')"
-RUN R -e "install.packages('shiny')"
-RUN R -e "install.packages('shinyBS')"
-RUN R -e "install.packages('shinyjs')"
-RUN R -e "install.packages('tidyverse')"
+RUN R -e "pacman::p_install('class', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('data.table', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('directlabels', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('doParallel', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('foreign', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('gtools', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('leaflet', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('maptools', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('raster', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('rgdal', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('rgeos', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('roxygen2', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('sf', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('shinyBS', repos='http://cran.rstudio.com/', force = FALSE)"
+RUN R -e "pacman::p_install('shinyjs', repos='http://cran.rstudio.com/', force = FALSE)"
 
 COPY ./R/ForSys.R /root/forsys/R/ForSys.R
 COPY ./R/forsys_functions.R /root/forsys/R/forsys_functions.R

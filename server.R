@@ -450,7 +450,7 @@ server <- function(input, output, session) {
 	# 	})
 
 	result_data_all_name <- reactive({
-		paste0('output/', r_data$json$scenario_name, '/pa_all_', r_data$json$scenario_name, '.csv')
+		paste0('output/', r_data$json$scenario_name, '/proj_', r_data$json$scenario_name, '_.csv')
 		})
 
 	result_data <- reactive({
