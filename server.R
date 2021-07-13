@@ -343,7 +343,6 @@ server <- function(input, output, session) {
 
 		available_scenarios <- list_scenarios()
 		updateSelectInput(session, 'select_scenario', choices = available_scenarios)
-		# updateTabsetPanel(session, 'main_nav', selected = 'simulation_panel')
 		})
 
 	observeEvent(input$save_and_run_but, {
@@ -376,6 +375,8 @@ server <- function(input, output, session) {
 			au_target_multiplier = 1.0
 		}
 
+		weight_values <- weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
+
 		output$simulation_output <- withProgress(message = 'Running Forsys', value = 0, {
 			run(
 				scenario_name = input$scenario_name,
@@ -394,9 +395,9 @@ server <- function(input, output, session) {
 				nesting_target = nesting_target,
 				nesting_unit = nesting_unit,
 				nesting_target_multiplier = au_target_multiplier,
-				# weighting_values = weight_values,
-				# thresholds = input$thresholds_expr,
-				# include_stands = c("man_alldis == 1"), # TODO parse include_stands from thresholds, or the other way around
+				weighting_values = weight_values,
+				thresholds = input$thresholds_expr,
+				include_stands = c("man_alldis == 1"), # TODO parse include_stands from thresholds, or the other way around
 				output_fields = input$outputs_select,
 				grouping_variables = input$output_grouping_fields, # c("PA_ID", "Owner"),
 				proj_fixed_target = FALSE,

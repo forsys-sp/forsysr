@@ -149,7 +149,7 @@ scenario_setup_panel_advanced <- tabPanel(
 			'Thresholds',
 			value = 'sspa_thresholds',
 			br(),
-			textAreaInput('thresholds_expr', label = 'Thresholds', placeholder = 'Manageable man_alldis == 1'),
+			textAreaInput('thresholds_expr', label = 'Thresholds', value = 'Manageable man_alldis == 1', placeholder = 'Manageable man_alldis == 1'),
 			radioButtons('thresholds_op', label = 'Thresholds Operator', choices = c('AND', 'OR'), inline = TRUE),
 			), 
 		tabPanel(
