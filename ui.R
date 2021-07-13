@@ -3,7 +3,8 @@ welcome_panel <- tabPanel(
 mainPanel(
 	fluidRow(
 		h1('Welcome to forsys.app'),
-		p('forsys.app implements Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam porta augue vitae leo imperdiet accumsan. Suspendisse viverra ullamcorper suscipit. Nunc quis massa augue. Integer bibendum porta pellentesque. Proin volutpat mi auctor cursus convallis. Vestibulum sit amet lorem nunc. Sed sit amet lacus at urna feugiat hendrerit. Nulla dapibus lacinia sapien, nec commodo turpis rhoncus vitae. Sed vehicula fermentum enim sit amet suscipit. Nunc dictum augue vel nulla malesuada, eget eleifend libero bibendum. Suspendisse at neque consequat, interdum metus id, suscipit ante. Nam eu lobortis purus, nec pretium massa. Pellentesque nulla dolor, porttitor sit amet sapien nec, lobortis porta diam.')
+		p('ForSys is a multi-objective spatial prioritization system that was designed to explore how specific investment strategies aimed at improving forest conditions change under a range of management constraints to achieve specific outcomes and understand tradeoffs. Forsys.app modernizes how the USFS and our partners identify, prioritize, and implement treatment activities across the landscape by using cloud-based, geospatial technology to explore and rapidly visualize various management scenarios and treatment optimization decisions.'), 
+		p('For more information see XXXX. (Can we have hyperlinks to user manual or scenario planning website)'),
 		),
 	br(),
 	fluidRow(
