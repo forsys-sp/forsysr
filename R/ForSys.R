@@ -208,7 +208,7 @@
           shuffled_weights <- projects_selected %>%
             filter(treatment_rank %>% is.na == FALSE) %>%
             mutate(weightedPriority = sample(weightedPriority)) %>%
-            dplyr::select(PA_ID, weightedPriority)
+            dplyr::select(stand_group_by, weightedPriority)
 
            projects_selected <- projects_selected %>% dplyr::select(-weightedPriority) %>%
              left_join(shuffled_weights, by = stand_group_by) %>%
@@ -229,12 +229,12 @@
         if(fire_annual_target_field %>% is.null){
           projects_scheduled <- projects_selected %>%
             mutate(ETrt_YR = 1) %>%
-            dplyr::select(PA_ID, ETrt_YR, treatment_rank)
+            dplyr::select(stand_group_by, weightedPriority, ETrt_YR, treatment_rank)
         } else {
           projects_scheduled <- projects_selected %>%
-            mutate(ETrt_YR = ifelse(cumsum(get(fire_annual_target_field)) %/% !!fire_annual_target_i + 1)) %>%
+            mutate(ETrt_YR = cumsum(get(fire_annual_target_field)) %/% !!fire_annual_target_i + 1) %>%
             mutate(ETrt_YR = ifelse(weightedPriority == 0, NA, ETrt_YR)) %>%
-            dplyr::select(PA_ID, ETrt_YR, treatment_rank) %>%
+            dplyr::select(stand_group_by, ETrt_YR, weightedPriority, treatment_rank) %>%
             filter(ETrt_YR == 1) %>%
             mutate(ETrt_YR = !!yr)
         }
@@ -242,35 +242,35 @@
         # record stands scheduled for treatment in current year
         stands_treated <- stands_selected %>%
           inner_join(projects_scheduled, by=stand_group_by) %>%
-          dplyr::select(CELL_ID, PA_ID, ETrt_YR, treatment_rank, weightedPriority) %>%
+          dplyr::select(stand_field, stand_group_by, ETrt_YR, treatment_rank) %>%
           bind_rows(stands_treated)
 
         # remove stands or project areas that were treated from available stands
         stands_available <- stands_available %>%
-          filter((CELL_ID %in% stands_treated$CELL_ID == FALSE) & (PA_ID %in% stands_treated$PA_ID == FALSE))
+          filter((.data[[stand_field]] %in% stands_treated[[stand_field]] == FALSE) & (.data[[stand_group_by]] %in% stands_treated[[stand_group_by]] == FALSE))
 
         # report yearly work
-        s_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(CELL_ID) %>% n_distinct()
-        p_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(PA_ID) %>% n_distinct()
+        s_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(stand_field) %>% n_distinct()
+        p_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(stand_group_by) %>% n_distinct()
         message(paste0(s_n, ' stands (', round(s_n/nrow(stands_prioritized) * 100, 2), '%) treated in ', p_n, ' projects'))
 
         if(!is.null(fire_intersect_table)) {
-
           # record stands that burned this year
           stands_burned <- stands %>%
-            left_join(projects_scheduled, by = stand_group_by) %>%
-            left_join(stands_selected %>% dplyr::select(CELL_ID, weightedPriority), by = stand_field) %>%
-            left_join(fires %>% dplyr::select(CELL_ID, FIRE_YR, FIRE_NUMBER), by = stand_field) %>%
+            left_join(projects_scheduled, by=stand_group_by) %>%
+            left_join(stands_treated %>% dplyr::select(stand_field), by=stand_field) %>%
+            left_join(fires %>% dplyr::select(stand_field, FIRE_YR, FIRE_NUMBER), by=stand_field) %>%
             filter(FIRE_YR == !!yr) %>%
-            dplyr::select(CELL_ID, PA_ID, ETrt_YR, FIRE_YR, FIRE_NUMBER, treatment_rank, weightedPriority) %>%
+            dplyr::select(stand_field, stand_group_by, ETrt_YR, FIRE_YR, FIRE_NUMBER, treatment_rank, weightedPriority) %>%
             bind_rows(stands_burned)
 
           # report yearly fire
-          message(paste(stands_burned %>% filter(FIRE_YR == yr) %>% pull(CELL_ID) %>% n_distinct(), 'stands burned'))
+          b_n = stands_burned %>% filter(FIRE_YR == yr) %>% pull(stand_field) %>% n_distinct()
+          message(paste0(b_n, ' (', round(b_n/nrow(stands_prioritized) * 100, 2), '%) stands burned'))
 
           # remove burnt stands from future selection only if running dynamic forsys
           if(fire_dynamic_forsys == TRUE) {
-            stands_available <- stands_available %>% filter(CELL_ID %in% stands_burned$CELL_ID == FALSE)
+            stands_available <- stands_available %>% filter(.data[[stand_field]] %in% stands_burned[[stand_field]] == FALSE)
           }
 
           # order planning areas for treatment post-fire to identify decision-shifts.
@@ -290,7 +290,7 @@
 
       if(!is.null(fire_intersect_table))
         stands_selected_out <- stands_selected_out %>%
-          left_join(fires %>% dplyr::select(CELL_ID, FIRE_YR, FIRE_NUMBER), by=stand_field)
+          left_join(fires %>% dplyr::select(stand_field, FIRE_YR, FIRE_NUMBER), by=stand_field)
 
       # write out minimal stand information
       stands_selected_out <- stands_selected_out %>% bind_cols(write_tags)
