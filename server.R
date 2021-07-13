@@ -116,9 +116,14 @@ server <- function(input, output, session) {
 
 	# Event listener for loading a scenario. Will deserialize a json file created from one of the save functions
 	observeEvent(input$load_scenario_but, {
+		print(paste0('SCENARIO: ', input$select_scenario))
 		validate(
-			need(input$select_scenario == '', 'Please select a scenario to load')
+			# TODO this validation doesn't work.
+			need(input$select_scenario != '', 'Please select a scenario to load')
 			)
+
+		# As a hack, use req to stop execution
+		req(input$select_scenario)
 
 		# Block loading dataset until on the right page. It seems like if we're not on the right tab the
 		# selected values don't update correctly
@@ -187,7 +192,6 @@ server <- function(input, output, session) {
 		updateSelectInput(session, 'pcp_spm_fields', choices = choices)
 		updateSelectInput(session, 'treatment_available_field', choices = choices)
 		updateSelectInput(session, 'planning_unit_id_field', choices = choices)
-		# updateSelectInput(session, 'pa_target_field', choices = choices) # TODO in the Idaho file, this is "AREA_MAN" which doesn't exist in the data
 		updateSelectInput(session, 'pa_unit_field', choices = choices)
 		updateSelectInput(session, 'output_grouping_fields', choices = choices)
 		updateSelectInput(session, 'au_id_field', choices = choices)
@@ -369,11 +373,16 @@ server <- function(input, output, session) {
 			au_target_multiplier = input$au_target_multiplier
 		} else {
 			nesting = FALSE
-			nesting_group_by = NULL
-			nesting_target = NULL
-			nesting_unit = NULL
+			nesting_group_by = ''
+			nesting_target = ''
+			nesting_unit = ''
 			au_target_multiplier = 1.0
 		}
+
+		nesting_group_by = input$au_id_field
+		nesting_target = input$au_target_field
+		nesting_unit = input$au_unit_field
+		au_target_multiplier = input$au_target_multiplier
 
 		weight_values <- weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
 

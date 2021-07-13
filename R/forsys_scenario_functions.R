@@ -115,10 +115,12 @@ write_save_file <- function(
 
 	json_data <- toJSON(vector_data, pretty = TRUE)
 
+	print(json_data)
+
 	output_file_name <- paste0('configs/', scenario_name, '.json')
 
 	if (!dir.exists(file.path(getwd(), 'configs'))) {
-	  print(glue('Making output directory: ', file.path(getwd(), 'configs')), sep="")
+	  print(paste0('Making output directory: ', file.path(getwd(), 'configs')))
 	  dir.create(file.path(getwd(), "configs"))
 	}
 
