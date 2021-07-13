@@ -113,16 +113,16 @@ write_save_file <- function(
 	vector_data$fixed_area_target = fixed_area_target
 	vector_data$overwrite_output = overwrite_output
 
-	json_data <- serializeJSON(vector_data, pretty = TRUE)
+	json_data <- toJSON(vector_data, pretty = TRUE)
 
-	output_file_name <- glue('configs/{scenario_name}.json')
+	output_file_name <- paste0('configs/', scenario_name, '.json')
 
 	if (!dir.exists(file.path(getwd(), 'configs'))) {
 	  print(glue('Making output directory: ', file.path(getwd(), 'configs')), sep="")
 	  dir.create(file.path(getwd(), "configs"))
 	}
 
-	write_json(json_data, output_file_name)
+	writeLines(json_data, output_file_name)
 
 	return(vector_data)
 }
@@ -189,8 +189,8 @@ read_save_file <- function(filename = '') {
 	# TODO check if file exists
 	# print(filename)
 
-	json_data = fromJSON(filename)
-	json_data = unserializeJSON(json_data)
+	json_data = readLines(filename)
+	json_data = fromJSON(json_data)
 }
 
 #' List json files in the configs folder, if it exists.
