@@ -253,7 +253,7 @@
         # report yearly work
         s_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(stand_field) %>% n_distinct()
         p_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(stand_group_by) %>% n_distinct()
-        message(paste0(s_n, ' stands (', round(s_n/nrow(stands_treated) * 100, 2), '%) treated in ', p_n, ' projects'))
+        message(paste0(s_n, ' stands (', round(s_n/nrow(stands_prioritized) * 100, 2), '%) treated in ', p_n, ' projects'))
 
         if(!is.null(fire_intersect_table)) {
           # record stands that burned this year
@@ -266,7 +266,8 @@
             bind_rows(stands_burned)
 
           # report yearly fire
-          message(paste(stands_burned %>% filter(FIRE_YR == yr) %>% pull(stand_field) %>% n_distinct(), 'stands burned'))
+          b_n = stands_burned %>% filter(FIRE_YR == yr) %>% pull(stand_field) %>% n_distinct()
+          message(paste0(b_n, ' (', round(b_n/nrow(stands_prioritized) * 100, 2), '%) stands burned'))
 
           # remove burnt stands from future selection only if running dynamic forsys
           if(fire_dynamic_forsys == TRUE) {
