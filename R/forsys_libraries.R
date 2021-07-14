@@ -3,6 +3,7 @@
 pacman::p_load(
   class, # ? Patchmax ? 
   data.table,
+  directlabels, # geom_dl
   dplyr,
   doParallel, # Patchmax
   foreign, # DBF

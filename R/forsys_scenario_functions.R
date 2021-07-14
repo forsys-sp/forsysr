@@ -13,10 +13,10 @@
 #'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
 #'                  A blank field means all lands are included in the calculation.
 #' @param priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
-#' @param stand_group_by TODO
-#' @param pa_target TODO
-#' @param pa_unit TODO
-#' @param pa_target_multiplier TODO
+#' @param proj_id TODO
+#' @param proj_target TODO
+#' @param proj_unit TODO
+#' @param proj_target_multiplier TODO
 #' @param nesting TODO
 #' @param nesting_group_by TODO
 #' @param nesting_target TODO
@@ -40,10 +40,10 @@ write_save_file <- function(
   pcp_spm = c(),
   land_base = '',
   priorities = c(),
-  stand_group_by = '',
-  pa_target = '',
-  pa_unit = '',
-  pa_target_multiplier = 0.15,
+  proj_id = '',
+  proj_target = '',
+  proj_unit = '',
+  proj_target_multiplier = 0.15,
   nesting = FALSE,
   nesting_group_by = NULL,
   nesting_target = NULL,
@@ -69,10 +69,10 @@ write_save_file <- function(
 		'pcp_spm',
 		'land_base',
 		'priorities',
-		'stand_group_by',
-		'pa_target',
-		'pa_unit',
-		'pa_target_multiplier',
+		'proj_id',
+		'proj_target',
+		'proj_unit',
+		'proj_target_multiplier',
 		'nesting',
 		'nesting_group_by',
 		'nesting_target',
@@ -95,10 +95,10 @@ write_save_file <- function(
 	vector_data$pcp_spm = pcp_spm
 	vector_data$land_base = land_base
 	vector_data$priorities = priorities
-	vector_data$stand_group_by = stand_group_by
-	vector_data$pa_target = pa_target
-	vector_data$pa_unit = pa_unit
-	vector_data$pa_target_multiplier = pa_target_multiplier
+	vector_data$proj_id = proj_id
+	vector_data$proj_target = proj_target
+	vector_data$proj_unit = proj_unit
+	vector_data$proj_target_multiplier = proj_target_multiplier
 	vector_data$nesting = nesting
 	vector_data$nesting_group_by = nesting_group_by
 	vector_data$nesting_target = nesting_target
@@ -161,10 +161,10 @@ write_save_file_helper <- function(input, data_path) {
 		pcp_spm = input$pcp_spm_fields,
 		land_base = input$treatment_available_field,
 		priorities = input$priorities_fields,
-		stand_group_by = input$planning_unit_id_field,
-		pa_target = input$pa_target_field,
-		pa_unit = input$pa_unit_field,
-		pa_target_multiplier = input$pa_target_multiplier,
+		proj_id = input$planning_unit_id_field,
+		proj_target = input$proj_target_field,
+		proj_unit = input$proj_unit_field,
+		proj_target_multiplier = input$proj_target_multiplier,
 		nesting = input$use_au,
 		nesting_group_by = nesting_group_by,
 		nesting_target = nesting_target,

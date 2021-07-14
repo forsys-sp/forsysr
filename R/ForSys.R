@@ -22,7 +22,7 @@
   #'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
   #'                  A blank field means all lands are included in the calculation.
   #' @param priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
-  #' @param stand_group_by TODO
+  #' @param proj_id TODO
   #' @param proj_target TODO
   #' @param proj_unit TODO
   #' @param proj_target_multiplier TODO
@@ -52,7 +52,7 @@
     pcp_spm = c(),
     land_base = '',
     priorities = c(),
-    stand_group_by = '',
+    proj_id = '',
     proj_unit = '',
     proj_target = '',
     proj_target_multiplier = 0.15,
@@ -130,7 +130,7 @@
       add_target_field(proj_unit = proj_unit,
                        proj_target = proj_target,
                        proj_target_multiplier = proj_target_multiplier,
-                       stand_group_by = stand_group_by,
+                       proj_id = proj_id,
                        land_base = land_base)
 
     # create objects for tracking treated and burnt stands
@@ -179,7 +179,7 @@
             treatment_type = threshold_dat$type,
             treatment_threshold = threshold_dat$threshold,
             stand_field = stand_field,
-            stand_group_by = stand_group_by,
+            proj_id = proj_id,
             proj_fixed_target = proj_fixed_target,
             proj_fixed_area_target = proj_fixed_area_target,
             proj_unit = proj_unit,
@@ -193,7 +193,7 @@
 
         # group selected stands by project
         projects_selected <- stands_selected %>%
-          create_grouped_dataset(grouping_vars = stand_group_by,
+          create_grouped_dataset(grouping_vars = proj_id,
                                  summing_vars = c(output_fields, "weightedPriority")) %>%
           rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields) %>%
           replace(is.na(.), 0) %>%
@@ -208,10 +208,10 @@
           shuffled_weights <- projects_selected %>%
             filter(treatment_rank %>% is.na == FALSE) %>%
             mutate(weightedPriority = sample(weightedPriority)) %>%
-            dplyr::select(stand_group_by, weightedPriority)
+            dplyr::select(proj_id, weightedPriority)
 
            projects_selected <- projects_selected %>% dplyr::select(-weightedPriority) %>%
-             left_join(shuffled_weights, by = stand_group_by) %>%
+             left_join(shuffled_weights, by = proj_id) %>%
              arrange(-weightedPriority) %>%
              mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA)) %>%
              drop_na(treatment_rank)
@@ -229,39 +229,39 @@
         if(fire_annual_target_field %>% is.null){
           projects_scheduled <- projects_selected %>%
             mutate(ETrt_YR = 1) %>%
-            dplyr::select(stand_group_by, weightedPriority, ETrt_YR, treatment_rank)
+            dplyr::select(proj_id, weightedPriority, ETrt_YR, treatment_rank)
         } else {
           projects_scheduled <- projects_selected %>%
             mutate(ETrt_YR = cumsum(get(fire_annual_target_field)) %/% !!fire_annual_target_i + 1) %>%
             mutate(ETrt_YR = ifelse(weightedPriority == 0, NA, ETrt_YR)) %>%
-            dplyr::select(stand_group_by, ETrt_YR, weightedPriority, treatment_rank) %>%
+            dplyr::select(proj_id, ETrt_YR, weightedPriority, treatment_rank) %>%
             filter(ETrt_YR == 1) %>%
             mutate(ETrt_YR = !!yr)
         }
 
         # record stands scheduled for treatment in current year
         stands_treated <- stands_selected %>%
-          inner_join(projects_scheduled, by=stand_group_by) %>%
-          dplyr::select(stand_field, stand_group_by, ETrt_YR, treatment_rank) %>%
+          inner_join(projects_scheduled, by=proj_id) %>%
+          dplyr::select(stand_field, proj_id, ETrt_YR, treatment_rank) %>%
           bind_rows(stands_treated)
 
         # remove stands or project areas that were treated from available stands
         stands_available <- stands_available %>%
-          filter((.data[[stand_field]] %in% stands_treated[[stand_field]] == FALSE) & (.data[[stand_group_by]] %in% stands_treated[[stand_group_by]] == FALSE))
+          filter((.data[[stand_field]] %in% stands_treated[[stand_field]] == FALSE) & (.data[[proj_id]] %in% stands_treated[[proj_id]] == FALSE))
 
         # report yearly work
         s_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(stand_field) %>% n_distinct()
-        p_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(stand_group_by) %>% n_distinct()
+        p_n = stands_treated %>% filter(ETrt_YR == yr) %>% pull(proj_id) %>% n_distinct()
         message(paste0(s_n, ' stands (', round(s_n/nrow(stands_prioritized) * 100, 2), '%) treated in ', p_n, ' projects'))
 
         if(!is.null(fire_intersect_table)) {
           # record stands that burned this year
           stands_burned <- stands %>%
-            left_join(projects_scheduled, by=stand_group_by) %>%
+            left_join(projects_scheduled, by=proj_id) %>%
             left_join(stands_treated %>% dplyr::select(stand_field), by=stand_field) %>%
             left_join(fires %>% dplyr::select(stand_field, FIRE_YR, FIRE_NUMBER), by=stand_field) %>%
             filter(FIRE_YR == !!yr) %>%
-            dplyr::select(stand_field, stand_group_by, ETrt_YR, FIRE_YR, FIRE_NUMBER, treatment_rank, weightedPriority) %>%
+            dplyr::select(stand_field, proj_id, ETrt_YR, FIRE_YR, FIRE_NUMBER, treatment_rank, weightedPriority) %>%
             bind_rows(stands_burned)
 
           # report yearly fire
@@ -286,7 +286,7 @@
       message('Writing output files for stands and planning areas')
 
       # tag stands with specific scenario attributes
-      stands_selected_out <- stands_treated %>% dplyr::select(!!stand_field, !!stand_group_by, ETrt_YR)
+      stands_selected_out <- stands_treated %>% dplyr::select(!!stand_field, !!proj_id, ETrt_YR)
 
       if(!is.null(fire_intersect_table))
         stands_selected_out <- stands_selected_out %>%
@@ -305,9 +305,9 @@
       # group *selected* stands by project
       projects_etrt_out <- stands_selected_out %>%
         dplyr::select(!!stand_field, ETrt_YR) %>%
-        left_join(stands_prioritized %>% dplyr::select(stand_field, stand_group_by, output_fields, 'weightedPriority'),
+        left_join(stands_prioritized %>% dplyr::select(stand_field, proj_id, output_fields, 'weightedPriority'),
                   by = stand_field) %>%
-        create_grouped_dataset(grouping_vars = c(stand_group_by, 'ETrt_YR'),
+        create_grouped_dataset(grouping_vars = c(proj_id, 'ETrt_YR'),
                                summing_vars = c(output_fields, 'weightedPriority')) %>%
         arrange(ETrt_YR, -weightedPriority) %>%
         rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields) %>%
@@ -316,12 +316,12 @@
       # group *all* stands by project
       projects_esum_out <- stands %>%
         compile_planning_areas_and_stands(unique_weights = uniqueWeights,
-                                          group_by = stand_group_by,
+                                          group_by = proj_id,
                                           output_fields = output_fields)
 
       # combine etrt w/ esum
       projects_selected_out <- projects_etrt_out %>%
-        inner_join(projects_esum_out, by=stand_group_by) %>%
+        inner_join(projects_esum_out, by=proj_id) %>%
         replace(is.na(.), 0) %>%
         arrange(ETrt_YR, -weightedPriority) %>%
         mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA))

@@ -95,10 +95,10 @@ scenario_setup_panel_advanced <- tabPanel(
 			value = 'sspa_priorities',
 			br(),
 			selectInput('stand_id_field', 'Stand ID Field', choices = NULL, multiple = FALSE, selectize = TRUE),
-			selectInput('pcp_spm_fields', 'Fields to calculate PCP and SPM on', choices = NULL, multiple = TRUE, selectize = TRUE),
+			selectInput('pcp_spm_fields', 'Priorities', choices = NULL, multiple = TRUE, selectize = TRUE),
 			selectInput('treatment_available_field', 'Available for Treatment Field', choices = NULL, multiple = FALSE, selectize = TRUE),
-			selectInput('priorities_fields', 'Priorties', choices = NULL, multiple = TRUE, selectize = TRUE),
-
+			selectInput('priorities_fields', 'Effects', choices = NULL, multiple = TRUE, selectize = TRUE),
+			p('Select Priority Weight Scale, the default returns 21 scenarios for two priorities. Increase the Maximum Weight value to increase the number of scenarios. For example, a maximum weight of 10 returns 65 scenarios for two priorities.'), 
 			div(
 				id = 'weight_items',
 				numericInput('weight_min', 'Minimum Weight', 0, width = '150px'),
@@ -107,20 +107,29 @@ scenario_setup_panel_advanced <- tabPanel(
 					)
 				),
 		tabPanel(
+			'Thresholds',
+			value = 'sspa_thresholds',
+			br(),
+			textAreaInput('thresholds_expr', label = 'Thresholds', value = 'Manageable man_alldis == 1', placeholder = 'Manageable man_alldis == 1'),
+			radioButtons('thresholds_op', label = 'Thresholds Operator', choices = c('AND', 'OR'), inline = TRUE),
+			), 
+		tabPanel(
 			'Planning Areas',
 			value = 'sspa_pa',
 			br(),
 			selectInput('planning_unit_id_field', 'Planning Unit ID', choices = NULL, multiple = FALSE, selectize = TRUE),
 
-			textInput('pa_target_field', 'Planning Unit Constraint', 'AREA_MAN'),
+			p('Stands will be prioritized within predefined planning units until user defined constraints are met.'),
+
+			textInput('proj_target_field', 'Planning Unit Constraint', 'AREA_MAN'),
 
 			radioButtons('variable_fixed_select', label = NULL, choices = c('Variable', 'Fixed'), inline = TRUE),
 
 			tabsetPanel(
 				tabPanel(id = 'variable_target_panel', 'Variable Constraint',
 					br(),
-					selectInput('pa_unit_field', 'Planning Unit Unit', choices = NULL, multiple = FALSE, selectize = TRUE),
-					numericInput('pa_target_multiplier', 'Planning Unit Multiplier', 0.15)),
+					selectInput('proj_unit_field', 'Constraint Units Field', choices = NULL, multiple = FALSE, selectize = TRUE),
+					numericInput('proj_target_multiplier', 'Constraint Units Multiplier', 0.15)),
 				tabPanel(id = 'fixed_target_panel', 'Fixed Constraint',
 					br(),
 					numericInput('fixed_target_value', 'Fixed Constraint Amount', 2000))
@@ -130,6 +139,7 @@ scenario_setup_panel_advanced <- tabPanel(
 			'Administrative Units',
 			value = 'sspa_nesting',
 			br(),
+			p('Do you need to prioritize planning units within larger administrative units?'),
 			checkboxInput('use_au', 'Multiple Administrative Units'),
 			div(
 				id = 'au_items',
@@ -147,13 +157,6 @@ scenario_setup_panel_advanced <- tabPanel(
 			),
 		),
 		tabPanel(
-			'Thresholds',
-			value = 'sspa_thresholds',
-			br(),
-			textAreaInput('thresholds_expr', label = 'Thresholds', value = 'Manageable man_alldis == 1', placeholder = 'Manageable man_alldis == 1'),
-			radioButtons('thresholds_op', label = 'Thresholds Operator', choices = c('AND', 'OR'), inline = TRUE),
-			), 
-		tabPanel(
 			'Output',
 			value = 'sspa_output',
 			br(),
@@ -166,10 +169,10 @@ scenario_setup_panel_advanced <- tabPanel(
 	)
 
 scenario_select_main_panel <- navbarMenu(
-	'Scenario Planning',
+	'Load Scenario',
 	tabPanel(
 		value = 'select_scenario_panel',
-		'Access Saved Scenarios',
+		'Access forsys.app scenario',
 		titlePanel('Select from the following scenarios'),
 		mainPanel(
 			selectInput('select_scenario', '', c(), size = 10, selectize = FALSE),
@@ -181,13 +184,13 @@ scenario_select_main_panel <- navbarMenu(
 		),
 	tabPanel(
 		id = 'create_scenario_from_config_panel',
-		'Create New Scenario By Uploading Config',
+		'Upload existing scenario file',
 		fileInput('config_input', 'Select Config File', accept = c('.json'))
 		)
 	)
 
 scenario_setup_main_panel <- navbarMenu(
-	'Scenario Setup',
+	'Create/Edit Scenario',
 	# scenario_setup_panel_simple,
 	scenario_setup_panel_advanced)
 
@@ -205,7 +208,7 @@ results_main_panel <- tabPanel(
 			h3('Charts'),
 			# p(actionLink('attainment_efficiency', 'Attainment Efficiency')),
 			p(actionLink('attainment_efficiency_by_area','Attainment Efficiency by Area Treated')),
-			p(actionLink('production_frontiers','Production Frontiers')),
+			p(actionLink('production_frontiers','Tradeoff Analysis')),
 			h3('Maps'),
 			p('Treatment Prioritization'),
 			h3('Data'),
@@ -214,10 +217,10 @@ results_main_panel <- tabPanel(
 			),
 		mainPanel(
 			# selectInput('stand_id_field', 'Stand ID Field', choices = NULL, multiple = FALSE, selectize = TRUE),
-			selectInput('plot_x_field', 'Select Planning Unit Target', choices = NULL, multiple = FALSE, selectize = TRUE),
 			selectInput('plot_priority', 'Select Priority', choices = NULL, multiple = FALSE, selectize = TRUE),
+			selectInput('plot_x_field', 'Select Planning Unit Target', choices = NULL, multiple = FALSE, selectize = TRUE),
 			plotOutput('analysis_plot', click = 'results_plot_click'),
-			leafletOutput("pa_map")
+			leafletOutput("proj_map")
 			)
 		)
 	)

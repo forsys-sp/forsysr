@@ -193,11 +193,11 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
 }
 
 # TODO Add function description
-add_target_field <- function(stands, proj_unit, proj_target, proj_target_multiplier, stand_group_by, land_base) {
+add_target_field <- function(stands, proj_unit, proj_target, proj_target_multiplier, proj_id, land_base) {
   if(length(land_base) == 0) {
-    stands_updated <- stands[, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = stand_group_by]
+    stands_updated <- stands[, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = proj_id]
   } else {
-    stands_updated <- stands[get(land_base) == 1, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = stand_group_by]
+    stands_updated <- stands[get(land_base) == 1, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = proj_id]
   }
   return(stands_updated)
 }
@@ -317,7 +317,7 @@ apply_treatment <- function(stands,
                             treatment_type,
                             treatment_threshold,
                             stand_field,
-                            stand_group_by,
+                            proj_id,
                             proj_fixed_target,
                             proj_fixed_area_target=NULL,
                             proj_unit=NULL,
@@ -343,13 +343,13 @@ apply_treatment <- function(stands,
 
     # select stands for treatment type t
     treat_stands <- select_simple_greedy_algorithm(dt = filtered_stands,
-                                                   grouped_by = stand_group_by,
+                                                   grouped_by = proj_id,
                                                    prioritize_by = "weightedPriority",
                                                    constrain_by = c(1, proj_unit, "master_target"))
 
     # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
-    area_treatedPA <- update_target(treat_stands, stand_group_by, proj_unit)
-    stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
+    area_treatedPA <- update_target(treat_stands, proj_id, proj_unit)
+    stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = proj_id]
     stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_type[t], selected = 1), on = stand_field]
     selected_stands <- rbind(selected_stands, stands_updated[selected==1,])
   }
