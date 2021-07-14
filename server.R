@@ -75,7 +75,7 @@ server <- function(input, output, session) {
 		})
 
 	observeEvent(extra_help_toggle(), {
-		if (extra_help_toggle()) 
+		if (extra_help_toggle())
 		{
 			shinyjs::show(id = 'extra_help')
 		} else {
@@ -92,7 +92,7 @@ server <- function(input, output, session) {
 	observeEvent(input$go_to_new_scenario_but, {
 		updateTabsetPanel(session, 'main_nav', selected = 'scenario_setup_panel_advanced')
 	})
-	
+
 
 	########################################################
 
@@ -117,7 +117,7 @@ server <- function(input, output, session) {
 	# Event listener for loading a scenario. Will deserialize a json file created from one of the save functions
 	observeEvent(input$load_scenario_but, {
 		print(paste0('SCENARIO: ', input$select_scenario))
-		validate(
+		shiny::validate(
 			# TODO this validation doesn't work.
 			need(input$select_scenario != '', 'Please select a scenario to load')
 			)
