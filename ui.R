@@ -202,7 +202,7 @@ simulation_main_panel <- tabPanel(
 
 results_main_panel <- tabPanel(
 	value = 'analysis_panel',
-	'Results and Analysis',
+	'Results',
 	sidebarLayout(
 		sidebarPanel(
 			h3('Charts'),
