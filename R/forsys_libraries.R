@@ -1,21 +1,16 @@
 ('Loading required R packages...')
 pacman::p_load(
-  class, # ? Patchmax ? 
+  class, # ? Patchmax ?
   data.table,
   directlabels,   # geom_dl
   dplyr,
   doParallel,     # Patchmax
   foreign,        # DBF
-  gtools,         # permutations
+  gtools,         # permutation
   jsonlite,       # Config files
-  leaflet,        # Drawing maps
-  # maptools,     # ? superceeded by SF?
-  shiny,
-  shinyBS,        # Shiny tooltips
-  shinyjs, 
-  stringr, 
+  stringr,
   rgdal,
-  rgeos,          # ? 
+  rgeos,          # ?
   roxygen2,       # documentation
   sp,             # ? do we use
   sf,

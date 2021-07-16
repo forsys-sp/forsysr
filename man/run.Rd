@@ -8,16 +8,19 @@ in a config file and pass the name of the file to this run function.}
 run(
   config_file = "",
   scenario_name = "",
+  num_reps = 1,
   input_standfile = "",
   write_stand_outputs = FALSE,
-  stand_field = "Cell_ID",
+  stand_field = "CELL_ID",
   pcp_spm = c(),
   land_base = "",
   priorities = c(),
-  stand_group_by = "",
-  pa_target = "",
-  pa_unit = "",
-  pa_target_multiplier = 0.15,
+  proj_id = "",
+  proj_unit = "",
+  proj_target = "",
+  proj_target_multiplier = 0.15,
+  proj_fixed_target = FALSE,
+  proj_fixed_area_target = NULL,
   nesting = FALSE,
   nesting_group_by = NULL,
   nesting_target = NULL,
@@ -28,11 +31,15 @@ run(
   include_stands = c("man_alldis == 1"),
   output_fields = c("AREA_HA", "TVMBF_STND", "TVMBF_PCP", "HUSUM_STND", "HUSUM_PCP"),
   grouping_variables = c("PA_ID", "Owner"),
-  fixed_target = FALSE,
-  fixed_area_target = 2000,
   overwrite_output = TRUE,
-  spatial_optimization = FALSE,
-  shiny_output = FALSE
+  run_with_shiny = FALSE,
+  fire_intersect_table = NULL,
+  fire_planning_years = 1,
+  fire_annual_target_field = NULL,
+  fire_annual_target = NA,
+  fire_dynamic_forsys = FALSE,
+  fire_random_projects = FALSE,
+  write_tags = ""
 )
 }
 \arguments{
@@ -40,11 +47,13 @@ run(
 
 \item{scenario_name}{A name for this scenario}
 
-\item{input_standfile}{TODO}
+\item{num_reps}{TODO}
 
-\item{write_stand_outputs}{TODO}
+\item{input_standfile}{Path to the input dataset}
 
-\item{stand_field}{TODO}
+\item{write_stand_outputs}{Whether to write intermediate stand outputs}
+
+\item{stand_field}{The field in the input_standfile which is a unique ID for each stand}
 
 \item{pcp_spm}{PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.}
 
@@ -54,19 +63,25 @@ A blank field means all lands are included in the calculation.}
 
 \item{priorities}{Priorities are named here. If only one priority exists, only a weight of one will be used.}
 
-\item{stand_group_by}{TODO}
+\item{proj_id}{The field in the input_standfile that indicates which project or planning area a stand belongs to}
 
-\item{pa_target}{TODO}
+\item{proj_unit}{TODO}
 
-\item{pa_unit}{TODO}
+\item{proj_target}{TODO}
 
-\item{pa_target_multiplier}{TODO}
+\item{proj_target_multiplier}{TODO}
+
+\item{proj_fixed_target}{Set to have either a fixed area target (TRUE) or a variable area target (FALSE)}
+
+\item{proj_fixed_area_target}{If using a fixed target, set the fixed target value here.}
 
 \item{nesting}{TODO}
 
 \item{nesting_group_by}{TODO}
 
 \item{nesting_target}{TODO}
+
+\item{nesting_unit}{TODO}
 
 \item{nesting_target_multiplier}{TODO}
 
@@ -81,14 +96,26 @@ priority weights and treatment rank are added automatically.}
 
 \item{grouping_variables}{Include the smaller and larger groups here for grouping of treated stands.}
 
-\item{fixed_target}{Set to have either a fixed area target (TRUE) or a variable area target (FALSE)}
+\item{overwrite_output}{Overwrite any existing output of the same name?}
 
-\item{fixed_area_target}{TODO}
+\item{run_with_shiny}{Sets some output business for better shiny interaction}
 
-\item{overwrite_output}{Toggle to overwrite existing output files}
+\item{fire_intersect_table}{TOTO}
+
+\item{fire_planning_years}{= TODO}
+
+\item{fire_annual_target_field}{TODO}
+
+\item{fire_annual_target}{TODO}
+
+\item{fire_dynamic_forsys}{TODO}
+
+\item{fire_random_projects}{TODO}
+
+\item{write_tags}{TODO}
 }
 \value{
-A datatable with the weighted values for the priorities in the \code{priorityList}.
+
 }
 \description{
 Run the ForSys treatment planner. Either provide parameters, or define parameters

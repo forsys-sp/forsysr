@@ -5,7 +5,7 @@
 \title{Select subunits to treat based on a given priority.}
 \usage{
 select_simple_greedy_algorithm(
-  dt = dbfFile,
+  dt = NULL,
   grouped_by = "PA_ID",
   prioritize_by = "TVMBF_SPM",
   constrain_by = c("apply", "AREA_HA", "AREA_PA10P")
@@ -24,9 +24,6 @@ first item in each list, default 'apply', is the name of a binary field in which
 and 0 = do not apply the constraint to a given stand. The second item in each list is the name
 of the field that is summed to reach the constraint. The third item in each list is the name of
 the constraining field.}
-
-\item{group_target}{The variable that contains the subunit values which are summed to meet the
-constraint value.}
 }
 \value{
 The selected stands from \code{df}, ordered by \code{prioritize_by}, and selected until the sum of \code{tally_by} is as close to

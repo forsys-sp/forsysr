@@ -1,16 +1,45 @@
 Package: forsys
 Title: ForSys Scenario Planning
-Version: 0.0.0.9000
+Version: 0.1
 Authors@R: 
-    person(given = "Rachel",
+    c(
+        person(given = "Rachel",
            family = "Houtman",
-           role = c("aut", "cre"),
-           email = "Rachel.Houtman@oregonstate.edu",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-Depends: pacman
+           role = c("aut"),
+           email = "Rachel.Houtman@oregonstate.edu",),
+        person(given = "Cody",
+           family = "Evers",
+           role = c("aut"),
+           email = "evers.cody@gmail.com",), 
+        person(given = "Robb",
+           family = "Lankston",
+           role = c("cre"),
+           email = "robb@lankstonconsulting.com")
+    )
+Description: ForSys is a multi-objective spatial prioritization system that was designed to explore how specific investment strategies aimed at improving forest conditions change under a range of management constraints to achieve specific outcomes and understand tradeoffs. Forsys.app modernizes how the USFS and our partners identify, prioritize, and implement treatment activities across the landscape by using cloud-based, geospatial technology to explore and rapidly visualize various management scenarios and treatment optimization decisions.
+Depends: R (>= 4.0.0), rlang
+Imports:
+    class,
+    data.table,
+    directlabels, 
+    dplyr, 
+    foreign, 
+    gtools, 
+    ggplot2, 
+    jsonlite, 
+    stringr, 
+    pacman,
+    purrr,
+    roxygen2,
+    tidyr
+Suggests:
+    doParallel,
+    rgdal, 
+    rgeos, 
+    sp,
+    sf
 License: GPL-3
-URL: https://www.fuelcast.app
+URL: https://www.forsys.app
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
