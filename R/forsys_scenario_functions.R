@@ -74,7 +74,7 @@ write_save_file <- function(
 	write_tags = ''
   ) {
 
-	vector_data <- vector(mode='list')
+	vector_data <- vector(mode='list', length=33)
 
 	names(vector_data) = c(
 		'scenario_name',

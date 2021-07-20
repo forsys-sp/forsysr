@@ -7,7 +7,7 @@ load_dataset <- function(path_to_file) {
   file_type <- stringr::str_sub(path_to_file, start= -3)
   message("Loading Dataset")
   if (file_type == "dbf") {
-    standDT <- date.table::data.table(foreign::read.dbf(path_to_file))
+    standDT <- data.table::data.table(foreign::read.dbf(path_to_file))
     message("Read stand file from DBF")
   } else if (file_type == "csv") {
     standDT <- data.table::data.table(data.table::fread(path_to_file, header = TRUE))
@@ -32,8 +32,9 @@ load_dataset <- function(path_to_file) {
 #' the constraining field.
 #' @return The selected stands from \code{df}, ordered by \code{prioritize_by}, and selected until the sum of \code{tally_by} is as close to
 #' \code{group_target} as possible.
-
+#'
 #' @importFrom data.table :=
+#' @importFrom rlang .data
 #'
 select_simple_greedy_algorithm <- function(dt = NULL,
                                            grouped_by = 'PA_ID',

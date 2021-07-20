@@ -52,7 +52,7 @@
 #' @return 
 #'
 #' @importFrom dplyr %>%
-#' @importFrom dplyr .data
+#' @importFrom rlang .data
 #'
   run <- function(
     config_file = '',
