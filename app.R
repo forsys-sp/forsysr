@@ -8,6 +8,4 @@ source('R/ForSys.R')
 source('ui.R')
 source('server.R')
 
-run('config_TenYearPlan_WW_FS.R')
-
 shinyApp(ui, server)

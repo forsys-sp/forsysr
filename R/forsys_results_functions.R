@@ -66,23 +66,22 @@ attainment_chart_by_target_treated <- function(results_data, pcp_field, target_f
 
 }
 
-production_frontiers_chart <- function(results_data, x_field, y_field, target_field) {
+production_frontiers_chart <- function(results_data, proj_field, x_field, y_field, target_field) {
 	# First, find the top PA_IDs in terms of target performance
-	# Right now it's set to top 10, maybe make this dynamic?
+	# Right now it's set to top 10, maybe make this dynamic?	
 	dat <- results_data %>%
-			group_by(PA_ID) %>%
+			group_by_at(proj_field) %>%
 			summarize(sum = sum(get(target_field))) %>%
 			slice_max(n = 10, order_by = sum)
-
-
-	print(dat)
+	
+	# print(dat)
 
 	# Now, for those top 10, chart the x vs y of them
-	top_pa_ids <- results_data[results_data$PA_ID %in% dat$PA_ID, ]
+	top_proj_ids <- results_data[results_data[[proj_field]] %in% dat[[proj_field]], ]
 
 	# TODO make x scale dynamic (scale_x_continuous)
-	ggplot(top_pa_ids, aes(x = get(x_field), y = get(y_field), group = factor(PA_ID), color = factor(PA_ID))) +
+	ggplot(top_proj_ids, aes(x = get(x_field), y = get(y_field), group = factor(proj_field), color = factor(proj_field))) +
 	  geom_line() + theme_classic() + scale_color_manual(values = safe_colorblind_palette) +
-	  geom_dl(aes(label = factor(PA_ID)), method = list(dl.combine("first.points", "last.points")), cex = 0.8) + scale_x_continuous(expand=c(0, .1)) +
-	  labs(title='Production Frontiers', x = x_field, y = y_field, color = "PA_ID")
+	  geom_dl(aes(label = factor(proj_field)), method = list(dl.combine("first.points", "last.points")), cex = 0.8) + scale_x_continuous(expand=c(0, .1)) +
+	  labs(title='Tradeoff Analysis', x = x_field, y = y_field, color = "PA_ID")
 }

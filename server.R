@@ -1,10 +1,5 @@
 options(shiny.maxRequestSize = 2000*1024^2)
 
-
-validate_inputs <- function() {
-
-}
-
 server <- function(input, output, session) {
 
 	########################################################
@@ -39,15 +34,19 @@ server <- function(input, output, session) {
 
 			if (stringr::str_detect(ext, 'zip')) {
 				# First open the zip and make sure it has a 'shp' in it
-				zfiles <- zip_list(x['datapath'])
-				if (has_element(purrr::map(zfiles$filename, function(x) str_detect(x, 'dbf')), TRUE)) {
-					unzip(x['datapath'], exdir=perm_data_path)
-					data_path <- paste0(str_sub(perm_data_path, -3), 'dbf')
-					r_data$data_path <- perm_data_path
-					r_data$ext <- ext
+				zfiles <- unzip(x['datapath'], list=TRUE)
 
-					r_data$data <- load_dataset(perm_data_path)
-				}
+				out_dir = str_sub(perm_data_path, end=-5)
+
+				unzip(perm_data_path, exdir=out_dir)
+
+				data_path <- paste0(out_dir, '/', str_sub(x['name'], end=-4), 'dbf')
+
+				r_data$data_path <- data_path
+				r_data$ext <- ext
+
+				r_data$data <- load_dataset(data_path)
+
 			} else if (stringr::str_detect(ext, 'dbf') | stringr::str_detect(ext, 'csv')) {
 				r_data$data_path <- perm_data_path
 				r_data$ext <- ext
@@ -71,7 +70,7 @@ server <- function(input, output, session) {
 		})
 
 	observeEvent(extra_help_toggle(), {
-		if (extra_help_toggle()) 
+		if (extra_help_toggle())
 		{
 			shinyjs::show(id = 'extra_help')
 		} else {
@@ -88,7 +87,7 @@ server <- function(input, output, session) {
 	observeEvent(input$go_to_new_scenario_but, {
 		updateTabsetPanel(session, 'main_nav', selected = 'scenario_setup_panel_advanced')
 	})
-	
+
 
 	########################################################
 
@@ -112,13 +111,14 @@ server <- function(input, output, session) {
 
 	# Event listener for loading a scenario. Will deserialize a json file created from one of the save functions
 	observeEvent(input$load_scenario_but, {
-		validate(
-			need(input$select_scenario == '', 'Please select a scenario to load')
+		print(paste0('SCENARIO: ', input$select_scenario))
+		shiny::validate(
+			shiny::need(input$select_scenario != '', 'Please select a scenario to load')
 			)
 
 		# Block loading dataset until on the right page. It seems like if we're not on the right tab the
 		# selected values don't update correctly
-		updateTabsetPanel(session, 'main_nav', selected = 'scenario_setup_panel')
+		updateTabsetPanel(session, 'main_nav', selected = 'scenario_setup_panel_advanced')
 
 		# Read in the scenario data
 		json_data = read_save_file(input$select_scenario)
@@ -183,8 +183,7 @@ server <- function(input, output, session) {
 		updateSelectInput(session, 'pcp_spm_fields', choices = choices)
 		updateSelectInput(session, 'treatment_available_field', choices = choices)
 		updateSelectInput(session, 'planning_unit_id_field', choices = choices)
-		# updateSelectInput(session, 'pa_target_field', choices = choices) # TODO in the Idaho file, this is "AREA_MAN" which doesn't exist in the data
-		updateSelectInput(session, 'pa_unit_field', choices = choices)
+		updateSelectInput(session, 'proj_unit_field', choices = choices)
 		updateSelectInput(session, 'output_grouping_fields', choices = choices)
 		updateSelectInput(session, 'au_id_field', choices = choices)
 		updateSelectInput(session, 'au_target_multiplier', choices = choices)
@@ -204,7 +203,7 @@ server <- function(input, output, session) {
 
 			############################
 			# Populate outputs now that we have some options
-			select <- c(reactive_output_field(), reactive_pcp_spm_fields(), reactive_pa_unit_field()) # In case a previous selection was made, get them
+			select <- c(reactive_output_field(), reactive_pcp_spm_fields(), reactive_proj_unit_field()) # In case a previous selection was made, get them
 			updateSelectInput(session, 'outputs_select', choices = choices, selected = select)
 
 			# Now create the spm_pcp (priorities) choices (these aren't fields from the input data)
@@ -214,10 +213,10 @@ server <- function(input, output, session) {
 
 
 			updateSelectInput(session, 'treatment_available_field', selected = r_data$json$land_base)
-			updateSelectInput(session, 'planning_unit_id_field', selected = r_data$json$stand_group_by)
-			updateTextInput(session, 'pa_target_field', value = r_data$json$pa_target)
-			updateSelectInput(session, 'pa_unit_field', selected = r_data$json$pa_unit)
-			updateNumericInput(session, 'pa_target_multiplier', value = r_data$json$pa_target_multiplier)
+			updateSelectInput(session, 'planning_unit_id_field', selected = r_data$json$proj_id)
+			updateTextInput(session, 'proj_target_field', value = r_data$json$proj_target)
+			updateSelectInput(session, 'proj_unit_field', selected = r_data$json$proj_unit)
+			updateNumericInput(session, 'proj_target_multiplier', value = r_data$json$proj_target_multiplier)
 
 			updateTextInput(session, 'use_au', value = r_data$json$nesting)
 			updateTextInput(session, 'au_id_field', value = r_data$json$nesting_group_by)
@@ -236,7 +235,7 @@ server <- function(input, output, session) {
 			############################
 			get_inverse_select <- get_priority_output_names(reactive_priorities_fields()) # Find the 'inverse' target selection
 			# Populate outputs now that we have some options
-			choices <- c(colnames(r_data$data), reactive_pcp_spm_fields(), reactive_pa_unit_field()) # Add non-input data options to choices
+			choices <- c(colnames(r_data$data), reactive_pcp_spm_fields(), reactive_proj_unit_field()) # Add non-input data options to choices
 			select <- c(reactive_output_field(), get_inverse_select) # Get previous selections if needed and add new
 			updateSelectInput(session, 'outputs_select', choices = choices, selected = select)
 			############################
@@ -258,8 +257,8 @@ server <- function(input, output, session) {
 		fields <- input$pcp_spm_fields
 		})
 
-	reactive_pa_unit_field <- reactive({
-		fields <- input$pa_unit_field
+	reactive_proj_unit_field <- reactive({
+		fields <- input$proj_unit_field
 		})
 
 	reactive_output_field <- reactive({
@@ -286,7 +285,7 @@ server <- function(input, output, session) {
 	observeEvent(reactive_pcp_spm_fields(), {
 		# Populate outputs now that we have some options
 		choices <- colnames(r_data$data) # In case this hasn't been populated before, get all colnames
-		select <- c(reactive_output_field(), reactive_pcp_spm_fields(), reactive_pa_unit_field()) # In case a previous selection was made, get them
+		select <- c(reactive_output_field(), reactive_pcp_spm_fields(), reactive_proj_unit_field()) # In case a previous selection was made, get them
 		updateSelectInput(session, 'outputs_select', choices = choices, selected = select)
 
 		# Now create the spm_pcp (priorities) choices (these aren't fields from the input data)
@@ -299,7 +298,7 @@ server <- function(input, output, session) {
 	observeEvent(reactive_priorities_fields(), {
 		get_inverse_select <- get_priority_output_names(reactive_priorities_fields()) # Find the 'inverse' target selection
 		# Populate outputs now that we have some options
-		choices <- c(colnames(r_data$data), reactive_pcp_spm_fields(), reactive_pa_unit_field()) # Add non-input data options to choices
+		choices <- c(colnames(r_data$data), reactive_pcp_spm_fields(), reactive_proj_unit_field()) # Add non-input data options to choices
 		select <- c(reactive_output_field(), get_inverse_select) # Get previous selections if needed and add new
 		updateSelectInput(session, 'outputs_select', choices = choices, selected = select)
 
@@ -307,13 +306,14 @@ server <- function(input, output, session) {
 		weights()
 		})
 
-	# Event listener for the pa_unit field and adds it to output choices
-	observeEvent(reactive_pa_unit_field(), {
-		choices <- c(colnames(r_data$data), reactive_pcp_spm_fields(), reactive_pa_unit_field()) # Add non-input data options to choices
-		select <- c(reactive_output_field(), reactive_pa_unit_field())
+	# Event listener for the proj_unit field and adds it to output choices
+	observeEvent(reactive_proj_unit_field(), {
+		choices <- c(colnames(r_data$data), reactive_pcp_spm_fields(), reactive_proj_unit_field()) # Add non-input data options to choices
+		select <- c(reactive_output_field(), reactive_proj_unit_field())
 		updateSelectInput(session, 'outputs_select', choices = choices, selected = select)
 		})
 
+	# TODO this doesn't work
 	observeEvent(input$thresholds_expr, {
 		line_count <- str_count(input$thresholds_expr, '\n') + 1
 		if (line_count > 1) {
@@ -339,7 +339,6 @@ server <- function(input, output, session) {
 
 		available_scenarios <- list_scenarios()
 		updateSelectInput(session, 'select_scenario', choices = available_scenarios)
-		updateTabsetPanel(session, 'main_nav', selected = 'simulation_panel')
 		})
 
 	observeEvent(input$save_and_run_but, {
@@ -366,13 +365,20 @@ server <- function(input, output, session) {
 			au_target_multiplier = input$au_target_multiplier
 		} else {
 			nesting = FALSE
-			nesting_group_by = NULL
-			nesting_target = NULL
-			nesting_unit = NULL
+			nesting_group_by = ''
+			nesting_target = ''
+			nesting_unit = ''
 			au_target_multiplier = 1.0
 		}
 
-		output$simulation_output <- renderPrint({
+		nesting_group_by = input$au_id_field
+		nesting_target = input$au_target_field
+		nesting_unit = input$au_unit_field
+		au_target_multiplier = input$au_target_multiplier
+
+		weight_values <- weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
+
+		output$simulation_output <- withProgress(message = 'Running Forsys', value = 0, {
 			run(
 				scenario_name = input$scenario_name,
 				input_standfile = r_data$data_path,
@@ -381,22 +387,22 @@ server <- function(input, output, session) {
 				pcp_spm = input$pcp_spm_fields,
 				land_base = input$treatment_available_field,
 				priorities = input$priorities_fields,
-				stand_group_by = input$planning_unit_id_field,
-				pa_target = input$pa_target_field,
-				pa_unit = input$pa_unit_field,
-				pa_target_multiplier = input$pa_target_multiplier,
+				proj_id = input$planning_unit_id_field,
+				proj_target = input$proj_target_field,
+				proj_unit = input$proj_unit_field,
+				proj_target_multiplier = input$proj_target_multiplier,
 				nesting = input$use_au,
 				nesting_group_by = nesting_group_by,
 				nesting_target = nesting_target,
 				nesting_unit = nesting_unit,
 				nesting_target_multiplier = au_target_multiplier,
-				# weighting_values = weight_values,
-				# thresholds = input$thresholds_expr,
-				# include_stands = c("man_alldis == 1"), # TODO parse include_stands from thresholds, or the other way around
+				weighting_values = weight_values,
+				thresholds = input$thresholds_expr,
+				include_stands = c("man_alldis == 1"), # TODO parse include_stands from thresholds, or the other way around
 				output_fields = input$outputs_select,
 				grouping_variables = input$output_grouping_fields, # c("PA_ID", "Owner"),
-				fixed_target = FALSE,
-				fixed_area_target = input$fixed_target_value,
+				proj_fixed_target = FALSE,
+				proj_fixed_area_target = input$fixed_target_value,
 				overwrite_output = input$overwrite_output_chk,
 				run_with_shiny = TRUE
 				)
@@ -419,8 +425,8 @@ server <- function(input, output, session) {
 		updateSelectInput(session, 'treatment_available_field', choices = NULL)
 		updateSelectInput(session, 'priorities_fields', choices = NULL)
 		updateSelectInput(session, 'planning_unit_id_field', choices = NULL)
-		updateSelectInput(session, 'pa_target_field', choices = NULL)
-		updateSelectInput(session, 'pa_unit_field', choices = NULL)
+		updateSelectInput(session, 'proj_target_field', choices = NULL)
+		updateSelectInput(session, 'proj_unit_field', choices = NULL)
 
 		})
 
@@ -446,7 +452,7 @@ server <- function(input, output, session) {
 	# 	})
 
 	result_data_all_name <- reactive({
-		paste0('output/', r_data$json$scenario_name, '/pa_all_', r_data$json$scenario_name, '.csv')
+		paste0('output/', r_data$json$scenario_name, '/proj_', r_data$json$scenario_name, '_.csv')
 		})
 
 	result_data <- reactive({
@@ -457,7 +463,7 @@ server <- function(input, output, session) {
 			updateSelectInput(session, 'plot_x_field', choices = get_result_targets(d))
 			updateSelectInput(session, 'plot_priority', choices = get_result_priorities(d))
 
-			reactive_results_values$result_data_pa_all <- d
+			reactive_results_values$result_data_proj_all <- d
 		} else {
 			d <- NULL
 		}
@@ -470,7 +476,7 @@ server <- function(input, output, session) {
 		})
 
 
-	reactive_results_values <- reactiveValues(plot = NULL, result_data_pa_all = NULL)
+	reactive_results_values <- reactiveValues(plot = NULL, result_data_proj_all = NULL)
 
 
 	reactive_attainment_chart_by_target_treated <- reactive({
@@ -479,9 +485,9 @@ server <- function(input, output, session) {
 		# target_field = 'ETrt_AREA_HA'
 		target_field = input$plot_x_field
 		pcp_field = get_result_pcp_name(p)
-		priority = priority_column_name(reactive_results_values$result_data_pa_all, p)
+		priority = priority_column_name(reactive_results_values$result_data_proj_all, p)
 
-		attainment_chart_by_target_treated(reactive_results_values$result_data_pa_all,
+		attainment_chart_by_target_treated(reactive_results_values$result_data_proj_all,
 										   pcp_field,
 										   target_field,
 										   priority)
@@ -499,12 +505,13 @@ server <- function(input, output, session) {
 	  shinyjs::hide(id = 'plot_x_field')
 	  shinyjs::hide(id = 'plot_priority')
 
-	  priority_col_names <- priority_column_name(reactive_results_values$result_data_pa_all, '')
+	  priority_col_names <- priority_column_name(reactive_results_values$result_data_proj_all, '')
 
 	  if (length(priority_col_names) == 2) {
-	    production_frontiers_chart(reactive_results_values$result_data_pa_all,
+	    production_frontiers_chart(reactive_results_values$result_data_proj_all,
+	    							r_data$json$proj_id, 
 	                               'ETrt_TVMBF_PCP',
-	                               'ETrt_HUSUM_PCP',
+	                               'ETrt_HUSUM_PCP', # TODO get rid of these hardcoded shits
 	                               'ETrt_AREA_HA')
 	  	}
 

@@ -3,3 +3,7 @@
 .RData
 .Ruserdata
 /output/*
+/output_graphics/*
+/R/bak/*
+/data/*
+.DS_Store

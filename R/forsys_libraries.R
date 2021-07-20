@@ -1,30 +1,24 @@
 ('Loading required R packages...')
-#install.packages('pacman')
 pacman::p_load(
-  class,
+  class, # ? Patchmax ? 
   data.table,
+  directlabels,   # geom_dl
   dplyr,
-  doParallel,
-  directlabels,
-  foreign,
-  glue,
-  gtools,
-  igraph,
-  jsonlite,
-  KernSmooth,
-  leaflet,
-  maptools,
+  doParallel,     # Patchmax
+  foreign,        # DBF
+  gtools,         # permutations
+  jsonlite,       # Config files
+  leaflet,        # Drawing maps
+  # maptools,     # ? superceeded by SF?
   shiny,
-  shinyBS,
-  shinyjs,
-  stringr,
+  shinyBS,        # Shiny tooltips
+  shinyjs, 
+  stringr, 
   rgdal,
-  rgeos,
-  roxygen2,
-  sp,
+  rgeos,          # ? 
+  roxygen2,       # documentation
+  sp,             # ? do we use
   sf,
-  tidyverse,
-  zip
+  tidyverse
   )
 
-# library("Patchmax", lib.loc="C:/Users/Houtmanr/Documents/R/win-library/4.0")

@@ -1,15 +1,15 @@
 
 load_dataset <- function(path_to_file) {
   file_type <- str_sub(path_to_file, start= -3)
-  print("Loading Dataset")
+  message("Loading Dataset")
   if (file_type == "dbf") {
     standDT <- data.table(read.dbf(path_to_file))
-    print("Read stand file from DBF")
+    message("Read stand file from DBF")
   } else if (file_type == "csv") {
     standDT <- data.table(fread(path_to_file, header = TRUE))
-    print("Read stand file from CSV")
+    message("Read stand file from CSV")
   } else {
-    ('Input format not recognized')
+    message('Input format not recognized')
   }
   return(standDT)
 }
@@ -131,9 +131,9 @@ weight_values_to_string <- function(min = 0, max = 5, step =1) {
 
 weight_string_to_values <- function(weight_str) {
   vals <- str_split(weight_str, ' ')
-  # print(vals)
+  # message(vals)
   vals <- sapply(vals, as.numeric)
-  # print(vals[,1])
+  # message(vals[,1])
 }
 
 #' Weight priorities for selection
@@ -187,17 +187,17 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
                        "7) Running on ForSys\n",
                        "\n",
                        "Required files:\n",
-                       "1) ForSys output - pa_all.csv")
+                       "1) ForSys output - proj_all.csv")
   writeLines(parameters, file("README.txt"))
 
 }
 
 # TODO Add function description
-add_target_field <- function(stands, pa_unit, pa_target, pa_target_multiplier, stand_group_by, land_base) {
+add_target_field <- function(stands, proj_unit, proj_target, proj_target_multiplier, proj_id, land_base) {
   if(length(land_base) == 0) {
-    stands_updated <- stands[, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = stand_group_by]
+    stands_updated <- stands[, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = proj_id]
   } else {
-    stands_updated <- stands[get(land_base) == 1, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = stand_group_by]
+    stands_updated <- stands[get(land_base) == 1, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = proj_id]
   }
   return(stands_updated)
 }
@@ -295,14 +295,11 @@ set_up_priorities_helper <- function(stands, i, weight, priority) {
 
 set_up_priorities <- function(stands, w, priorities, weights) {
 
-  for (i in 1:ncol(weights)) { # START FOR 1
+  for (i in 1:ncol(weights)) {
     curr_weight = weights[[i]][w]
     curr_priority = priorities[[i]][1]
-
     stands <- set_up_priorities_helper(stands, i, curr_weight, curr_priority)
-  } # END FOR 1
-
-
+  }
   return(stands)
 }
 
@@ -313,44 +310,47 @@ make_thresholds <- function(thresholds) {
   })
   treatment_types <- unique(sapply(all_thresholds, function(x) x[1]))
   all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
-  return(list(types = treatment_types, thresholds = all_thresholds))
+  return(list(type = treatment_types, threshold = all_thresholds))
 }
 
 apply_treatment <- function(stands,
-                            treatment_types,
-                            all_thresholds,
-                            stand_group_by,
+                            treatment_type,
+                            treatment_threshold,
                             stand_field,
-                            fixed_target, fixed_area_target=NULL,
-                            pa_unit=NULL, pa_target=NULL, pa_target_multiplier=NULL) {
+                            proj_id,
+                            proj_fixed_target,
+                            proj_fixed_area_target=NULL,
+                            proj_unit=NULL,
+                            proj_target=NULL,
+                            proj_target_multiplier=NULL) {
   stands_updated <- stands
   selected_stands <- NULL
 
   # for each treatment type
-  for (t in 1:length(treatment_types)) {
+  for (t in 1:length(treatment_type)) {
 
     # filter stands by threshold type criteria
-    filtered_stands <- stand_filter(stands, all_thresholds[V1 == treatment_types[t], ])
+    filtered_stands <- stand_filter(stands, treatment_threshold[V1 == treatment_type[t], ])
 
-    print(paste0(nrow(filtered_stands), " stands meet treatment thresholds for ", treatment_types[t]))
+    message(paste0(round(nrow(filtered_stands)/nrow(stands)*100), "% of stands met threshold for ", treatment_type[t]))
 
     # set project target
-    if (fixed_target == TRUE) {
-      filtered_stands <- filtered_stands %>% set_fixed_area_target(fixed_area_target) # Target based on fixed field
-    } else if (fixed_target == FALSE) {
-      filtered_stands <- filtered_stands %>% set_percentage_area_target(pa_target, pa_target_multiplier) # Activate for percentage not fixed area
+    if (proj_fixed_target == TRUE) {
+      filtered_stands <- filtered_stands %>% set_fixed_area_target(proj_fixed_area_target) # Target based on fixed field
+    } else if (proj_fixed_target == FALSE) {
+      filtered_stands <- filtered_stands %>% set_percentage_area_target(proj_target, proj_target_multiplier) # Activate for percentage not fixed area
     }
 
     # select stands for treatment type t
     treat_stands <- select_simple_greedy_algorithm(dt = filtered_stands,
-                                                   grouped_by = stand_group_by,
+                                                   grouped_by = proj_id,
                                                    prioritize_by = "weightedPriority",
-                                                   constrain_by = c(1, pa_unit, "master_target"))
+                                                   constrain_by = c(1, proj_unit, "master_target"))
 
     # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
-    area_treatedPA <- update_target(treat_stands, stand_group_by, pa_unit)
-    stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
-    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_types[t], selected = 1), on = stand_field]
+    area_treatedPA <- update_target(treat_stands, proj_id, proj_unit)
+    stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = proj_id]
+    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_type[t], selected = 1), on = stand_field]
     selected_stands <- rbind(selected_stands, stands_updated[selected==1,])
   }
 
@@ -361,15 +361,15 @@ set_fixed_area_target <- function(stands, fixed_area_target) {
   stands[, master_target := fixed_area_target]
 }
 
-set_percentage_area_target <- function(stands, pa_target, pa_target_multiplier) {
-  stands[, master_target := get(pa_target) * pa_target_multiplier]
+set_percentage_area_target <- function(stands, proj_target, proj_target_multiplier) {
+  stands[, master_target := get(proj_target) * proj_target_multiplier]
 }
 
 
 identify_nested_planning_areas <- function(grouped_by_pa) {
 
   # Step 3: Identify the best planning areas within each nest.
-  print("Selecting planning area subunits")
+  message("Selecting planning area subunits")
   groupedByPA$system <- 1
 
   if (system_constraint == TRUE) {
@@ -388,7 +388,7 @@ identify_nested_planning_areas <- function(grouped_by_pa) {
                                             tally_by = nesting_unit,
                                             grouped_target = "harvestTarg")
   paSubunits <- paSubunits[order(-paSubunits$weightedPriority),]
-  print("adding treatment rank")
+  message("adding treatment rank")
   paSubunits$treatment_rank <- seq(1:nrow(paSubunits))
 }
 
