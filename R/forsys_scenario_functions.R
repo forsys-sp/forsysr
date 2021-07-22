@@ -26,7 +26,7 @@
 #' @param include_stands This defines global threshold values to include stands - i.e. for any threshold type.
 #' @param output_fields This should include the desired fields for the planning area treatment files. Planning area id,
 #'                      priority weights and treatment rank are added automatically.
-#' @param grouping_variables Include the smaller and larger groups here for grouping of treated stands.
+#' @param output_grouping_variables Include the smaller and larger groups here for grouping of treated stands.
 #' @param overwrite_output Overwrite any existing output of the same name?
 #' @param run_with_shiny Sets some output business for better shiny interaction
 #' @param fire_intersect_table TOTO
@@ -62,7 +62,7 @@ write_save_file <- function(
 	thresholds = c("Manageable man_alldis == 1") ,
 	include_stands = c("man_alldis == 1"),
 	output_fields = c("AREA_HA", "TVMBF_STND", "TVMBF_PCP", "HUSUM_STND", "HUSUM_PCP"),
-	grouping_variables = c("PA_ID", "Owner"),
+	output_grouping_variables = c("PA_ID", "Owner"),
 	overwrite_output = TRUE,
 	run_with_shiny = FALSE,
 	fire_intersect_table = NULL,
@@ -100,7 +100,7 @@ write_save_file <- function(
 		'thresholds',
 		'include_stands',
 		'output_fields',
-		'grouping_variables',
+		'output_grouping_variables',
 		'overwrite_output',
 		'run_with_shiny',
 		'fire_intersect_table',
@@ -135,7 +135,7 @@ write_save_file <- function(
 	vector_data$thresholds = thresholds
 	vector_data$include_stands = include_stands
 	vector_data$output_fields = output_fields
-	vector_data$grouping_variables = grouping_variables
+	vector_data$output_grouping_variables = output_grouping_variables
 	vector_data$overwrite_output = overwrite_output
 	vector_data$run_with_shiny = run_with_shiny
 	vector_data$fire_intersect_table = fire_intersect_table
@@ -191,7 +191,7 @@ write_save_file_helper <- function(input, data_path) {
 		scenario_name = input$scenario_name,
 		input_standfile = data_path,
 		write_stand_outputs = input$write_stand_outputs_chk,
-		stand_field = input$stand_id_field,
+		stand_field = input$stand_field,
 		pcp_spm = input$pcp_spm_fields,
 		land_base = input$treatment_available_field,
 		priorities = input$priorities_fields,
@@ -210,7 +210,7 @@ write_save_file_helper <- function(input, data_path) {
 		thresholds = input$thresholds_expr,
 		include_stands = c("man_alldis == 1"), # TODO parse include_stands from thresholds, or the other way around
 		output_fields = input$outputs_select,
-		grouping_variables = input$grouping_fields, # c("PA_ID", "Owner"),
+		output_grouping_variables = input$output_grouping_variables, # c("PA_ID", "Owner"),
 		overwrite_output = input$overwrite_output_chk
 		)
 }

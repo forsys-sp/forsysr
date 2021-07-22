@@ -45,7 +45,7 @@ NULL
 #' @param include_stands This defines global threshold values to include stands - i.e. for any threshold type.
 #' @param output_fields This should include the desired fields for the planning area treatment files. Planning area id,
 #'                      priority weights and treatment rank are added automatically.
-#' @param grouping_variables Include the smaller and larger groups here for grouping of treated stands.
+#' @param output_grouping_variables Include the smaller and larger groups here for grouping of treated stands.
 #' @param overwrite_output Overwrite any existing output of the same name?
 #' @param run_with_shiny Sets some output business for better shiny interaction
 #' @param fire_intersect_table TOTO
@@ -83,7 +83,7 @@ forsys_run <- function(
 	thresholds = c("Manageable man_alldis == 1") ,
 	include_stands = c("man_alldis == 1"),
 	output_fields = c("AREA_HA", "TVMBF_STND", "TVMBF_PCP", "HUSUM_STND", "HUSUM_PCP"),
-	grouping_variables = c("PA_ID", "Owner"),
+	output_grouping_variables = c("PA_ID", "Owner"),
 	overwrite_output = TRUE,
 	run_with_shiny = FALSE,
 	fire_intersect_table = NULL,
@@ -119,7 +119,7 @@ run(
     thresholds = thresholds,
     include_stands = include_stands,
     output_fields = output_fields,
-    grouping_variables = grouping_variables,
+    output_grouping_variables = output_grouping_variables,
     overwrite_output = overwrite_output,
     run_with_shiny = run_with_shiny,
     fire_intersect_table = fire_intersect_table,

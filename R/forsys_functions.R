@@ -106,6 +106,7 @@ stand_flag <- function(dt, filters, field) {
     filter <- paste0(filters[f,2], " ", filters[f,3], " ", filters[f,4])
     filter <- stringr::str_remove(filter, "'")
     filter <- stringr::str_remove(filter, "'")
+    print('Check 2')
     dt <- dt[ eval(parse(text = filter)), (field) := 1]
   }
   return(dt)
@@ -334,7 +335,7 @@ apply_treatment <- function(stands,
   for (t in 1:length(treatment_type)) {
 
     # stands by threshold type criteria
-    filtered_stands <- stand_filter(stands, treatment_threshold[.data$V1 == treatment_type[t], ])
+    filtered_stands <- stand_filter(stands, treatment_threshold[{{ V1 }} == treatment_type[t], ])
 
     message(paste0(round(nrow(filtered_stands)/nrow(stands)*100), "% of stands met threshold for ", treatment_type[t]))
 
@@ -353,8 +354,11 @@ apply_treatment <- function(stands,
 
     # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
     area_treatedPA <- update_target(treat_stands, proj_id, proj_unit)
+    print('CHECK1')
     stands_updated <- stands_updated[area_treatedPA,  .data$treatedPAArea := .data$treatedPAArea + i.sum, on = proj_id]
+    print('CHECK2')
     stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_type[t], selected = 1), on = stand_field]
+    print('CHECK3')
     selected_stands <- rbind(selected_stands, stands_updated[selected==1,])
   }
 
@@ -369,7 +373,9 @@ apply_treatment <- function(stands,
 #' @importFrom data.table :=
 #'
 set_fixed_area_target <- function(stands, fixed_area_target) {
-  stands[, master_target := fixed_area_target]
+  print('CHECK4')
+  stands[, master_target := {{ fixed_area_target }}]
+  print('CHECK7')
 }
 
 #' TODO
@@ -382,7 +388,12 @@ set_fixed_area_target <- function(stands, fixed_area_target) {
 #' @importFrom rlang .data
 #'
 set_percentage_area_target <- function(stands, proj_target, proj_target_multiplier) {
-  stands[, .data$master_target := get(proj_target) * proj_target_multiplier]
+  print('CHECK5')
+  print(head(stands))
+  print(paste('proj_target', proj_target))
+  print(paste('proj_target_multiplier', proj_target_multiplier))
+  stands[, master_target := proj_target * proj_target_multiplier]
+  print('CHECK6')
 }
 
 
