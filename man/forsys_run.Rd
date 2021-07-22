@@ -30,7 +30,7 @@ forsys_run(
   thresholds = c("Manageable man_alldis == 1"),
   include_stands = c("man_alldis == 1"),
   output_fields = c("AREA_HA", "TVMBF_STND", "TVMBF_PCP", "HUSUM_STND", "HUSUM_PCP"),
-  grouping_variables = c("PA_ID", "Owner"),
+  output_grouping_variables = c("PA_ID", "Owner"),
   overwrite_output = TRUE,
   run_with_shiny = FALSE,
   fire_intersect_table = NULL,
@@ -94,7 +94,7 @@ A blank field means all lands are included in the calculation.}
 \item{output_fields}{This should include the desired fields for the planning area treatment files. Planning area id,
 priority weights and treatment rank are added automatically.}
 
-\item{grouping_variables}{Include the smaller and larger groups here for grouping of treated stands.}
+\item{output_grouping_variables}{Include the smaller and larger groups here for grouping of treated stands.}
 
 \item{overwrite_output}{Overwrite any existing output of the same name?}
 

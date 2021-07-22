@@ -7,10 +7,10 @@ load_dataset <- function(path_to_file) {
   file_type <- stringr::str_sub(path_to_file, start= -3)
   message("Loading Dataset")
   if (file_type == "dbf") {
-    standDT <- data.table::data.table(foreign::read.dbf(path_to_file))
+    standDT <- data.table(foreign::read.dbf(path_to_file))
     message("Read stand file from DBF")
   } else if (file_type == "csv") {
-    standDT <- data.table::data.table(data.table::fread(path_to_file, header = TRUE))
+    standDT <- data.table(data.table::fread(path_to_file, header = TRUE))
     message("Read stand file from CSV")
   } else {
     message('Input format not recognized')
@@ -34,7 +34,6 @@ load_dataset <- function(path_to_file) {
 #' \code{group_target} as possible.
 #'
 #' @importFrom data.table :=
-#' @importFrom rlang .data
 #'
 select_simple_greedy_algorithm <- function(dt = NULL,
                                            grouped_by = 'PA_ID',
@@ -45,34 +44,34 @@ select_simple_greedy_algorithm <- function(dt = NULL,
   # Order by priority:
   # Select stands up to treatment target
   # The operator in the line below determines the directionality and whether the threshold is inclusive or not.
-  dt <- data.table::data.table(dt)
-  dt[, .data$considerForTreatment := 1]
-  dt[, .data$current_target := 0]
-  dt[, .data$cumulative_tally_by := 0]
-  dt[, .data$selected := 0]
+  dt <- data.table(dt)
+  dt[, considerForTreatment := 1]
+  dt[, current_target := 0]
+  dt[, cumulative_tally_by := 0]
+  dt[, selected := 0]
   dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
   #dt <- dt[, activity_code := do_treat(c(.BY, .SD), constrain_by[2]), by = "PA_ID"]
   # Common issue: if the dataset has na values in the priority field, this will fail.
-  while(sum(dt[,considerForTreatment==1 & .data$selected == 0]) != 0){
+  while(sum(dt[,considerForTreatment==1 & selected == 0]) != 0){
     # Order the data table by the priority.
     dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
     # Determine the current target
     dt[, current_target := 0]
     # Sum the treated tally by group
-    dt[.data$selected == 1, current_target := sum(get(constrain_by[2])), by=list(get(grouped_by))]
+    dt[selected == 1, current_target := sum(get(constrain_by[2])), by=list(get(grouped_by))]
     # The current target is the target value less the value of the already treated stands, by group.
     dt[, current_target := get(constrain_by[3]) - max(current_target), by=list(get(grouped_by))]
     # Compute the cumulative sum for the constrained variable and select subunits
-    dt[considerForTreatment == 1 & .data$selected == 0, cumulative_tally_by := cumsum(get(constrain_by[2])), by=list(get(grouped_by))]
-    dt[considerForTreatment == 1 & .data$selected == 0 & cumulative_tally_by <= current_target, .data$selected := 1 ]
+    dt[considerForTreatment == 1 & selected == 0, cumulative_tally_by := cumsum(get(constrain_by[2])), by=list(get(grouped_by))]
+    dt[considerForTreatment == 1 & selected == 0 & cumulative_tally_by <= current_target, selected := 1 ]
     # Determine the remaining target
     dt[, current_target := 0]
-    dt[.data$selected == 1, current_target := sum(get(constrain_by[2])), by=list(get(grouped_by))]
+    dt[selected == 1, current_target := sum(get(constrain_by[2])), by=list(get(grouped_by))]
     dt[, current_target := get(constrain_by[3]) - max(current_target), by=list(get(grouped_by))]
     # Remove from treatment consideration if subunit value is greater than total target.
-    dt[considerForTreatment == 1 & .data$selected == 0, considerForTreatment := ifelse(get(constrain_by[2]) > current_target, 0, 1 )]
+    dt[considerForTreatment == 1 & selected == 0, considerForTreatment := ifelse(get(constrain_by[2]) > current_target, 0, 1 )]
   }
-  dt <- dt[.data$selected == 1,]
+  dt <- dt[selected == 1,]
   return(dt)
 }
 
@@ -106,7 +105,6 @@ stand_flag <- function(dt, filters, field) {
     filter <- paste0(filters[f,2], " ", filters[f,3], " ", filters[f,4])
     filter <- stringr::str_remove(filter, "'")
     filter <- stringr::str_remove(filter, "'")
-    print('Check 2')
     dt <- dt[ eval(parse(text = filter)), (field) := 1]
   }
   return(dt)
@@ -121,8 +119,6 @@ stand_flag <- function(dt, filters, field) {
 #' @param subset_var TODO
 #' @return The selected stands from \code{df}, ordered by \code{priority_SPM}, and selected until the sum of \code{priority_STND} is as close to
 #' \code{treat_target} as possible.
-#'
-#' @importFrom dplyr %>%
 #'
 create_grouped_dataset <- function(dt,
                                  grouping_vars,
@@ -298,7 +294,7 @@ make_thresholds <- function(thresholds) {
     all_thresholds <- rbind(all_thresholds, strsplit(thresholds[i], " ")[1])
   })
   treatment_types <- unique(sapply(all_thresholds, function(x) x[1]))
-  all_thresholds <- data.table::data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
+  all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
   return(list(type = treatment_types, threshold = all_thresholds))
 }
 
@@ -315,8 +311,6 @@ make_thresholds <- function(thresholds) {
 #' @param proj_target_multiplier TODO
 #' @return TODO
 #'
-#' @importFrom data.table :=
-#' @importFrom rlang .data
 #'
 apply_treatment <- function(stands,
                             treatment_type,
@@ -335,7 +329,7 @@ apply_treatment <- function(stands,
   for (t in 1:length(treatment_type)) {
 
     # stands by threshold type criteria
-    filtered_stands <- stand_filter(stands, treatment_threshold[{{ V1 }} == treatment_type[t], ])
+    filtered_stands <- stand_filter(stands, treatment_threshold[V1 == treatment_type[t], ])
 
     message(paste0(round(nrow(filtered_stands)/nrow(stands)*100), "% of stands met threshold for ", treatment_type[t]))
 
@@ -354,11 +348,8 @@ apply_treatment <- function(stands,
 
     # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
     area_treatedPA <- update_target(treat_stands, proj_id, proj_unit)
-    print('CHECK1')
-    stands_updated <- stands_updated[area_treatedPA,  .data$treatedPAArea := .data$treatedPAArea + i.sum, on = proj_id]
-    print('CHECK2')
+    stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = proj_id]
     stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_type[t], selected = 1), on = stand_field]
-    print('CHECK3')
     selected_stands <- rbind(selected_stands, stands_updated[selected==1,])
   }
 
@@ -373,9 +364,8 @@ apply_treatment <- function(stands,
 #' @importFrom data.table :=
 #'
 set_fixed_area_target <- function(stands, fixed_area_target) {
-  print('CHECK4')
+  # TODO this {{ }} probably doesn't work
   stands[, master_target := {{ fixed_area_target }}]
-  print('CHECK7')
 }
 
 #' TODO
@@ -385,15 +375,9 @@ set_fixed_area_target <- function(stands, fixed_area_target) {
 #' @return TODO
 #'
 #' @importFrom data.table :=
-#' @importFrom rlang .data
 #'
 set_percentage_area_target <- function(stands, proj_target, proj_target_multiplier) {
-  print('CHECK5')
-  print(head(stands))
-  print(paste('proj_target', proj_target))
-  print(paste('proj_target_multiplier', proj_target_multiplier))
-  stands[, master_target := proj_target * proj_target_multiplier]
-  print('CHECK6')
+  stands[, master_target := get(proj_target) * proj_target_multiplier]
 }
 
 

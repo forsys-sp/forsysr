@@ -24,8 +24,10 @@ cumulate_results <- function(results_data) {
 #' @param results_data TODO
 #' @return List of priorities identified in results file
 #'
+#'
 #' @importFrom dplyr %>%
 #'
+#' @export
 get_result_targets <- function(results_data) {
 	targets <- results_data %>%
 				colnames() %>%
@@ -40,6 +42,7 @@ get_result_targets <- function(results_data) {
 #'
 #' @importFrom dplyr %>%
 #'
+#' @export
 get_result_priorities <- function(results_data) {
 	targets <- results_data %>%
 				colnames() %>%
@@ -82,8 +85,8 @@ get_result_pcp_name <- function(priority) {
 #' @return TODO
 #'
 #' @importFrom dplyr %>%
-#' @importFrom rlang .data
 #'
+#' @export
 attainment_chart_by_target_treated <- function(results_data, pcp_field, target_field, priority) {
 	g <- results_data %>%
 		dplyr::filter(get(priority) == 1.0) %>%
@@ -109,6 +112,7 @@ attainment_chart_by_target_treated <- function(results_data, pcp_field, target_f
 #'
 #' @importFrom dplyr %>%
 #'
+#' @export
 production_frontiers_chart <- function(results_data, proj_field, x_field, y_field, target_field) {
 	# First, find the top PA_IDs in terms of target performance
 	# Right now it's set to top 10, maybe make this dynamic?	
