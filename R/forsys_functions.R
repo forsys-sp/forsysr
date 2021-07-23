@@ -2,7 +2,7 @@
 #'
 #' @param path_to_file Path to an input dataset
 #' @return Loaded data.table from the input dataset
-#' 
+#'
 load_dataset <- function(path_to_file) {
   file_type <- stringr::str_sub(path_to_file, start= -3)
   message("Loading Dataset")
@@ -341,10 +341,10 @@ apply_treatment <- function(stands,
     }
 
     # select stands for treatment type t
-    treat_stands <- select_simple_greedy_algorithm(dt = filtered_stands,
-                                                   grouped_by = proj_id,
-                                                   prioritize_by = "weightedPriority",
-                                                   constrain_by = c(1, proj_unit, "master_target"))
+    treat_stands <- filtered_stands %>%
+      select_simple_greedy_algorithm(grouped_by = proj_id,
+                                     prioritize_by = "weightedPriority",
+                                     constrain_by = c(1, proj_unit, "master_target"))
 
     # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
     area_treatedPA <- update_target(treat_stands, proj_id, proj_unit)
@@ -415,7 +415,7 @@ set_percentage_area_target <- function(stands, proj_target, proj_target_multipli
 #' @param dir TODO
 #' @param name TODO
 #' @param write_fields TODO
-#' @return 
+#' @return
 #'
 #' @importFrom dplyr %>%
 #'
@@ -431,7 +431,7 @@ write_stand_outputs_to_file <- function(selected_stands, dir, name, write_fields
 #' @param unique_weights TODO
 #' @param group_by TODO
 #' @param output_fields TODO
-#' @return 
+#' @return
 #'
 #' @importFrom dplyr %>%
 #'

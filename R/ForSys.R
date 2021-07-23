@@ -22,7 +22,7 @@
 #'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
 #'                  A blank field means all lands are included in the calculation.
 #' @param priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
-#' @param proj_id The field in the input_standfile that indicates which project or planning area a stand belongs to 
+#' @param proj_id The field in the input_standfile that indicates which project or planning area a stand belongs to
 #' @param proj_target TODO
 #' @param proj_unit TODO
 #' @param proj_target_multiplier TODO
@@ -48,8 +48,8 @@
 #' @param fire_dynamic_forsys TODO
 #' @param fire_random_projects TODO
 #' @param write_tags TODO
-#' 
-#' @return 
+#'
+#' @return
 #'
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
@@ -88,12 +88,12 @@
     fire_annual_target = NA,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
-    write_tags = ''
+    write_tags = NULL
     ) {
 
 
     # If a config file has been selected, source it to read in variables
-    if (length(config_file) > 1) {
+    if (length(config_file) != 0) {
       configuration_file <- config_file
       setwd(dirname(configuration_file))
       source(configuration_file, local = TRUE)
@@ -232,7 +232,10 @@
 
         # set annual target
         fire_annual_target_i = fire_annual_target[yr]
-        if(is.na(fire_annual_target_i)) fire_annual_target_i = Inf # if no target available, set to Inf
+        if(is.na(fire_annual_target_i)){
+          warning(glue::glue('no annual target for year {yr}... assuming no limit exists'))
+          fire_annual_target_i = Inf # if no target available, set to Inf
+        }
 
         # schedule projects from year yr into the future based on annual constraint
         if(fire_annual_target_field %>% is.null){
@@ -282,8 +285,6 @@
             stands_available <- stands_available %>% dplyr::filter(.data[[stand_field]] %in% stands_burned[[stand_field]] == FALSE)
           }
 
-          # order planning areas for treatment post-fire to identify decision-shifts.
-
         }
       } # END YEAR LOOP
 
@@ -302,7 +303,7 @@
           dplyr::left_join(fires %>% dplyr::select(stand_field, FIRE_YR, FIRE_NUMBER), by=stand_field)
 
       # write out minimal stand information
-      stands_selected_out <- stands_selected_out %>% dplyr::bind_cols(write_tags)
+      stands_selected_out <- stands_selected_out %>% dplyr::bind_cols(write_tags) # blank column here
       stands_selected_out <- stands_selected_out %>%
         dplyr::left_join(stands_prioritized %>% dplyr::select(!!stand_field, output_fields), by = stand_field)
 
