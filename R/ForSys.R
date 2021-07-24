@@ -55,7 +55,7 @@
 #' @importFrom rlang .data
 #'
   run <- function(
-    config_file = '',
+    config_file = NULL,
     scenario_name = '',
     num_reps = 1,
     input_standfile = '',
@@ -86,17 +86,21 @@
     fire_planning_years = 1,
     fire_annual_target_field = NULL,
     fire_annual_target = NA,
+    fire_annnual_target_default = Inf,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
     write_tags = NULL
     ) {
 
-
     # If a config file has been selected, source it to read in variables
-    if (length(config_file) != 0) {
+    if (!is.null(config_file) & grepl('[.]R', config_file)) { # if .R config (depreciated)
       configuration_file <- config_file
       setwd(dirname(configuration_file))
       source(configuration_file, local = TRUE)
+      warning('!! config files with R are depreciated; use json format instead !!')
+    } else if (!is.null(config_file) & grepl('[.]json', config_file)){ # if .json config (perferred)
+      json_data = readLines(filename) %>% jsonlite::fromJSON()
+      list2env(json_data, envir = environment())
     }
 
     # collapse write tags into string if provided as data.frame
@@ -232,10 +236,8 @@
 
         # set annual target
         fire_annual_target_i = fire_annual_target[yr]
-        if(is.na(fire_annual_target_i)){
-          warning(glue::glue('no annual target for year {yr}... assuming no limit exists'))
-          fire_annual_target_i = Inf # if no target available, set to Inf
-        }
+        if(is.na(fire_annual_target_i))
+          fire_annual_target_i = fire_annnual_target_default # use default if  annual vector not specified
 
         # schedule projects from year yr into the future based on annual constraint
         if(fire_annual_target_field %>% is.null){
@@ -303,7 +305,7 @@
           dplyr::left_join(fires %>% dplyr::select(stand_field, FIRE_YR, FIRE_NUMBER), by=stand_field)
 
       # write out minimal stand information
-      stands_selected_out <- stands_selected_out %>% dplyr::bind_cols(write_tags) # blank column here
+      stands_selected_out <- stands_selected_out %>% dplyr::bind_cols(write_tags)
       stands_selected_out <- stands_selected_out %>%
         dplyr::left_join(stands_prioritized %>% dplyr::select(!!stand_field, output_fields), by = stand_field)
 
