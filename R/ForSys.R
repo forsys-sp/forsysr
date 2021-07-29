@@ -22,7 +22,7 @@
 #'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
 #'                  A blank field means all lands are included in the calculation.
 #' @param priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
-#' @param proj_id The field in the input_standfile that indicates which project or planning area a stand belongs to 
+#' @param proj_id The field in the input_standfile that indicates which project or planning area a stand belongs to
 #' @param proj_target TODO
 #' @param proj_unit TODO
 #' @param proj_target_multiplier TODO
@@ -48,14 +48,14 @@
 #' @param fire_dynamic_forsys TODO
 #' @param fire_random_projects TODO
 #' @param write_tags TODO
-#' 
-#' @return 
+#'
+#' @return
 #'
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
 #'
   run <- function(
-    config_file = '',
+    config_file = NULL,
     scenario_name = '',
     num_reps = 1,
     input_standfile = '',
@@ -86,17 +86,21 @@
     fire_planning_years = 1,
     fire_annual_target_field = NULL,
     fire_annual_target = NA,
+    fire_annnual_target_default = Inf,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
-    write_tags = ''
+    write_tags = NULL
     ) {
 
-
     # If a config file has been selected, source it to read in variables
-    if (length(config_file) > 1) {
+    if (!is.null(config_file) & grepl('[.]R', config_file)) { # if .R config (depreciated)
       configuration_file <- config_file
       setwd(dirname(configuration_file))
       source(configuration_file, local = TRUE)
+      warning('!! config files with R are depreciated; use json format instead !!')
+    } else if (!is.null(config_file) & grepl('[.]json', config_file)){ # if .json config (perferred)
+      json_data = readLines(filename) %>% jsonlite::fromJSON()
+      list2env(json_data, envir = environment())
     }
 
     # collapse write tags into string if provided as data.frame
@@ -232,7 +236,8 @@
 
         # set annual target
         fire_annual_target_i = fire_annual_target[yr]
-        if(is.na(fire_annual_target_i)) fire_annual_target_i = Inf # if no target available, set to Inf
+        if(is.na(fire_annual_target_i))
+          fire_annual_target_i = fire_annnual_target_default # use default if  annual vector not specified
 
         # schedule projects from year yr into the future based on annual constraint
         if(fire_annual_target_field %>% is.null){
@@ -248,14 +253,12 @@
             dplyr::mutate(ETrt_YR = !!yr)
         }
 
-        # browser()
         # record stands scheduled for treatment in current year
         stands_treated <- stands_selected %>%
           dplyr::inner_join(projects_scheduled, by=proj_id) %>%
           dplyr::select(stand_field, proj_id, ETrt_YR, treatment_rank) %>%
           dplyr::bind_rows(stands_treated)
 
-        # browser()
         # remove stands or project areas that were treated from available stands
         stands_available <- stands_available %>%
           dplyr::filter((.data[[stand_field]] %in% stands_treated[[stand_field]] == FALSE) & (.data[[proj_id]] %in% stands_treated[[proj_id]] == FALSE))
@@ -284,8 +287,6 @@
             stands_available <- stands_available %>% dplyr::filter(.data[[stand_field]] %in% stands_burned[[stand_field]] == FALSE)
           }
 
-          # order planning areas for treatment post-fire to identify decision-shifts.
-
         }
       } # END YEAR LOOP
 
@@ -296,7 +297,6 @@
       # WRITE: write stands to file ...........
       message('Writing output files for stands and planning areas')
 
-      # browser()
       # tag stands with specific scenario attributes
       stands_selected_out <- stands_treated %>% dplyr::select(!!stand_field, !!proj_id, ETrt_YR)
 
@@ -309,17 +309,11 @@
       stands_selected_out <- stands_selected_out %>%
         dplyr::left_join(stands_prioritized %>% dplyr::select(!!stand_field, output_fields), by = stand_field)
 
-      if (length(write_tags_txt) > 1) {
-        stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', write_tags_txt, ".csv")
-      } else {
-        stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, ".csv")
-      }
-      
+      stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', write_tags_txt, ".csv")
       data.table::fwrite(stands_selected_out, stand_fn, row.names = FALSE)
 
       # WRITE: write project to file ...........
 
-      # browser()
       # group *selected* stands by project
       projects_etrt_out <- stands_selected_out %>%
         dplyr::select(!!stand_field, ETrt_YR) %>%
@@ -331,7 +325,6 @@
         dplyr::rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields) %>%
         replace(is.na(.), 0)
 
-      # browser()
       # group *all* stands by project
       projects_esum_out <- stands %>%
         compile_planning_areas_and_stands(unique_weights = uniqueWeights,
@@ -352,12 +345,7 @@
       projects_selected_out[,paste0('Pr_', 1:length(priorities), '_', priorities)] = weights[1,]
 
       # write tag for selection scenario
-      if (length(write_tags_txt) > 1) {
-        project_fn = paste0(relative_output_path, "/proj_", scenario_name,  '_', write_tags_txt, ".csv")
-      } else {
-        project_fn = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
-      }
-      
+      project_fn = paste0(relative_output_path, "/proj_", scenario_name,  '_', write_tags_txt,".csv")
       data.table::fwrite(projects_selected_out, file = project_fn, sep = ",", row.names = FALSE)
 
       } # END WEIGHT LOOP
