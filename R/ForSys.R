@@ -22,7 +22,7 @@
 #'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
 #'                  A blank field means all lands are included in the calculation.
 #' @param priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
-#' @param proj_id The field in the input_standfile that indicates which project or planning area a stand belongs to 
+#' @param proj_id The field in the input_standfile that indicates which project or planning area a stand belongs to
 #' @param proj_target TODO
 #' @param proj_unit TODO
 #' @param proj_target_multiplier TODO
@@ -48,8 +48,8 @@
 #' @param fire_dynamic_forsys TODO
 #' @param fire_random_projects TODO
 #' @param write_tags TODO
-#' 
-#' @return 
+#'
+#' @return
 #'
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
@@ -57,29 +57,22 @@
   run <- function(
     config_file = '',
     scenario_name = '',
-    num_reps = 1,
     input_standfile = '',
-    write_stand_outputs = FALSE,
-    stand_field = 'CELL_ID',
+    stand_field = '',
     pcp_spm = c(),
     land_base = '',
     priorities = c(),
     proj_id = '',
     proj_unit = '',
     proj_target = '',
-    proj_target_multiplier = 0.15,
+    proj_target_multiplier = 1,
     proj_fixed_target = FALSE,
     proj_fixed_area_target = NULL,
-    nesting = FALSE,
-    nesting_group_by = NULL,
-    nesting_target = NULL,
-    nesting_unit = NULL,
-    nesting_target_multiplier = 1.0,
-    weighting_values = "0 5 1",
-    thresholds = c("Manageable man_alldis == 1") ,
-    include_stands = c("man_alldis == 1"),
-    output_fields = c("AREA_HA", "TVMBF_STND", "TVMBF_PCP", "HUSUM_STND", "HUSUM_PCP"),
-    output_grouping_variables = c("PA_ID", "Owner"),
+    weighting_values = "1 1 1",
+    thresholds = NULL,
+    include_stands = NULL,
+    output_fields = NULL,
+    output_grouping_variables = NULL,
     overwrite_output = TRUE,
     run_with_shiny = FALSE,
     fire_intersect_table = NULL,
@@ -128,6 +121,7 @@
     # 1. PREP STANDS ------------
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    browser()
     # # # Load data
     stands <- load_dataset(input_standfile)
     if(!is.null(fire_intersect_table)) fires <- fire_intersect_table
@@ -314,7 +308,7 @@
       } else {
         stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, ".csv")
       }
-      
+
       data.table::fwrite(stands_selected_out, stand_fn, row.names = FALSE)
 
       # WRITE: write project to file ...........
@@ -357,7 +351,7 @@
       } else {
         project_fn = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
       }
-      
+
       data.table::fwrite(projects_selected_out, file = project_fn, sep = ",", row.names = FALSE)
 
       } # END WEIGHT LOOP
