@@ -2,6 +2,7 @@
 #'
 #' @param path_to_file Path to an input dataset
 #' @return Loaded data.table from the input dataset
+#' @export
 #'
 load_dataset <- function(path_to_file) {
   file_type <- stringr::str_sub(path_to_file, start= -3)
@@ -17,7 +18,6 @@ load_dataset <- function(path_to_file) {
   }
   return(standDT)
 }
-
 
 #' Select subunits to treat based on a given priority.
 #'
@@ -341,10 +341,10 @@ apply_treatment <- function(stands,
     }
 
     # select stands for treatment type t
-    treat_stands <- filtered_stands %>%
-      select_simple_greedy_algorithm(grouped_by = proj_id,
-                                     prioritize_by = "weightedPriority",
-                                     constrain_by = c(1, proj_unit, "master_target"))
+    treat_stands <- select_simple_greedy_algorithm(dt = filtered_stands,
+                                                   grouped_by = proj_id,
+                                                   prioritize_by = "weightedPriority",
+                                                   constrain_by = c(1, proj_unit, "master_target"))
 
     # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
     area_treatedPA <- update_target(treat_stands, proj_id, proj_unit)
