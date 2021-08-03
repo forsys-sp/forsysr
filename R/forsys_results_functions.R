@@ -60,6 +60,8 @@ get_result_priorities <- function(results_data) {
 #'
 #' @importFrom dplyr %>%
 #'
+#'
+#' @export
 priority_column_name <- function(results_data, priority) {
 	priority <- results_data %>%
 					colnames() %>%

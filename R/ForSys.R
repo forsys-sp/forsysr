@@ -309,7 +309,11 @@
       stands_selected_out <- stands_selected_out %>%
         dplyr::left_join(stands_prioritized %>% dplyr::select(!!stand_field, output_fields), by = stand_field)
 
-      stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', write_tags_txt, ".csv")
+      if (length(write_tags_txt) > 1) {
+        stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', write_tags_txt, ".csv")
+      } else {
+        stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, ".csv")
+      }
       data.table::fwrite(stands_selected_out, stand_fn, row.names = FALSE)
 
       # WRITE: write project to file ...........
@@ -345,7 +349,11 @@
       projects_selected_out[,paste0('Pr_', 1:length(priorities), '_', priorities)] = weights[1,]
 
       # write tag for selection scenario
-      project_fn = paste0(relative_output_path, "/proj_", scenario_name,  '_', write_tags_txt,".csv")
+      if (length(write_tags_txt) > 1) {
+        project_fn = paste0(relative_output_path, "/proj_", scenario_name,  '_', write_tags_txt, ".csv")
+      } else {
+        project_fn = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
+      }
       data.table::fwrite(projects_selected_out, file = project_fn, sep = ",", row.names = FALSE)
 
       } # END WEIGHT LOOP
