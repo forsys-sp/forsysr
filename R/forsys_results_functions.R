@@ -72,6 +72,7 @@ priority_column_name <- function(results_data, priority) {
 #' @param priority TODO
 #' @return TODO
 #'
+#' @export
 get_result_pcp_name <- function(priority) {
 	paste0('ETrt_', priority, '_PCP')
 }

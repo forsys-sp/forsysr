@@ -465,3 +465,10 @@ weight_string_to_values <- function(weight_str) {
   vals <- sapply(vals, as.numeric)
   # message(vals[,1])
 }
+
+#' Print the version information for Forsys.R
+#'
+#' @return A string representing the version of Forsys.R
+#' @export
+version <- function() {ver <- paste('forsys version: ', packageVersion('forsys'))}
+

@@ -6,7 +6,7 @@
 in a config file and pass the name of the file to this run function.}
 \usage{
 run(
-  config_file = "",
+  config_file = NULL,
   scenario_name = "",
   num_reps = 1,
   input_standfile = "",
@@ -37,9 +37,10 @@ run(
   fire_planning_years = 1,
   fire_annual_target_field = NULL,
   fire_annual_target = NA,
+  fire_annnual_target_default = Inf,
   fire_dynamic_forsys = FALSE,
   fire_random_projects = FALSE,
-  write_tags = ""
+  write_tags = NULL
 )
 }
 \arguments{
