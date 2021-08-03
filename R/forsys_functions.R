@@ -2,7 +2,8 @@
 #'
 #' @param path_to_file Path to an input dataset
 #' @return Loaded data.table from the input dataset
-#' 
+#' @export
+#'
 load_dataset <- function(path_to_file) {
   file_type <- stringr::str_sub(path_to_file, start= -3)
   message("Loading Dataset")
@@ -17,7 +18,6 @@ load_dataset <- function(path_to_file) {
   }
   return(standDT)
 }
-
 
 #' Select subunits to treat based on a given priority.
 #'
@@ -125,7 +125,6 @@ create_grouped_dataset <- function(dt,
                                  summing_vars,
                                  subset_var = NULL) {
   ## Create the grouped data.table by grouping the treated subunits from the previous step.
-  # browser()
   if(!is.null(subset_var)){
     dt <- subset(dt[get(subset_var)==1])
   }
@@ -416,7 +415,7 @@ set_percentage_area_target <- function(stands, proj_target, proj_target_multipli
 #' @param dir TODO
 #' @param name TODO
 #' @param write_fields TODO
-#' @return 
+#' @return
 #'
 #' @importFrom dplyr %>%
 #'
@@ -432,7 +431,7 @@ write_stand_outputs_to_file <- function(selected_stands, dir, name, write_fields
 #' @param unique_weights TODO
 #' @param group_by TODO
 #' @param output_fields TODO
-#' @return 
+#' @return
 #'
 #' @importFrom dplyr %>%
 #'

@@ -13,32 +13,25 @@
 #'
 #' @param config_file Relative path to a config file that defines needed parameters
 #' @param scenario_name A name for this scenario
-#' @param num_reps TODO
-#' @param input_standfile Path to the input dataset
-#' @param write_stand_outputs Whether to write intermediate stand outputs
-#' @param stand_field The field in the input_standfile which is a unique ID for each stand
-#' @param pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
-#' @param land_base The land base is the area that is used to calculate the PCP and SPM values.
+#' @param scenario_stand_filename Path to the input dataset
+#' @param scenario_write_stand_outputs Whether to write intermediate stand outputs
+#' @param stand_field The field in the scenario_stand_filename which is a unique ID for each stand
+#' @param stand_pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
+#' @param stand_filter The land base is the area that is used to calculate the PCP and SPM values.
 #'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
 #'                  A blank field means all lands are included in the calculation.
-#' @param priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
-#' @param proj_id The field in the input_standfile that indicates which project or planning area a stand belongs to
+#' @param scenario_priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
+#' @param proj_id The field in the scenario_stand_filename that indicates which project or planning area a stand belongs to
 #' @param proj_target TODO
 #' @param proj_unit TODO
 #' @param proj_target_multiplier TODO
 #' @param proj_fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
 #' @param proj_fixed_area_target If using a fixed target, set the fixed target value here.
-#' @param nesting TODO
-#' @param nesting_group_by TODO
-#' @param nesting_target TODO
-#' @param nesting_unit TODO
-#' @param nesting_target_multiplier TODO
-#' @param weighting_values Defines the weights and integer steps between weights. The values are for min, max, and step.
-#' @param thresholds Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
-#' @param include_stands This defines global threshold values to include stands - i.e. for any threshold type.
-#' @param output_fields This should include the desired fields for the planning area treatment files. Planning area id,
+#' @param scenario_weighting_values Defines the weights and integer steps between weights. The values are for min, max, and step.
+#' @param proj_thresholds Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
+#' @param scenario_output_fields This should include the desired fields for the planning area treatment files. Planning area id,
 #'                      priority weights and treatment rank are added automatically.
-#' @param output_grouping_variables Include the smaller and larger groups here for grouping of treated stands.
+#' @param scenario_output_grouping_variables Include the smaller and larger groups here for grouping of treated stands.
 #' @param overwrite_output Overwrite any existing output of the same name?
 #' @param run_with_shiny Sets some output business for better shiny interaction
 #' @param fire_intersect_table TOTO
@@ -47,43 +40,42 @@
 #' @param fire_annual_target TODO
 #' @param fire_dynamic_forsys TODO
 #' @param fire_random_projects TODO
-#' @param write_tags TODO
+#' @param scenario_write_tags TODO
 #'
 #' @return
 #'
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
+#' @export
 #'
-  run <- function(
+  forsys_run <- function(
     config_file = '',
     scenario_name = '',
-    input_standfile = '',
+    scenario_output_fields = NULL,
+    scenario_output_grouping_variables = NULL,
+    scenario_priorities = NULL,
+    scenario_weighting_values = "1 1 1",
+    scenario_write_tags = NULL,
+    scenario_stand_filename = '',
     stand_field = '',
-    pcp_spm = c(),
-    land_base = '',
-    priorities = c(),
+    stand_filter = '',
+    stand_pcp_spm = NULL,
     proj_id = '',
     proj_unit = '',
     proj_target = '',
     proj_target_multiplier = 1,
     proj_fixed_target = FALSE,
     proj_fixed_area_target = NULL,
-    weighting_values = "1 1 1",
-    thresholds = NULL,
-    include_stands = NULL,
-    output_fields = NULL,
-    output_grouping_variables = NULL,
-    overwrite_output = TRUE,
-    run_with_shiny = FALSE,
+    proj_thresholds = NULL,
     fire_intersect_table = NULL,
     fire_planning_years = 1,
     fire_annual_target_field = NULL,
     fire_annual_target = NA,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
-    write_tags = ''
+    run_with_shiny = FALSE,
+    overwrite_output = TRUE
     ) {
-
 
     # If a config file has been selected, source it to read in variables
     if (length(config_file) > 1) {
@@ -93,12 +85,12 @@
     }
 
     # collapse write tags into string if provided as data.frame
-    if(write_tags %>% length > 1 & !names(write_tags) %>% is.null){
-      write_tags_txt <- paste(names(write_tags), write_tags, sep='_', collapse = '_')
-    } else write_tags_txt <- write_tags
+    if(scenario_write_tags %>% length > 1 & !names(scenario_write_tags) %>% is.null){
+      scenario_write_tags_txt <- paste(names(scenario_write_tags), scenario_write_tags, sep='_', collapse = '_')
+    } else scenario_write_tags_txt <- scenario_write_tags
 
     options(scipen = 9999)
-    relative_output_path = paste0('output/', scenario_name, '/', write_tags_txt)
+    relative_output_path = paste0('output/', scenario_name, '/', scenario_write_tags_txt)
 
     # Check if output directory exists
     absolute_output_path = file.path(getwd(), relative_output_path)
@@ -121,31 +113,30 @@
     # 1. PREP STANDS ------------
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    browser()
     # # # Load data
-    stands <- load_dataset(input_standfile)
+    stands <- load_dataset(scenario_stand_filename)
     if(!is.null(fire_intersect_table)) fires <- fire_intersect_table
 
     # Calculate SPM & PCP values
     stands <- stands %>%
-      calculate_spm_pcp(filter = land_base,
-                        fields = pcp_spm) %>%
+      calculate_spm_pcp(filter = stand_filter,
+                        fields = stand_pcp_spm) %>%
       add_target_field(proj_unit = proj_unit,
                        proj_target = proj_target,
                        proj_target_multiplier = proj_target_multiplier,
                        proj_id = proj_id,
-                       land_base = land_base)
+                       land_base = stand_filter)
 
     # create objects for tracking treated and burnt stands
     stands_treated <- NULL
     stands_burned <- NULL
 
     # specify thresholds
-    threshold_dat <- make_thresholds(thresholds = thresholds)
+    threshold_dat <- make_thresholds(thresholds = proj_thresholds)
 
     # set up weighting scenarios
-    weights <- weight_priorities(numPriorities = length(priorities),
-                                 weights = weighting_values[1])
+    weights <- weight_priorities(numPriorities = length(scenario_priorities),
+                                 weights = scenario_weighting_values[1])
 
     # Run selection code for each set of weights
     for (w in 1:nrow(weights)) { # START WEIGHT LOOP
@@ -160,7 +151,7 @@
       stands_prioritized <- stands %>%
         set_up_treatment_types() %>%
         set_up_priorities(w = w,
-                          priorities = priorities,
+                          priorities = scenario_priorities,
                           weights = weights)
 
       stands_available <- stands_prioritized
@@ -175,6 +166,7 @@
       for(yr in 1:fire_planning_years){ # BEGIN YEAR LOOP
 
         message(paste('---------------\nYear', yr, '\n---------------'))
+        browser()
 
         # select stands from project areas until target reached while filtering by threshold
         stands_selected <- stands_available %>%
@@ -197,8 +189,8 @@
         # group selected stands by project
         projects_selected <- stands_selected %>%
           create_grouped_dataset(grouping_vars = proj_id,
-                                 summing_vars = c(output_fields, "weightedPriority")) %>%
-          dplyr::rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields) %>%
+                                 summing_vars = c(scenario_output_fields, "weightedPriority")) %>%
+          dplyr::rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields) %>%
           replace(is.na(.), 0) %>%
           dplyr::arrange(-weightedPriority) %>%
           dplyr::mutate(treatment_rank = ifelse(weightedPriority > 0, 1:dplyr::n(), NA)) %>%
@@ -242,17 +234,16 @@
             dplyr::mutate(ETrt_YR = !!yr)
         }
 
-        # browser()
         # record stands scheduled for treatment in current year
         stands_treated <- stands_selected %>%
           dplyr::inner_join(projects_scheduled, by=proj_id) %>%
           dplyr::select(stand_field, proj_id, ETrt_YR, treatment_rank) %>%
           dplyr::bind_rows(stands_treated)
 
-        # browser()
         # remove stands or project areas that were treated from available stands
         stands_available <- stands_available %>%
-          dplyr::filter((.data[[stand_field]] %in% stands_treated[[stand_field]] == FALSE) & (.data[[proj_id]] %in% stands_treated[[proj_id]] == FALSE))
+          dplyr::filter((.data[[stand_field]] %in% stands_treated[[stand_field]] == FALSE) &
+                          (.data[[proj_id]] %in% stands_treated[[proj_id]] == FALSE))
 
         # report yearly work
         s_n = stands_treated %>% dplyr::filter(ETrt_YR == yr) %>% dplyr::pull(stand_field) %>% dplyr::n_distinct()
@@ -277,9 +268,6 @@
           if(fire_dynamic_forsys == TRUE) {
             stands_available <- stands_available %>% dplyr::filter(.data[[stand_field]] %in% stands_burned[[stand_field]] == FALSE)
           }
-
-          # order planning areas for treatment post-fire to identify decision-shifts.
-
         }
       } # END YEAR LOOP
 
@@ -290,7 +278,6 @@
       # WRITE: write stands to file ...........
       message('Writing output files for stands and planning areas')
 
-      # browser()
       # tag stands with specific scenario attributes
       stands_selected_out <- stands_treated %>% dplyr::select(!!stand_field, !!proj_id, ETrt_YR)
 
@@ -299,12 +286,12 @@
           dplyr::left_join(fires %>% dplyr::select(stand_field, FIRE_YR, FIRE_NUMBER), by=stand_field)
 
       # write out minimal stand information
-      stands_selected_out <- stands_selected_out %>% dplyr::bind_cols(write_tags)
+      stands_selected_out <- stands_selected_out %>% dplyr::bind_cols(scenario_write_tags)
       stands_selected_out <- stands_selected_out %>%
-        dplyr::left_join(stands_prioritized %>% dplyr::select(!!stand_field, output_fields), by = stand_field)
+        dplyr::left_join(stands_prioritized %>% dplyr::select(!!stand_field, scenario_output_fields), by = stand_field)
 
-      if (length(write_tags_txt) > 1) {
-        stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', write_tags_txt, ".csv")
+      if (length(scenario_write_tags_txt) > 1) {
+        stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', scenario_write_tags_txt, ".csv")
       } else {
         stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, ".csv")
       }
@@ -313,24 +300,22 @@
 
       # WRITE: write project to file ...........
 
-      # browser()
       # group *selected* stands by project
       projects_etrt_out <- stands_selected_out %>%
         dplyr::select(!!stand_field, ETrt_YR) %>%
-        dplyr::left_join(stands_prioritized %>% dplyr::select(stand_field, proj_id, output_fields, 'weightedPriority'),
+        dplyr::left_join(stands_prioritized %>% dplyr::select(stand_field, proj_id, scenario_output_fields, 'weightedPriority'),
                   by = stand_field) %>%
         create_grouped_dataset(grouping_vars = c(proj_id, 'ETrt_YR'),
-                               summing_vars = c(output_fields, 'weightedPriority')) %>%
+                               summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
         dplyr::arrange(ETrt_YR, -weightedPriority) %>%
-        dplyr::rename_with(.fn = ~ paste0("ETrt_", .x), .cols = output_fields) %>%
+        dplyr::rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields) %>%
         replace(is.na(.), 0)
 
-      # browser()
       # group *all* stands by project
       projects_esum_out <- stands %>%
         compile_planning_areas_and_stands(unique_weights = uniqueWeights,
                                           group_by = proj_id,
-                                          output_fields = output_fields)
+                                          output_fields = scenario_output_fields)
 
       # combine etrt w/ esum
       projects_selected_out <- projects_etrt_out %>%
@@ -340,14 +325,14 @@
         dplyr::mutate(treatment_rank = ifelse(weightedPriority > 0, 1:dplyr::n(), NA))
 
       # tag project with specific scenario attributes
-      projects_selected_out <- projects_selected_out %>% dplyr::bind_cols(write_tags)
+      projects_selected_out <- projects_selected_out %>% dplyr::bind_cols(scenario_write_tags)
 
       # assign weight scenario values to project out
-      projects_selected_out[,paste0('Pr_', 1:length(priorities), '_', priorities)] = weights[1,]
+      projects_selected_out[,paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[1,]
 
       # write tag for selection scenario
-      if (length(write_tags_txt) > 1) {
-        project_fn = paste0(relative_output_path, "/proj_", scenario_name,  '_', write_tags_txt, ".csv")
+      if (length(scenario_write_tags_txt) > 1) {
+        project_fn = paste0(relative_output_path, "/proj_", scenario_name,  '_', scenario_write_tags_txt, ".csv")
       } else {
         project_fn = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
       }
