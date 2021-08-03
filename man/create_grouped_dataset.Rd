@@ -13,6 +13,8 @@ create_grouped_dataset(dt, grouping_vars, summing_vars, subset_var = NULL)
 \item{grouping_vars}{The variable names by which the data will be grouped.}
 
 \item{summing_vars}{The variables in the original dataset that need to be summed over each subunit.}
+
+\item{subset_var}{TODO}
 }
 \value{
 The selected stands from \code{df}, ordered by \code{priority_SPM}, and selected until the sum of \code{priority_STND} is as close to

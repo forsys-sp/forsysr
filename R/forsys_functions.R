@@ -1,15 +1,19 @@
-
+#' Load the input dataset. Supports both CSV and DBF.
+#'
+#' @param path_to_file Path to an input dataset
+#' @return Loaded data.table from the input dataset
+#'
 load_dataset <- function(path_to_file) {
-  file_type <- str_sub(path_to_file, start= -3)
-  print("Loading Dataset")
+  file_type <- stringr::str_sub(path_to_file, start= -3)
+  message("Loading Dataset")
   if (file_type == "dbf") {
-    standDT <- data.table(read.dbf(path_to_file))
-    print("Read stand file from DBF")
+    standDT <- data.table(foreign::read.dbf(path_to_file))
+    message("Read stand file from DBF")
   } else if (file_type == "csv") {
-    standDT <- data.table(fread(path_to_file, header = TRUE))
-    print("Read stand file from CSV")
+    standDT <- data.table(data.table::fread(path_to_file, header = TRUE))
+    message("Read stand file from CSV")
   } else {
-    ('Input format not recognized')
+    message('Input format not recognized')
   }
   return(standDT)
 }
@@ -26,14 +30,15 @@ load_dataset <- function(path_to_file) {
 #' and 0 = do not apply the constraint to a given stand. The second item in each list is the name
 #' of the field that is summed to reach the constraint. The third item in each list is the name of
 #' the constraining field.
-#' @param group_target The variable that contains the subunit values which are summed to meet the
-#' constraint value.
 #' @return The selected stands from \code{df}, ordered by \code{prioritize_by}, and selected until the sum of \code{tally_by} is as close to
 #' \code{group_target} as possible.
-select_simple_greedy_algorithm <- function(dt = dbfFile,
-                                        grouped_by = 'PA_ID',
-                                        prioritize_by = 'TVMBF_SPM',
-                                        constrain_by = c('apply', 'AREA_HA', 'AREA_PA10P')){
+#'
+#' @importFrom data.table :=
+#'
+select_simple_greedy_algorithm <- function(dt = NULL,
+                                           grouped_by = 'PA_ID',
+                                           prioritize_by = 'TVMBF_SPM',
+                                           constrain_by = c('apply', 'AREA_HA', 'AREA_PA10P')) {
   # For each grouped_by:
   # Remove subunits that don't meet threshold:
   # Order by priority:
@@ -77,8 +82,8 @@ select_simple_greedy_algorithm <- function(dt = dbfFile,
 stand_filter <- function(dt, filters) {
   for(f in 1:nrow(filters)){
     filter <- paste0(filters[f,2], " ", filters[f,3], " ", filters[f,4])
-    filter <- str_remove(filter, "'")
-    filter <- str_remove(filter, "'")
+    filter <- stringr::str_remove(filter, "'")
+    filter <- stringr::str_remove(filter, "'")
     dt <- subset(dt, eval(parse(text = filter)))
   }
   ## Hard-coded manageable/undisturbed.
@@ -92,12 +97,14 @@ stand_filter <- function(dt, filters) {
 #' @param field The name of a new field
 #' @return The final data table with stands available for treatment.
 #'
+#' @importFrom data.table :=
+#'
 stand_flag <- function(dt, filters, field) {
   dt[, (field) := 0]
   for(f in 1:nrow(filters)){
     filter <- paste0(filters[f,2], " ", filters[f,3], " ", filters[f,4])
-    filter <- str_remove(filter, "'")
-    filter <- str_remove(filter, "'")
+    filter <- stringr::str_remove(filter, "'")
+    filter <- stringr::str_remove(filter, "'")
     dt <- dt[ eval(parse(text = filter)), (field) := 1]
   }
   return(dt)
@@ -109,8 +116,10 @@ stand_flag <- function(dt, filters, field) {
 #' @param dt A data table with all the subunits and attributes.
 #' @param grouping_vars The variable names by which the data will be grouped.
 #' @param summing_vars The variables in the original dataset that need to be summed over each subunit.
+#' @param subset_var TODO
 #' @return The selected stands from \code{df}, ordered by \code{priority_SPM}, and selected until the sum of \code{priority_STND} is as close to
 #' \code{treat_target} as possible.
+#'
 create_grouped_dataset <- function(dt,
                                  grouping_vars,
                                  summing_vars,
@@ -119,46 +128,29 @@ create_grouped_dataset <- function(dt,
   if(!is.null(subset_var)){
     dt <- subset(dt[get(subset_var)==1])
   }
-  dt <- group_by_at(dt, vars(grouping_vars))
-  dt <- data.table(summarize_at(dt, .vars = vars(summing_vars), .funs = c(sum="sum")))
+  dt <- dplyr::group_by_at(dt, dplyr::vars(grouping_vars))
+  dt <- data.table::data.table(dplyr::summarize_at(dt, .vars = dplyr::vars(summing_vars), .funs = c(sum="sum")))
   names(dt) <- gsub(x = names(dt), pattern = "_sum", replacement = "")
   return(dt)
 }
 
-weight_values_to_string <- function(min = 0, max = 5, step =1) {
-  glue(min, ' ', max, ' ', step)
-}
-
-weight_string_to_values <- function(weight_str) {
-  vals <- str_split(weight_str, ' ')
-  # print(vals)
-  vals <- sapply(vals, as.numeric)
-  # print(vals[,1])
-}
-
 #' Weight priorities for selection
 #'
-#' @param minimum The minimum value of the weighting schema.
-#' @param maximum The maximum value of the weighting schema.
+#' @param numPriorities TODO
+#' @param weights TODO
 #' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
 weight_priorities <- function(numPriorities, weights = c("1 1 1")){
   if(numPriorities == 1)
-    return(data.table(1))
+    return(data.table::data.table(1))
   weights <- strtoi(unlist(strsplit(weights, " ")))
   weights <- seq(weights[1], weights[2], weights[3])
   # Updates by Luke Wilkerson to incorporate multiple priorities.
-  weightPermute <- (permutations(length(weights), numPriorities, weights, repeats.allowed=TRUE))
+  weightPermute <- (gtools::permutations(length(weights), numPriorities, weights, repeats.allowed=TRUE))
   weightprops <- proportions(weightPermute, 1)
-  weightPermute <- data.table(weightPermute)
+  weightPermute <- data.table::data.table(weightPermute)
   uniqueWeightCombinations <- weightPermute[!duplicated(weightprops) & rowSums(weightPermute) != 0, ]
 
   return(uniqueWeightCombinations)
-}
-
-createWeightedPairs <- function(dt) {
-  dt <- dt[Var1 != Var2]
-  dt[, proportion := ifelse(Var2 != 0, Var1 / Var2, 0)]
-  dt <- dt[!duplicated(dt$proportion) ]
 }
 
 
@@ -187,22 +179,39 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
                        "7) Running on ForSys\n",
                        "\n",
                        "Required files:\n",
-                       "1) ForSys output - pa_all.csv")
+                       "1) ForSys output - proj_all.csv")
   writeLines(parameters, file("README.txt"))
 
 }
 
-# TODO Add function description
-add_target_field <- function(stands, pa_unit, pa_target, pa_target_multiplier, stand_group_by, land_base) {
+#' TODO
+#' @param stands TODO
+#' @param proj_unit TODO
+#' @param proj_target TODO
+#' @param proj_target_multiplier TODO
+#' @param proj_id TODO
+#' @param land_base TODO
+#' @return TODO
+#'
+#' @importFrom data.table :=
+#'
+add_target_field <- function(stands, proj_unit, proj_target, proj_target_multiplier, proj_id, land_base) {
   if(length(land_base) == 0) {
-    stands_updated <- stands[, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = stand_group_by]
+    stands_updated <- stands[, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = proj_id]
   } else {
-    stands_updated <- stands[get(land_base) == 1, ':='(paste0(pa_target), (sum(get(pa_unit)))), by = stand_group_by]
+    stands_updated <- stands[get(land_base) == 1, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = proj_id]
   }
   return(stands_updated)
 }
 
-# TODO Add function description
+#' TODO
+#' @param stands TODO
+#' @param filter TODO
+#' @param fields TODO
+#' @return TODO
+#'
+#' @importFrom data.table :=
+#'
 calculate_spm_pcp <- function(stands, filter, fields){
   for (f in fields) {
     if (length(filter) == 0) {
@@ -239,39 +248,6 @@ calculate_spm_pcp <- function(stands, filter, fields){
   return(stands)
 }
 
-# This just gets names that calculate_spm_pcp would create, for use in the UI
-get_spm_pcp_names <- function(fields) {
-  l <- vector('list', length(fields) * 2)
-  i <- 1
-  for (f in fields) {
-    l[i] <- paste0(f, '_SPM')
-    l[i+1] <- paste0(f, '_PCP')
-    i <- i + 2
-  }
-  return(unlist(l))
-  # nms <- sapply(fields, function(f) {c(paste0(f, "_SPM"), paste0(f, "_PCP"))})
-}
-
-# Inverse function of get_spm_pcp_names, it returns the opposite of the selected
-# fields for suggested priority names
-get_priority_output_names <- function(fields) {
-  l <- vector('list', length(fields))
-  i <- 1
-  for (f in fields) {
-    g <- str_replace(f, 'STND_', '')
-
-    if (str_detect(g, 'SPM')) {
-      l[i] <- str_replace(g, 'SPM', 'PCP')
-
-    } else {
-      l[i] <- str_replace(g, 'PCP', 'SPM')
-    }
-
-    i <- i + 1
-  }
-
-  return(unlist(l))
-}
 
 # Hack the area target - can be set in the shapefile.
 # This code may be updated for looping multiple treatment types.
@@ -287,6 +263,15 @@ set_up_treatment_types <- function(stands, args=NULL) {
   return(stands)
 }
 
+#' TODO
+#' @param stands TODO
+#' @param i TODO
+#' @param weight TODO
+#' @param priority TODO
+#' @return TODO
+#'
+#' @importFrom data.table :=
+#'
 set_up_priorities_helper <- function(stands, i, weight, priority) {
   stands$weightedPriority <- stands$weightedPriority + weight * stands[, get(priority)]
   priorityName <- paste0("Pr_", i, "_", priority)
@@ -295,14 +280,11 @@ set_up_priorities_helper <- function(stands, i, weight, priority) {
 
 set_up_priorities <- function(stands, w, priorities, weights) {
 
-  for (i in 1:ncol(weights)) { # START FOR 1
+  for (i in 1:ncol(weights)) {
     curr_weight = weights[[i]][w]
     curr_priority = priorities[[i]][1]
-
     stands <- set_up_priorities_helper(stands, i, curr_weight, curr_priority)
-  } # END FOR 1
-
-
+  }
   return(stands)
 }
 
@@ -313,92 +295,180 @@ make_thresholds <- function(thresholds) {
   })
   treatment_types <- unique(sapply(all_thresholds, function(x) x[1]))
   all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
-  return(list(types = treatment_types, thresholds = all_thresholds))
+  return(list(type = treatment_types, threshold = all_thresholds))
 }
 
+#' TODO
+#' @param stands TODO
+#' @param treatment_type TODO
+#' @param treatment_threshold TODO
+#' @param stand_field TODO
+#' @param proj_id TODO
+#' @param proj_fixed_target TODO
+#' @param proj_fixed_area_target TODO
+#' @param proj_unit TODO
+#' @param proj_target TODO
+#' @param proj_target_multiplier TODO
+#' @return TODO
+#'
+#'
 apply_treatment <- function(stands,
-                            treatment_types,
-                            all_thresholds,
-                            stand_group_by,
+                            treatment_type,
+                            treatment_threshold,
                             stand_field,
-                            fixed_target, fixed_area_target=NULL,
-                            pa_unit=NULL, pa_target=NULL, pa_target_multiplier=NULL) {
+                            proj_id,
+                            proj_fixed_target,
+                            proj_fixed_area_target=NULL,
+                            proj_unit=NULL,
+                            proj_target=NULL,
+                            proj_target_multiplier=NULL) {
   stands_updated <- stands
   selected_stands <- NULL
 
   # for each treatment type
-  for (t in 1:length(treatment_types)) {
+  for (t in 1:length(treatment_type)) {
 
-    # filter stands by threshold type criteria
-    filtered_stands <- stand_filter(stands, all_thresholds[V1 == treatment_types[t], ])
+    # stands by threshold type criteria
+    filtered_stands <- stand_filter(stands, treatment_threshold[V1 == treatment_type[t], ])
 
-    print(paste0(nrow(filtered_stands), " stands meet treatment thresholds for ", treatment_types[t]))
+    message(paste0(round(nrow(filtered_stands)/nrow(stands)*100), "% of stands met threshold for ", treatment_type[t]))
 
     # set project target
-    if (fixed_target == TRUE) {
-      filtered_stands <- filtered_stands %>% set_fixed_area_target(fixed_area_target) # Target based on fixed field
-    } else if (fixed_target == FALSE) {
-      filtered_stands <- filtered_stands %>% set_percentage_area_target(pa_target, pa_target_multiplier) # Activate for percentage not fixed area
+    if (proj_fixed_target == TRUE) {
+      filtered_stands <- filtered_stands %>% set_fixed_area_target(proj_fixed_area_target) # Target based on fixed field
+    } else if (proj_fixed_target == FALSE) {
+      filtered_stands <- filtered_stands %>% set_percentage_area_target(proj_target, proj_target_multiplier) # Activate for percentage not fixed area
     }
 
     # select stands for treatment type t
-    treat_stands <- select_simple_greedy_algorithm(dt = filtered_stands,
-                                                   grouped_by = stand_group_by,
-                                                   prioritize_by = "weightedPriority",
-                                                   constrain_by = c(1, pa_unit, "master_target"))
+    treat_stands <- filtered_stands %>%
+      select_simple_greedy_algorithm(grouped_by = proj_id,
+                                     prioritize_by = "weightedPriority",
+                                     constrain_by = c(1, proj_unit, "master_target"))
 
     # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
-    area_treatedPA <- update_target(treat_stands, stand_group_by, pa_unit)
-    stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = stand_group_by]
-    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_types[t], selected = 1), on = stand_field]
+    area_treatedPA <- update_target(treat_stands, proj_id, proj_unit)
+    stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = proj_id]
+    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_type[t], selected = 1), on = stand_field]
     selected_stands <- rbind(selected_stands, stands_updated[selected==1,])
   }
 
   return(selected_stands)
 }
 
+#' TODO
+#' @param stands TODO
+#' @param fixed_area_target TODO
+#' @return TODO
+#'
+#' @importFrom data.table :=
+#'
 set_fixed_area_target <- function(stands, fixed_area_target) {
-  stands[, master_target := fixed_area_target]
+  # TODO this {{ }} probably doesn't work
+  stands[, master_target := {{ fixed_area_target }}]
 }
 
-set_percentage_area_target <- function(stands, pa_target, pa_target_multiplier) {
-  stands[, master_target := get(pa_target) * pa_target_multiplier]
+#' TODO
+#' @param stands TODO
+#' @param proj_target TODO
+#' @param proj_target_multiplier TODO
+#' @return TODO
+#'
+#' @importFrom data.table :=
+#'
+set_percentage_area_target <- function(stands, proj_target, proj_target_multiplier) {
+  stands[, master_target := get(proj_target) * proj_target_multiplier]
 }
 
 
-identify_nested_planning_areas <- function(grouped_by_pa) {
+# #' TODO
+# #' @param grouped_by_pa TODO
+# #' @return TODO
+# #'
+# #' @importFrom data.table :=
+# #'
+# identify_nested_planning_areas <- function(grouped_by_pa) {
 
-  # Step 3: Identify the best planning areas within each nest.
-  print("Selecting planning area subunits")
-  groupedByPA$system <- 1
+#   # Step 3: Identify the best planning areas within each nest.
+#   message("Selecting planning area subunits")
+#   groupedByPA$system <- 1
 
-  if (system_constraint == TRUE) {
-    grouping_type <- c("system")
-    groupedByPA[,harvestTarg := sum(groupedByPA[,get(nesting_target) * get(nesting_unit)])]
 
-  } else {
-    grouping_type <- nesting_unit
-    groupedByPA[,harvestTarg := groupedByPA[,get(nesting_target) * get(nesting_unit)]]
-  }
+#   grouping_type <- nesting_unit
+#   groupedByPA[,harvestTarg := groupedByPA[,get(nesting_target) * get(nesting_unit)]]
 
-  groupedByPA$selected <- 0
-  paSubunits <- select_simple_greedy_algorithm(dt = groupedByPA,
-                                            grouped_by = grouping_type,
-                                            prioritize_by = "weightedPriority",
-                                            tally_by = nesting_unit,
-                                            grouped_target = "harvestTarg")
-  paSubunits <- paSubunits[order(-paSubunits$weightedPriority),]
-  print("adding treatment rank")
-  paSubunits$treatment_rank <- seq(1:nrow(paSubunits))
-}
+#   groupedByPA$selected <- 0
+#   paSubunits <- select_simple_greedy_algorithm(dt = groupedByPA,
+#                                             grouped_by = grouping_type,
+#                                             prioritize_by = "weightedPriority",
+#                                             grouped_target = "harvestTarg")
+#   paSubunits <- paSubunits[order(-paSubunits$weightedPriority),]
+#   message("adding treatment rank")
+#   paSubunits$treatment_rank <- seq(1:nrow(paSubunits))
+# }
 
+
+#' Write individual stand output to file
+#' TODO this should go in _results
+#'
+#' @param selected_stands TODO
+#' @param dir TODO
+#' @param name TODO
+#' @param write_fields TODO
+#' @return
+#'
+#' @importFrom dplyr %>%
+#'
 write_stand_outputs_to_file <- function(selected_stands, dir, name, write_fields) {
     stand_output_file <- paste0(dir, "/stnd_",  name, ".csv")
-    fwrite(selected_stands %>% dplyr::select(write_fields), stand_output_file)
+    data.table::fwrite(selected_stands %>% dplyr::select(write_fields), stand_output_file)
 }
 
+#' TODO
+#' TODO this should go in _results
+#'
+#' @param stands TODO
+#' @param unique_weights TODO
+#' @param group_by TODO
+#' @param output_fields TODO
+#' @return
+#'
+#' @importFrom dplyr %>%
+#'
 compile_planning_areas_and_stands <- function(stands, unique_weights, group_by, output_fields) {
-  group_planning_areas <- stands %>% group_by_at(group_by)
-  planning_areas <- data.table(group_planning_areas %>% summarize(across(output_fields, sum, .names = "ESum_{.col}" )))
+  group_planning_areas <- stands %>% dplyr::group_by_at(group_by)
+  planning_areas <- data.table::data.table(group_planning_areas %>% dplyr::summarize(dplyr::across(output_fields, sum, .names = "ESum_{.col}" )))
   return (planning_areas)
 }
+
+
+#' Takes discrete minimum, maximum, and step values and turns them into
+#' the string that forsys expects
+#'
+#' @param min Minimum value
+#' @param max Maximum value
+#' @param step Increment value
+#' @return String of step values
+#' @export
+weight_values_to_string <- function(min = 0, max = 5, step = 1) {
+  paste0(min, ' ', max, ' ', step)
+}
+
+#' Inverse of weight_values_to_string
+#'
+#' @param weight_str A string of minimum, maximum, and step weights
+#' @return A list of values cast as integers
+#' @export
+weight_string_to_values <- function(weight_str) {
+  vals <- stringr::str_split(weight_str, ' ')
+  # message(vals)
+  vals <- sapply(vals, as.numeric)
+  # message(vals[,1])
+}
+
+#' Print the version information for Forsys.R
+#'
+#' @return A string representing the version of Forsys.R
+#' @export
+version <- function() {ver <- paste('forsys version: ', packageVersion('forsys'))}
+

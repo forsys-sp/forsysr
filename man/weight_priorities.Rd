@@ -7,9 +7,9 @@
 weight_priorities(numPriorities, weights = c("1 1 1"))
 }
 \arguments{
-\item{minimum}{The minimum value of the weighting schema.}
+\item{numPriorities}{TODO}
 
-\item{maximum}{The maximum value of the weighting schema.}
+\item{weights}{TODO}
 }
 \value{
 A datatable with the weighted values for the priorities in the \code{priorityList}.
