@@ -9,12 +9,12 @@ run(
   config_file = "",
   scenario_name = "",
   scenario_output_fields = NULL,
-  scenario_output_grouping_variables = NULL,
+  scenario_output_grouping_fields = NULL,
   scenario_priorities = NULL,
   scenario_weighting_values = "1 1 1",
   scenario_write_tags = NULL,
   scenario_stand_filename = "",
-  stand_field = "",
+  stand_id = "",
   stand_filter = "",
   stand_pcp_spm = NULL,
   proj_id = "",
@@ -42,7 +42,7 @@ run(
 \item{scenario_output_fields}{This should include the desired fields for the planning area treatment files. Planning area id,
 priority weights and treatment rank are added automatically.}
 
-\item{scenario_output_grouping_variables}{Include the smaller and larger groups here for grouping of treated stands.}
+\item{scenario_output_grouping_fields}{Include the smaller and larger groups here for grouping of treated stands.}
 
 \item{scenario_priorities}{Priorities are named here. If only one priority exists, only a weight of one will be used.}
 
@@ -52,7 +52,7 @@ priority weights and treatment rank are added automatically.}
 
 \item{scenario_stand_filename}{Path to the input dataset}
 
-\item{stand_field}{The field in the scenario_stand_filename which is a unique ID for each stand}
+\item{stand_id}{The field in the scenario_stand_filename which is a unique ID for each stand}
 
 \item{stand_filter}{The land base is the area that is used to calculate the PCP and SPM values.
 It is currently a single, binary variable that must be computed prior to running the ForSysR script.

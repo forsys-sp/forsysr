@@ -14,7 +14,7 @@ forsys_run_wrapper(
   scenario_output_grouping_variables = NULL,
   scenario_write_tags = NULL,
   scenario_stand_filename = "",
-  stand_field = "",
+  stand_id = "",
   stand_pcp_spm = c(),
   stand_filter = "",
   proj_id = "",
@@ -52,7 +52,7 @@ priority weights and treatment rank are added automatically.}
 
 \item{scenario_stand_filename}{Path to the input dataset}
 
-\item{stand_field}{The field in the scenario_stand_filename which is a unique ID for each stand}
+\item{stand_id}{The field in the scenario_stand_filename which is a unique ID for each stand}
 
 \item{stand_pcp_spm}{PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.}
 

@@ -29,7 +29,7 @@ NULL
 #' @param config_file Relative path to a config file that defines needed parameters
 #' @param scenario_name A name for this scenario
 #' @param scenario_stand_filename Path to the input dataset
-#' @param stand_field The field in the scenario_stand_filename which is a unique ID for each stand
+#' @param stand_id The field in the scenario_stand_filename which is a unique ID for each stand
 #' @param stand_pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
 #' @param stand_filter The land base is the area that is used to calculate the PCP and SPM values.
 #'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
@@ -66,7 +66,7 @@ forsys_run_wrapper <- function(
 	scenario_output_grouping_variables = NULL,
 	scenario_write_tags = NULL,
 	scenario_stand_filename = '',
-	stand_field = '',
+	stand_id = '',
 	stand_pcp_spm = c(),
 	stand_filter = '',
 	proj_id = '',
@@ -93,7 +93,7 @@ run(
 	scenario_output_fields = scenario_output_fields,
 	scenario_write_tags = scenario_write_tags,
 	scenario_stand_filename = scenario_stand_filename,
-    stand_field = stand_field,
+    stand_id = stand_id,
     stand_pcp_spm = stand_pcp_spm,
     stand_filter = stand_filter,
     proj_id = proj_id,

@@ -15,7 +15,7 @@
 #' @param config_file Relative path to a config file that defines needed parameters
 #' @param scenario_name A name for this scenario
 #' @param scenario_stand_filename Path to the input dataset
-#' @param stand_field The field in the scenario_stand_filename which is a unique ID for each stand
+#' @param stand_id The field in the scenario_stand_filename which is a unique ID for each stand
 #' @param stand_pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
 #' @param stand_filter The land base is the area that is used to calculate the PCP and SPM values.
 #'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
