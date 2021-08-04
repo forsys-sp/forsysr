@@ -8,13 +8,13 @@
   ########################################################################
 
 
+
 #' Run the ForSys treatment planner. Either provide parameters, or define parameters
 #' in a config file and pass the name of the file to this run function.
 #'
 #' @param config_file Relative path to a config file that defines needed parameters
 #' @param scenario_name A name for this scenario
 #' @param scenario_stand_filename Path to the input dataset
-#' @param scenario_write_stand_outputs Whether to write intermediate stand outputs
 #' @param stand_field The field in the scenario_stand_filename which is a unique ID for each stand
 #' @param stand_pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
 #' @param stand_filter The land base is the area that is used to calculate the PCP and SPM values.
@@ -47,8 +47,7 @@
 #' @importFrom dplyr %>%
 #' @importFrom rlang .data
 #' @export
-#'
-  forsys_run <- function(
+run <- function(
     config_file = '',
     scenario_name = '',
     scenario_output_fields = NULL,
@@ -166,7 +165,6 @@
       for(yr in 1:fire_planning_years){ # BEGIN YEAR LOOP
 
         message(paste('---------------\nYear', yr, '\n---------------'))
-        browser()
 
         # select stands from project areas until target reached while filtering by threshold
         stands_selected <- stands_available %>%

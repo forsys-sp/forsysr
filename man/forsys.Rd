@@ -10,10 +10,15 @@ specific investment strategies aimed at improving forest conditions change under
 management constraints to achieve specific outcomes and understand tradeoffs. Forsys.app
 modernizes how the USFS and our partners identify, prioritize, and implement treatment
 activities across the landscape by using cloud-based, geospatial technology to explore
+ForSys is a multi-objective spatial prioritization system that was designed to explore how
+specific investment strategies aimed at improving forest conditions change under a range of
+management constraints to achieve specific outcomes and understand tradeoffs. Forsys.app
+modernizes how the USFS and our partners identify, prioritize, and implement treatment
+activities across the landscape by using cloud-based, geospatial technology to explore
 and rapidly visualize various management scenarios and treatment optimization decisions.
 }
 \section{forsys functions}{
 
-forsys_run
+run
 }
 
