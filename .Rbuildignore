@@ -1,5 +1,7 @@
 a^forsys\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^\.github$
 ^output$
 ^output_graphics$
+^\.github$
