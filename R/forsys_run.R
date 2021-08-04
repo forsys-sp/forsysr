@@ -12,9 +12,10 @@
 #'
 #' @docType package
 #' @name forsys
-#'
-#' Run the ForSys treatment planner. Either provide parameters, or define parameters
-#' in a config file and pass the name of the file to this run function.
+NULL
+#> NULL
+
+#' Wrapper for running the ForSys treatment planner
 #'
 #' @param config_file Relative path to a config file that defines needed parameters
 #' @param scenario_name A name for this scenario

@@ -1,3 +1,5 @@
 a^forsys\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^output$
+^output_graphics$

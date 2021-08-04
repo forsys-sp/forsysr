@@ -1,15 +1,4 @@
-  ########################################################################
-  ##                                                                    ##
-  ##   ForSysR: The R implementation of ForSys scenario planning model  ##
-  ##   Author: Rachel Houtman, Oregon State University                  ##
-  ##   Origination date: 02/16/2018                                     ##
-  ##   Last updated: 10/01/2020                                         ##
-  ##                                                                    ##
-  ########################################################################
-
-
-#' Run the ForSys treatment planner. Either provide parameters, or define parameters
-#' in a config file and pass the name of the file to this run function.
+#' forsys: A package for objective optimization of forest planning
 #'
 #' @param config_file Relative path to a config file that defines needed parameters
 #' @param scenario_name A name for this scenario

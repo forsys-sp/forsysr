@@ -8,7 +8,7 @@ apply_treatment(
   stands,
   treatment_type,
   treatment_threshold,
-  stand_field,
+  stand_id,
   proj_id,
   proj_fixed_target,
   proj_fixed_area_target = NULL,
@@ -24,7 +24,7 @@ apply_treatment(
 
 \item{treatment_threshold}{TODO}
 
-\item{stand_field}{TODO}
+\item{stand_id}{TODO}
 
 \item{proj_id}{TODO}
 
