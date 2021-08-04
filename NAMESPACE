@@ -9,6 +9,8 @@ export(load_dataset)
 export(production_frontiers_chart)
 export(weight_string_to_values)
 export(weight_values_to_string)
+export(priority_column_name)
+
 importFrom(data.table,":=")
 importFrom(dplyr,"%>%")
 importFrom(rlang,.data)
