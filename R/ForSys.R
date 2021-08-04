@@ -31,7 +31,7 @@
 #' @param proj_thresholds Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
 #' @param scenario_output_fields This should include the desired fields for the planning area treatment files. Planning area id,
 #'                      priority weights and treatment rank are added automatically.
-#' @param scenario_output_grouping_variables Include the smaller and larger groups here for grouping of treated stands.
+#' @param scenario_output_grouping_fields Include the smaller and larger groups here for grouping of treated stands.
 #' @param overwrite_output Overwrite any existing output of the same name?
 #' @param run_with_shiny Sets some output business for better shiny interaction
 #' @param fire_intersect_table TOTO
@@ -52,7 +52,7 @@
     config_file = '',
     scenario_name = '',
     scenario_output_fields = NULL,
-    scenario_output_grouping_variables = NULL,
+    scenario_output_grouping_fields = NULL,
     scenario_priorities = NULL,
     scenario_weighting_values = "1 1 1",
     scenario_write_tags = NULL,
