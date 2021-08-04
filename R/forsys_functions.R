@@ -302,7 +302,7 @@ make_thresholds <- function(thresholds) {
 #' @param stands TODO
 #' @param treatment_type TODO
 #' @param treatment_threshold TODO
-#' @param stand_field TODO
+#' @param stand_id TODO
 #' @param proj_id TODO
 #' @param proj_fixed_target TODO
 #' @param proj_fixed_area_target TODO
@@ -315,7 +315,7 @@ make_thresholds <- function(thresholds) {
 apply_treatment <- function(stands,
                             treatment_type,
                             treatment_threshold,
-                            stand_field,
+                            stand_id,
                             proj_id,
                             proj_fixed_target,
                             proj_fixed_area_target=NULL,
@@ -349,7 +349,7 @@ apply_treatment <- function(stands,
     # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
     area_treatedPA <- update_target(treat_stands, proj_id, proj_unit)
     stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = proj_id]
-    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_type[t], selected = 1), on = stand_field]
+    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_type[t], selected = 1), on = stand_id]
     selected_stands <- rbind(selected_stands, stands_updated[selected==1,])
   }
 
