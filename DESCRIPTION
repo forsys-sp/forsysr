@@ -1,6 +1,6 @@
 Package: forsys
 Title: ForSys Scenario Planning
-Version: 0.2
+Version: 0.3
 Authors@R: 
     c(
         person(given = "Rachel",
@@ -31,7 +31,8 @@ Imports:
     pacman,
     purrr,
     roxygen2,
-    tidyr
+    tidyr,
+    utils
 Suggests:
     doParallel,
     rgdal, 

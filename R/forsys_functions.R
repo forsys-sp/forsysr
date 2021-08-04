@@ -470,5 +470,5 @@ weight_string_to_values <- function(weight_str) {
 #'
 #' @return A string representing the version of Forsys.R
 #' @export
-version <- function() {ver <- paste('forsys version: ', packageVersion('forsys'))}
+version <- function() {ver <- paste('forsys version: ', utils::packageVersion('forsys'))}
 
