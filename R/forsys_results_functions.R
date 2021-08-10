@@ -118,12 +118,12 @@ attainment_chart_by_target_treated <- function(results_data, pcp_field, target_f
 #' @export
 production_frontiers_chart <- function(results_data, proj_field, x_field, y_field, target_field) {
 	# First, find the top PA_IDs in terms of target performance
-	# Right now it's set to top 10, maybe make this dynamic?	
+	# Right now it's set to top 10, maybe make this dynamic?
 	dat <- results_data %>%
 			dplyr::group_by_at(proj_field) %>%
 			dplyr::summarize(sum = sum(get(target_field))) %>%
 			dplyr::slice_max(n = 10, order_by = sum)
-	
+
 	# print(dat)
 
 	# Now, for those top 10, chart the x vs y of them
