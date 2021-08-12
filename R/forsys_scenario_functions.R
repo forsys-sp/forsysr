@@ -15,7 +15,7 @@
 #' @param proj_unit TODO
 #' @param proj_target_multiplier TODO
 #' @param proj_fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
-#' @param proj_fixed_area_target If using a fixed target, set the fixed target value here.
+#' @param proj_fixed_target_value If using a fixed target, set the fixed target value here.
 #' @param nesting TODO
 #' @param nesting_group_by TODO
 #' @param nesting_target TODO
@@ -52,7 +52,7 @@ write_save_file <- function(
 	proj_target = '',
 	proj_target_multiplier = 0.15,
 	proj_fixed_target = FALSE,
-	proj_fixed_area_target = NULL,
+	proj_fixed_target_value = NULL,
 	nesting = FALSE,
 	nesting_group_by = NULL,
 	nesting_target = NULL,
@@ -90,7 +90,7 @@ write_save_file <- function(
 		'proj_target',
 		'proj_target_multiplier',
 		'proj_fixed_target',
-		'proj_fixed_area_target',
+		'proj_fixed_target_value',
 		'nesting',
 		'nesting_group_by',
 		'nesting_target',
@@ -125,7 +125,7 @@ write_save_file <- function(
 	vector_data$proj_target = proj_target
 	vector_data$proj_target_multiplier = proj_target_multiplier
 	vector_data$proj_fixed_target = proj_fixed_target
-	vector_data$proj_fixed_area_target = proj_fixed_area_target
+	vector_data$proj_fixed_target_value = proj_fixed_target_value
 	vector_data$nesting = nesting
 	vector_data$nesting_group_by = nesting_group_by
 	vector_data$nesting_target = nesting_target
@@ -196,11 +196,11 @@ write_save_file_helper <- function(input, data_path) {
 		land_base = input$treatment_available_field,
 		priorities = input$priorities_fields,
 		proj_id = input$planning_unit_id_field,
-		proj_target = input$proj_target_field,
+		proj_target = input$proj_target,
 		proj_unit = input$proj_unit_field,
 		proj_target_multiplier = input$proj_target_multiplier,
-		proj_fixed_target = FALSE,
-		proj_fixed_area_target = input$proj_fixed_area_target,
+		proj_fixed_target = input$proj_fixed_target,
+		proj_fixed_target_value = input$proj_fixed_target_value,
 		nesting = input$use_au,
 		nesting_group_by = nesting_group_by,
 		nesting_target = nesting_target,

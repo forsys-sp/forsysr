@@ -18,7 +18,7 @@ write_save_file(
   proj_target = "",
   proj_target_multiplier = 0.15,
   proj_fixed_target = FALSE,
-  proj_fixed_area_target = NULL,
+  proj_fixed_target_value = NULL,
   nesting = FALSE,
   nesting_group_by = NULL,
   nesting_target = NULL,
@@ -69,7 +69,7 @@ A blank field means all lands are included in the calculation.}
 
 \item{proj_fixed_target}{Set to have either a fixed area target (TRUE) or a variable area target (FALSE)}
 
-\item{proj_fixed_area_target}{If using a fixed target, set the fixed target value here.}
+\item{proj_fixed_target_value}{If using a fixed target, set the fixed target value here.}
 
 \item{nesting}{TODO}
 

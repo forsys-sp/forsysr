@@ -40,7 +40,7 @@ NULL
 #' @param proj_unit TODO
 #' @param proj_target_multiplier TODO
 #' @param proj_fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
-#' @param proj_fixed_area_target If using a fixed target, set the fixed target value here.
+#' @param proj_fixed_target_value If using a fixed target, set the fixed target value here.
 #' @param scenario_weighting_values Defines the weights and integer steps between weights. The values are for min, max, and step.
 #' @param proj_thresholds Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
 #' @param scenario_output_fields This should include the desired fields for the planning area treatment files. Planning area id,
@@ -74,7 +74,7 @@ forsys_run_wrapper <- function(
 	proj_target = '',
 	proj_target_multiplier = 1,
 	proj_fixed_target = FALSE,
-	proj_fixed_area_target = NULL,
+	proj_fixed_target_value = NULL,
 	proj_thresholds = NULL,
 	fire_intersect_table = NULL,
 	fire_planning_years = 1,
@@ -101,7 +101,7 @@ run(
     proj_target = proj_target,
     proj_target_multiplier = proj_target_multiplier,
     proj_fixed_target = proj_fixed_target,
-    proj_fixed_area_target = proj_fixed_area_target,
+    proj_fixed_target_value = proj_fixed_target_value,
     proj_thresholds = proj_thresholds,
     fire_intersect_table = fire_intersect_table,
     fire_planning_years = fire_planning_years,
