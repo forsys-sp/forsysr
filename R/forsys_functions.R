@@ -186,26 +186,6 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
 
 #' TODO
 #' @param stands TODO
-#' @param proj_unit TODO
-#' @param proj_target TODO
-#' @param proj_target_multiplier TODO
-#' @param proj_id TODO
-#' @param land_base TODO
-#' @return TODO
-#'
-#' @importFrom data.table :=
-#'
-add_target_field <- function(stands, proj_unit, proj_target, proj_target_multiplier, proj_id, land_base) {
-  if(length(land_base) == 0) {
-    stands_updated <- stands[, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = proj_id]
-  } else {
-    stands_updated <- stands[get(land_base) == 1, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = proj_id]
-  }
-  return(stands_updated)
-}
-
-#' TODO
-#' @param stands TODO
 #' @param filter TODO
 #' @param fields TODO
 #' @return TODO
@@ -306,9 +286,8 @@ make_thresholds <- function(thresholds) {
 #' @param proj_id TODO
 #' @param proj_fixed_target TODO
 #' @param proj_fixed_area_target TODO
-#' @param proj_unit TODO
-#' @param proj_target TODO
-#' @param proj_target_multiplier TODO
+#' @param proj_target_field TODO
+#' @param proj_variable_target_multiplier TODO
 #' @return TODO
 #'
 #'
@@ -318,10 +297,11 @@ apply_treatment <- function(stands,
                             stand_id,
                             proj_id,
                             proj_fixed_target,
-                            proj_fixed_area_target=NULL,
-                            proj_unit=NULL,
-                            proj_target=NULL,
-                            proj_target_multiplier=NULL) {
+                            proj_target_field=NULL,
+                            proj_target_value=NULL
+                            # proj_fixed_target_value=NULL,
+                            # proj_variable_target_multiplier=NULL
+                            ) {
   stands_updated <- stands
   selected_stands <- NULL
 
@@ -330,24 +310,29 @@ apply_treatment <- function(stands,
 
     # stands by threshold type criteria
     filtered_stands <- stand_filter(stands, treatment_threshold[V1 == treatment_type[t], ])
-
     message(paste0(round(nrow(filtered_stands)/nrow(stands)*100), "% of stands met threshold for ", treatment_type[t]))
 
-    # set project target
+    # set project target to filtered stands
     if (proj_fixed_target == TRUE) {
-      filtered_stands <- filtered_stands %>% set_fixed_area_target(proj_fixed_area_target) # Target based on fixed field
+      # target based on fixed total
+      filtered_stands <- filtered_stands %>%
+        set_fixed_target(target_value = proj_target_value)
     } else if (proj_fixed_target == FALSE) {
-      filtered_stands <- filtered_stands %>% set_percentage_area_target(proj_target, proj_target_multiplier) # Activate for percentage not fixed area
+      # target based on percent total of field
+      filtered_stands <- filtered_stands %>%
+        set_variable_target(group_by = proj_id,
+                            target_field = proj_target_field,
+                            multiplier = proj_target_value)
     }
 
-    # select stands for treatment type t
+    # select stands for current treatment type
     treat_stands <- select_simple_greedy_algorithm(dt = filtered_stands,
                                                    grouped_by = proj_id,
                                                    prioritize_by = "weightedPriority",
-                                                   constrain_by = c(1, proj_unit, "master_target"))
+                                                   constrain_by = c(1, proj_target_field, "master_target"))
 
     # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
-    area_treatedPA <- update_target(treat_stands, proj_id, proj_unit)
+    area_treatedPA <- update_target(treat_stands, proj_id, proj_target_field)
     stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = proj_id]
     stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_type[t], selected = 1), on = stand_id]
     selected_stands <- rbind(selected_stands, stands_updated[selected==1,])
@@ -363,21 +348,21 @@ apply_treatment <- function(stands,
 #'
 #' @importFrom data.table :=
 #'
-set_fixed_area_target <- function(stands, fixed_area_target) {
+set_fixed_target <- function(stands, target_value) {
   # TODO this {{ }} probably doesn't work
-  stands[, master_target := {{ fixed_area_target }}]
+  stands[, master_target := {{ target_value }}]
 }
 
 #' TODO
 #' @param stands TODO
-#' @param proj_target TODO
-#' @param proj_target_multiplier TODO
+#' @param proj_target_field TODO
+#' @param proj_variable_target_multiplier TODO
 #' @return TODO
 #'
 #' @importFrom data.table :=
 #'
-set_percentage_area_target <- function(stands, proj_target, proj_target_multiplier) {
-  stands[, master_target := get(proj_target) * proj_target_multiplier]
+set_variable_target <- function(stands, group_by, target_field, multiplier){
+  stands[, master_target := sum(get(target_field)) * multiplier, by=list(get(group_by))]
 }
 
 

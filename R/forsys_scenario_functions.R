@@ -149,26 +149,37 @@ write_save_file_helper <- function(input, data_path) {
 
 	weight_values <- forsys::weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
 
-	json <- write_save_file(
-		scenario_name = input$scenario_name,
-		scenario_stand_filename = data_path,
-		scenario_priorities = input$priorities_fields,
-		scenario_weighting_values = weight_values,
-		scenario_output_fields = input$outputs_select,
-		scenario_output_grouping_fields = input$output_grouping_fields,
-		stand_id = input$stand_id_field,
-		stand_pcp_spm = input$priorities_fields,
-		stand_filter = input$treatment_available_field,
-		proj_id = input$planning_unit_id_field,
-		proj_thresholds = input$proj_thresholds_expr,
-		proj_target = input$proj_target,
-		proj_fixed_target = input$proj_fixed_target,
-		proj_fixed_target_value = input$proj_fixed_target_value,
-		proj_target_multiplier = input$proj_target_multiplier,
-		overwrite_output = input$overwrite_output_chk,
-		run_with_shiny = TRUE
-		)
-  
+  if (input$use_au) {
+    nesting = TRUE
+    nesting_group_by = input$au_id_field
+    nesting_target = input$au_target_field
+    nesting_unit = input$au_unit_field
+    au_target_multiplier = input$au_target_multiplier
+  } else {
+    nesting = FALSE
+    nesting_group_by = NULL
+    nesting_target = NULL
+    nesting_unit = NULL
+    au_target_multiplier = 1.0
+  }
+
+  json <- write_save_file(
+    scenario_name = input$scenario_name,
+    scenario_input_standfile = data_path,
+    scenario_priorities = input$priorities_fields,
+    scenario_weighting_values = weight_values,
+    scenario_output_fields = input$outputs_select,
+    scenario_output_grouping_fields = input$output_grouping_fields,
+    stand_field = input$stand_id_field,
+    stand_filter = input$treatment_available_field,
+    proj_id = input$planning_unit_id_field,
+    proj_target_field = input$proj_target_field,
+    proj_fixed_target = ifelse(input$proj_fixed_target == 'TRUE', TRUE, FALSE),
+    proj_target_field = input$proj_target_field,
+    proj_target_value = input$proj_target_value,
+    proj_thresholds = input$proj_thresholds_expr,
+    overwrite_output = input$overwrite_output_chk
+  )
 }
 
 #' Load a json config file written from the write_save_file function.
