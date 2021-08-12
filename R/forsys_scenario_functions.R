@@ -51,12 +51,11 @@ write_save_file_helper <- function(input, data_path) {
     stand_field = input$stand_id_field,
     stand_filter = input$treatment_available_field,
     proj_id = input$planning_unit_id_field,
-    proj_target = input$proj_target_field,
-    proj_unit = input$proj_unit_field,
-    proj_target_multiplier = input$proj_target_multiplier,
-    proj_fixed_target = FALSE,
-    proj_fixed_area_target = input$proj_fixed_area_target,
-    proj_thresholds = input$thresholds_expr,
+    proj_target_field = input$proj_target_field,
+    proj_fixed_target = ifelse(input$proj_fixed_target == 'TRUE', TRUE, FALSE),
+    proj_fixed_target_value = input$proj_fixed_target_value,
+    proj_variable_target_multiplier = input$proj_variable_target_multiplier,
+    proj_thresholds = input$proj_thresholds_expr,
     overwrite_output = input$overwrite_output_chk
   )
 }

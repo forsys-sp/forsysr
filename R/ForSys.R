@@ -22,11 +22,10 @@
 #'                  A blank field means all lands are included in the calculation.
 #' @param scenario_priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
 #' @param proj_id The field in the scenario_stand_filename that indicates which project or planning area a stand belongs to
-#' @param proj_target TODO
-#' @param proj_unit TODO
-#' @param proj_target_multiplier TODO
+#' @param proj_target_field TODO
+#' @param proj_variable_target_multiplier TODO
 #' @param proj_fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
-#' @param proj_fixed_area_target If using a fixed target, set the fixed target value here.
+#' @param proj_fixed_target_value If using a fixed target, set the fixed target value here.
 #' @param scenario_weighting_values Defines the weights and integer steps between weights. The values are for min, max, and step.
 #' @param proj_thresholds Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
 #' @param scenario_output_fields This should include the desired fields for the planning area treatment files. Planning area id,
@@ -60,11 +59,10 @@ run <- function(
     stand_filter = '',
     stand_pcp_spm = NULL,
     proj_id = '',
-    proj_unit = '',
-    proj_target = '',
-    proj_target_multiplier = 1,
+    proj_target_field = '',
     proj_fixed_target = FALSE,
-    proj_fixed_area_target = NULL,
+    proj_variable_target_multiplier = 1,
+    proj_fixed_target_value = NULL,
     proj_thresholds = NULL,
     fire_intersect_table = NULL,
     fire_planning_years = 1,
@@ -117,15 +115,12 @@ run <- function(
     stands <- load_dataset(scenario_stand_filename)
     if(!is.null(fire_intersect_table)) fires <- fire_intersect_table
 
+    browser()
+
     # Calculate SPM & PCP values
     stands <- stands %>%
       calculate_spm_pcp(filter = stand_filter,
-                        fields = stand_pcp_spm) %>%
-      add_target_field(proj_unit = proj_unit,
-                       proj_target = proj_target,
-                       proj_target_multiplier = proj_target_multiplier,
-                       proj_id = proj_id,
-                       land_base = stand_filter)
+                        fields = stand_pcp_spm)
 
     # create objects for tracking treated and burnt stands
     stands_treated <- NULL
@@ -178,10 +173,9 @@ run <- function(
             stand_id = stand_id,
             proj_id = proj_id,
             proj_fixed_target = proj_fixed_target,
-            proj_fixed_area_target = proj_fixed_area_target,
-            proj_unit = proj_unit,
-            proj_target = proj_target,
-            proj_target_multiplier = proj_target_multiplier
+            proj_target_field = proj_target_field,
+            proj_fixed_target_value = proj_fixed_target_value,
+            proj_variable_target_multiplier = proj_variable_target_multiplier
           )
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!
