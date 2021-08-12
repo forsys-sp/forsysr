@@ -298,30 +298,31 @@ apply_treatment <- function(stands,
                             proj_id,
                             proj_fixed_target,
                             proj_target_field=NULL,
-                            proj_fixed_target_value=NULL,
-                            proj_variable_target_multiplier=NULL
+                            proj_target_value=NULL
+                            # proj_fixed_target_value=NULL,
+                            # proj_variable_target_multiplier=NULL
                             ) {
   stands_updated <- stands
   selected_stands <- NULL
 
-  browser()
   # for each treatment type
   for (t in 1:length(treatment_type)) {
 
     # stands by threshold type criteria
     filtered_stands <- stand_filter(stands, treatment_threshold[V1 == treatment_type[t], ])
-
     message(paste0(round(nrow(filtered_stands)/nrow(stands)*100), "% of stands met threshold for ", treatment_type[t]))
 
     # set project target to filtered stands
     if (proj_fixed_target == TRUE) {
+      # target based on fixed total
       filtered_stands <- filtered_stands %>%
-        set_fixed_target(fixed_target_value = proj_fixed_target_value) # Target based on fixed field
+        set_fixed_target(target_value = proj_target_value)
     } else if (proj_fixed_target == FALSE) {
+      # target based on percent total of field
       filtered_stands <- filtered_stands %>%
-        set_variable_target(proj_id = proj_id,
-                            proj_target_field = proj_target_field,
-                            proj_variable_target_multiplier = proj_variable_target_multiplier) # Activate for percentage not fixed area
+        set_variable_target(group_by = proj_id,
+                            target_field = proj_target_field,
+                            multiplier = proj_target_value)
     }
 
     # select stands for current treatment type
@@ -347,9 +348,9 @@ apply_treatment <- function(stands,
 #'
 #' @importFrom data.table :=
 #'
-set_fixed_target <- function(stands, fixed_target_value) {
+set_fixed_target <- function(stands, target_value) {
   # TODO this {{ }} probably doesn't work
-  stands[, master_target := {{ fixed_target_value }}]
+  stands[, master_target := {{ target_value }}]
 }
 
 #' TODO
@@ -360,8 +361,8 @@ set_fixed_target <- function(stands, fixed_target_value) {
 #'
 #' @importFrom data.table :=
 #'
-set_variable_target <- function(stands, proj_id, proj_target_field, proj_variable_target_multiplier){
-  stands[, master_target := sum(get(proj_target_field)) * proj_variable_target_multiplier, by=list(get(proj_id))]
+set_variable_target <- function(stands, group_by, target_field, multiplier){
+  stands[, master_target := sum(get(target_field)) * multiplier, by=list(get(group_by))]
 }
 
 

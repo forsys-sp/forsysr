@@ -53,8 +53,8 @@ write_save_file_helper <- function(input, data_path) {
     proj_id = input$planning_unit_id_field,
     proj_target_field = input$proj_target_field,
     proj_fixed_target = ifelse(input$proj_fixed_target == 'TRUE', TRUE, FALSE),
-    proj_fixed_target_value = input$proj_fixed_target_value,
-    proj_variable_target_multiplier = input$proj_variable_target_multiplier,
+    proj_target_field = input$proj_target_field,
+    proj_target_value = input$proj_target_value,
     proj_thresholds = input$proj_thresholds_expr,
     overwrite_output = input$overwrite_output_chk
   )
