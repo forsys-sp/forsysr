@@ -59,31 +59,30 @@ write_save_file <- function(
 	vector_data <- vector(mode='list', length=26)
 
 	names(vector_data) = c(
-	    'config_file',
-	    'scenario_name',
-	    'scenario_stand_filename',
-	    'stand_id',
-	    'stand_pcp_spm',
-	    'stand_filter',
-	    'scenario_priorities',
-	    'proj_id',
-	    'proj_thresholds',
-	    'proj_target_multiplier',
-	    'proj_fixed_target',
-	    'proj_target_field',
-	    'proj_target_value',
-	    'scenario_weighting_values',
-	    'scenario_output_fields',
-	    'scenario_output_grouping_fields',
-	    'overwrite_output',
-	    'run_with_shiny',
-	    'fire_intersect_table',
-	    'fire_planning_years',
-	    'fire_annual_target_field',
-	    'fire_annual_target',
-	    'fire_dynamic_forsys',
-	    'fire_random_projects',
-	    'scenario_write_tags'
+    'config_file',
+    'scenario_name',
+    'scenario_stand_filename',
+    'stand_id',
+    'stand_pcp_spm',
+    'stand_filter',
+    'scenario_priorities',
+    'proj_id',
+    'proj_thresholds',
+    'proj_fixed_target',
+    'proj_target_field',
+    'proj_target_value',
+    'scenario_weighting_values',
+    'scenario_output_fields', 
+    'scenario_output_grouping_fields', 
+    'overwrite_output', 
+    'run_with_shiny', 
+    'fire_intersect_table',
+    'fire_planning_years',
+    'fire_annual_target_field',
+    'fire_annual_target',
+    'fire_dynamic_forsys',
+    'fire_random_projects',
+    'scenario_write_tags'
 		)
 
 	vector_data$config_file = config_file
@@ -94,12 +93,10 @@ write_save_file <- function(
 	vector_data$stand_filter = stand_filter
 	vector_data$scenario_priorities = scenario_priorities
 	vector_data$proj_id = proj_id
-	vector_data$proj_target = proj_target
-	vector_data$proj_unit = proj_unit
-	vector_data$proj_target_multiplier = proj_target_multiplier
-	vector_data$proj_fixed_target = proj_fixed_target
-	vector_data$proj_fixed_target_value = proj_fixed_target_value
 	vector_data$proj_thresholds = proj_thresholds
+	vector_data$proj_fixed_target = proj_fixed_target
+	vector_data$proj_target_field = proj_target_field
+	vector_data$proj_target_value = proj_target_value
 	vector_data$scenario_weighting_values = scenario_weighting_values
 	vector_data$scenario_output_fields = scenario_output_fields
 	vector_data$scenario_output_grouping_fields = scenario_output_grouping_fields
@@ -160,7 +157,7 @@ write_save_file_helper <- function(input, data_path) {
 
   json <- write_save_file(
 	scenario_name = input$scenario_name,
-	scenario_stand_filename = r_data$data_path,
+	scenario_stand_filename = data_path,
 	scenario_priorities = input$priorities_fields,
 	scenario_weighting_values = weight_values,
 	scenario_output_fields = input$outputs_select,
