@@ -11,10 +11,8 @@ apply_treatment(
   stand_id,
   proj_id,
   proj_fixed_target,
-  proj_fixed_area_target = NULL,
-  proj_unit = NULL,
-  proj_target = NULL,
-  proj_target_multiplier = NULL
+  proj_target_field = NULL,
+  proj_target_value = NULL
 )
 }
 \arguments{
@@ -30,13 +28,11 @@ apply_treatment(
 
 \item{proj_fixed_target}{TODO}
 
+\item{proj_target_field}{TODO}
+
 \item{proj_fixed_area_target}{TODO}
 
-\item{proj_unit}{TODO}
-
-\item{proj_target}{TODO}
-
-\item{proj_target_multiplier}{TODO}
+\item{proj_variable_target_multiplier}{TODO}
 }
 \value{
 TODO

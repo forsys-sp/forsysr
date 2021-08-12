@@ -22,6 +22,8 @@
 #'                  A blank field means all lands are included in the calculation.
 #' @param scenario_priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
 #' @param proj_id The field in the scenario_stand_filename that indicates which project or planning area a stand belongs to
+#' @param proj_thresholds TODO
+#' @param proj_fixed_target TODO
 #' @param proj_target_field TODO
 #' @param proj_target_value TODO
 #' @param scenario_weighting_values Defines the weights and integer steps between weights. The values are for min, max, and step.
@@ -56,6 +58,11 @@ run <- function(
     proj_fixed_target = FALSE,
     proj_target_field = '',
     proj_target_value = NULL,
+    scenario_weighting_values = NULL,
+    scenario_output_fields = NULL, 
+    scenario_output_grouping_fields = NULL, 
+    overwrite_output = TRUE, 
+    run_with_shiny = FALSE, 
     fire_intersect_table = NULL,
     fire_planning_years = 1,
     fire_annual_target_field = NULL,

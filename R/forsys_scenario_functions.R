@@ -10,13 +10,11 @@
 #'                  A blank field means all lands are included in the calculation.
 #' @param scenario_priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
 #' @param proj_id The field in the scenario_stand_filename that indicates which project or planning area a stand belongs to
-#' @param proj_target TODO
-#' @param proj_unit TODO
-#' @param proj_target_multiplier TODO
-#' @param proj_fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
-#' @param proj_fixed_target_value If using a fixed target, set the fixed target value here.
+#' @param proj_thresholds TODO
+#' @param proj_fixed_target TODO
+#' @param proj_target_field TODO
+#' @param proj_target_value TODO
 #' @param scenario_weighting_values Defines the weights and integer steps between weights. The values are for min, max, and step.
-#' @param proj_thresholds Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
 #' @param scenario_output_fields This should include the desired fields for the planning area treatment files. Planning area id,
 #'                      priority weights and treatment rank are added automatically.
 #' @param scenario_output_grouping_fields Include the smaller and larger groups here for grouping of treated stands.
@@ -29,8 +27,8 @@
 #' @param fire_dynamic_forsys TODO
 #' @param fire_random_projects TODO
 #' @param scenario_write_tags TODO
-#' @return A serialized vector of input choices in json format
 #' @export
+#'
 write_save_file <- function(
     config_file = '',
     scenario_name = '',
@@ -40,17 +38,15 @@ write_save_file <- function(
     stand_filter = '',
     scenario_priorities = NULL,
     proj_id = '',
-    proj_target = '',
-    proj_unit = '',
-    proj_target_multiplier = 1,
-    proj_fixed_target = FALSE,
-    proj_fixed_target_value = NULL,
     proj_thresholds = NULL,
-    scenario_weighting_values = "1 1 1",
-    scenario_output_fields = NULL,
-    scenario_output_grouping_fields = NULL,
-    overwrite_output = TRUE,
-    run_with_shiny = FALSE,
+    proj_fixed_target = FALSE,
+    proj_target_field = '',
+    proj_target_value = NULL,
+    scenario_weighting_values = NULL,
+    scenario_output_fields = NULL, 
+    scenario_output_grouping_fields = NULL, 
+    overwrite_output = TRUE, 
+    run_with_shiny = FALSE, 
     fire_intersect_table = NULL,
     fire_planning_years = 1,
     fire_annual_target_field = NULL,
@@ -71,12 +67,11 @@ write_save_file <- function(
 	    'stand_filter',
 	    'scenario_priorities',
 	    'proj_id',
-	    'proj_target',
-	    'proj_unit',
+	    'proj_thresholds',
 	    'proj_target_multiplier',
 	    'proj_fixed_target',
-	    'proj_fixed_target_value',
-	    'proj_thresholds',
+	    'proj_target_field',
+	    'proj_target_value',
 	    'scenario_weighting_values',
 	    'scenario_output_fields',
 	    'scenario_output_grouping_fields',
@@ -164,21 +159,24 @@ write_save_file_helper <- function(input, data_path) {
   }
 
   json <- write_save_file(
-    scenario_name = input$scenario_name,
-    scenario_input_standfile = data_path,
-    scenario_priorities = input$priorities_fields,
-    scenario_weighting_values = weight_values,
-    scenario_output_fields = input$outputs_select,
-    scenario_output_grouping_fields = input$output_grouping_fields,
-    stand_field = input$stand_id_field,
-    stand_filter = input$treatment_available_field,
-    proj_id = input$planning_unit_id_field,
-    proj_target_field = input$proj_target_field,
-    proj_fixed_target = ifelse(input$proj_fixed_target == 'TRUE', TRUE, FALSE),
-    proj_target_field = input$proj_target_field,
-    proj_target_value = input$proj_target_value,
-    proj_thresholds = input$proj_thresholds_expr,
-    overwrite_output = input$overwrite_output_chk
+	scenario_name = input$scenario_name,
+	scenario_stand_filename = r_data$data_path,
+	scenario_priorities = input$priorities_fields,
+	scenario_weighting_values = weight_values,
+	scenario_output_fields = input$outputs_select,
+	scenario_output_grouping_fields = input$output_grouping_fields,
+	stand_id = input$stand_id_field,
+	stand_pcp_spm = input$priorities_fields,
+	stand_filter = input$treatment_available_field,
+	proj_id = input$planning_unit_id_field,
+	proj_thresholds = input$proj_thresholds_expr,
+	proj_fixed_target = FALSE,
+	proj_target_field = input$proj_target_field,
+	proj_target_value = input$proj_target_value,
+	# proj_fixed_target_value = input$proj_fixed_target_value,
+	# proj_variable_target_multiplier = input$proj_variable_target_multiplier,
+	overwrite_output = input$overwrite_output_chk,
+	run_with_shiny = TRUE
   )
 }
 

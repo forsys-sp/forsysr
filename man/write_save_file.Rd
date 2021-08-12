@@ -13,13 +13,11 @@ write_save_file(
   stand_filter = "",
   scenario_priorities = NULL,
   proj_id = "",
-  proj_target = "",
-  proj_unit = "",
-  proj_target_multiplier = 1,
-  proj_fixed_target = FALSE,
-  proj_fixed_target_value = NULL,
   proj_thresholds = NULL,
-  scenario_weighting_values = "1 1 1",
+  proj_fixed_target = FALSE,
+  proj_target_field = "",
+  proj_target_value = NULL,
+  scenario_weighting_values = NULL,
   scenario_output_fields = NULL,
   scenario_output_grouping_fields = NULL,
   overwrite_output = TRUE,
@@ -52,17 +50,13 @@ A blank field means all lands are included in the calculation.}
 
 \item{proj_id}{The field in the scenario_stand_filename that indicates which project or planning area a stand belongs to}
 
-\item{proj_target}{TODO}
+\item{proj_thresholds}{TODO}
 
-\item{proj_unit}{TODO}
+\item{proj_fixed_target}{TODO}
 
-\item{proj_target_multiplier}{TODO}
+\item{proj_target_field}{TODO}
 
-\item{proj_fixed_target}{Set to have either a fixed area target (TRUE) or a variable area target (FALSE)}
-
-\item{proj_fixed_target_value}{If using a fixed target, set the fixed target value here.}
-
-\item{proj_thresholds}{Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).}
+\item{proj_target_value}{TODO}
 
 \item{scenario_weighting_values}{Defines the weights and integer steps between weights. The values are for min, max, and step.}
 
@@ -88,9 +82,6 @@ priority weights and treatment rank are added automatically.}
 \item{fire_random_projects}{TODO}
 
 \item{scenario_write_tags}{TODO}
-}
-\value{
-A serialized vector of input choices in json format
 }
 \description{
 Write a json config file with the user's selected parameters
