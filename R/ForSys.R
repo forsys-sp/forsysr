@@ -102,7 +102,8 @@ run <- function(
       dir.create(absolute_output_path, recursive=TRUE)
     } else {
       if (run_with_shiny) {
-
+        message(paste0("output directory, ", absolute_output_path, ", already exists"))
+        if(overwrite_output) list.files(absolute_output_path, full.names = T) %>% file.remove()
       } else {
         message(paste0("output directory, ", absolute_output_path, ", already exists"))
       }
@@ -143,8 +144,11 @@ run <- function(
       ## Step 0: create the weighted priorities.
       if (run_with_shiny) {
       } else {
-        message(paste0("Creating weighted priorities:",  w, " of ", nrow(weights)))
       }
+
+      message(paste0("\n---------------\nWeighting scenario ",  w, " of ", nrow(weights),
+                     "\nWeights: ", paste0(weights[w,], collapse = '-'),
+                     "\n---------------"))
 
       # prep stand data
       stands_prioritized <- stands %>%
@@ -164,7 +168,7 @@ run <- function(
 
       for(yr in 1:fire_planning_years){ # BEGIN YEAR LOOP
 
-        message(paste('---------------\nYear', yr, '\n---------------'))
+        if(fire_planning_years > 1) message(paste('\nYear', yr, '\n---------------'))
 
         # select stands from project areas until target reached while filtering by threshold
         stands_selected <- stands_available %>%
@@ -273,9 +277,6 @@ run <- function(
       # 5. WRITE DATA -------------
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      # WRITE: write stands to file ...........
-      message('Writing output files for stands and planning areas')
-
       # tag stands with specific scenario attributes
       stands_selected_out <- stands_treated %>% dplyr::select(!!stand_id, !!proj_id, ETrt_YR)
 
@@ -326,7 +327,7 @@ run <- function(
       projects_selected_out <- projects_selected_out %>% dplyr::bind_cols(scenario_write_tags)
 
       # assign weight scenario values to project out
-      projects_selected_out[,paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[1,]
+      projects_selected_out[,paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[w,]
 
       # write tag for selection scenario
       if (length(scenario_write_tags_txt) > 1) {
@@ -335,7 +336,7 @@ run <- function(
         project_fn = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
       }
 
-      data.table::fwrite(projects_selected_out, file = project_fn, sep = ",", row.names = FALSE)
+      data.table::fwrite(projects_selected_out, file = project_fn, sep = ",", row.names = FALSE, append = T)
 
       } # END WEIGHT LOOP
   }

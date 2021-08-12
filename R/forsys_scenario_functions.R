@@ -160,8 +160,8 @@ write_save_file <- function(
 	writeLines(json_data, output_file_name)
 
 	return(vector_data)
-}
 
+}
 
 #' Take the input object from a shiny server function all at once and then call the write_save_file function
 #' This function helps keep the server code clean.
@@ -170,22 +170,8 @@ write_save_file <- function(
 #' @param data_path System path to save the output file to
 #' @return A serialized vector of input choices in json format
 #' @export
+#'
 write_save_file_helper <- function(input, data_path) {
-	weight_values <- weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
-
-	if (input$use_au) {
-			nesting = TRUE
-			nesting_group_by = input$au_id_field
-			nesting_target = input$au_target_field
-			nesting_unit = input$au_unit_field
-			au_target_multiplier = input$au_target_multiplier
-		} else {
-			nesting = FALSE
-			nesting_group_by = NULL
-			nesting_target = NULL
-			nesting_unit = NULL
-			au_target_multiplier = 1.0
-		}
 
 	json <- write_save_file(
 		scenario_name = input$scenario_name,
@@ -213,6 +199,8 @@ write_save_file_helper <- function(input, data_path) {
 		output_grouping_variables = input$output_grouping_variables, # c("PA_ID", "Owner"),
 		overwrite_output = input$overwrite_output_chk
 		)
+  
+  weight_values <- forsys::weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
 }
 
 #' Load a json config file written from the write_save_file function.
@@ -220,6 +208,7 @@ write_save_file_helper <- function(input, data_path) {
 #' @param filename Relative path and filename to the scenario json
 #' @return A vector of input choices
 #' @export
+#'
 read_save_file <- function(filename = '') {
 
 	# TODO check if file exists
@@ -233,6 +222,7 @@ read_save_file <- function(filename = '') {
 #'
 #' @return A list of found config files
 #' @export
+#'
 list_scenarios <- function() {
 	if (dir.exists(file.path(getwd(), 'configs'))) {
 		output_files <- sapply(list.files('configs'), function(x) paste0('configs/', x))
