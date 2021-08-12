@@ -27,8 +27,8 @@
 #' @param proj_target_multiplier TODO
 #' @param proj_fixed_target Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
 #' @param proj_fixed_target_value If using a fixed target, set the fixed target value here.
-#' @param scenario_weighting_values Defines the weights and integer steps between weights. The values are for min, max, and step.
 #' @param proj_thresholds Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
+#' @param scenario_weighting_values Defines the weights and integer steps between weights. The values are for min, max, and step.
 #' @param scenario_output_fields This should include the desired fields for the planning area treatment files. Planning area id,
 #'                      priority weights and treatment rank are added automatically.
 #' @param scenario_output_grouping_fields Include the smaller and larger groups here for grouping of treated stands.
@@ -50,30 +50,31 @@
 run <- function(
     config_file = '',
     scenario_name = '',
-    scenario_output_fields = NULL,
-    scenario_output_grouping_fields = NULL,
-    scenario_priorities = NULL,
-    scenario_weighting_values = "1 1 1",
-    scenario_write_tags = NULL,
     scenario_stand_filename = '',
     stand_id = '',
-    stand_filter = '',
     stand_pcp_spm = NULL,
+    stand_filter = '',
+    scenario_priorities = NULL,
     proj_id = '',
-    proj_unit = '',
     proj_target = '',
+    proj_unit = '',
     proj_target_multiplier = 1,
     proj_fixed_target = FALSE,
     proj_fixed_target_value = NULL,
     proj_thresholds = NULL,
+    scenario_weighting_values = "1 1 1",
+    scenario_output_fields = NULL,
+    scenario_output_grouping_fields = NULL,
+    overwrite_output = TRUE,
+    run_with_shiny = FALSE,
     fire_intersect_table = NULL,
     fire_planning_years = 1,
     fire_annual_target_field = NULL,
     fire_annual_target = NA,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
-    run_with_shiny = FALSE,
-    overwrite_output = TRUE
+    scenario_write_tags = NULL
+
     ) {
 
     # If a config file has been selected, source it to read in variables

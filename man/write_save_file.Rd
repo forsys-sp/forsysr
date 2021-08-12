@@ -5,30 +5,23 @@
 \title{Write a json config file with the user's selected parameters}
 \usage{
 write_save_file(
+  config_file = "",
   scenario_name = "",
-  num_reps = 1,
-  input_standfile = "",
-  write_stand_outputs = FALSE,
-  stand_field = "CELL_ID",
-  pcp_spm = c(),
-  land_base = "",
-  priorities = c(),
+  scenario_stand_filename = "",
+  stand_id = "",
+  stand_pcp_spm = NULL,
+  stand_filter = "",
+  scenario_priorities = NULL,
   proj_id = "",
-  proj_unit = "",
   proj_target = "",
-  proj_target_multiplier = 0.15,
+  proj_unit = "",
+  proj_target_multiplier = 1,
   proj_fixed_target = FALSE,
   proj_fixed_target_value = NULL,
-  nesting = FALSE,
-  nesting_group_by = NULL,
-  nesting_target = NULL,
-  nesting_unit = NULL,
-  nesting_target_multiplier = 1,
-  weighting_values = "0 5 1",
-  thresholds = c("Manageable man_alldis == 1"),
-  include_stands = c("man_alldis == 1"),
-  output_fields = c("AREA_HA", "TVMBF_STND", "TVMBF_PCP", "HUSUM_STND", "HUSUM_PCP"),
-  output_grouping_variables = c("PA_ID", "Owner"),
+  proj_thresholds = NULL,
+  scenario_weighting_values = "1 1 1",
+  scenario_output_fields = NULL,
+  scenario_output_grouping_fields = NULL,
   overwrite_output = TRUE,
   run_with_shiny = FALSE,
   fire_intersect_table = NULL,
@@ -37,33 +30,31 @@ write_save_file(
   fire_annual_target = NA,
   fire_dynamic_forsys = FALSE,
   fire_random_projects = FALSE,
-  write_tags = ""
+  scenario_write_tags = NULL
 )
 }
 \arguments{
+\item{config_file}{Relative path to a config file that defines needed parameters}
+
 \item{scenario_name}{A name for this scenario}
 
-\item{num_reps}{TODO}
+\item{scenario_stand_filename}{Path to the input dataset}
 
-\item{input_standfile}{Path to the input dataset}
+\item{stand_id}{The field in the scenario_stand_filename which is a unique ID for each stand}
 
-\item{write_stand_outputs}{Whether to write intermediate stand outputs}
+\item{stand_pcp_spm}{PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.}
 
-\item{stand_field}{The field in the input_standfile which is a unique ID for each stand}
-
-\item{pcp_spm}{PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.}
-
-\item{land_base}{The land base is the area that is used to calculate the PCP and SPM values.
+\item{stand_filter}{The land base is the area that is used to calculate the PCP and SPM values.
 It is currently a single, binary variable that must be computed prior to running the ForSysR script.
 A blank field means all lands are included in the calculation.}
 
-\item{priorities}{Priorities are named here. If only one priority exists, only a weight of one will be used.}
+\item{scenario_priorities}{Priorities are named here. If only one priority exists, only a weight of one will be used.}
 
-\item{proj_id}{The field in the input_standfile that indicates which project or planning area a stand belongs to}
-
-\item{proj_unit}{TODO}
+\item{proj_id}{The field in the scenario_stand_filename that indicates which project or planning area a stand belongs to}
 
 \item{proj_target}{TODO}
+
+\item{proj_unit}{TODO}
 
 \item{proj_target_multiplier}{TODO}
 
@@ -71,26 +62,14 @@ A blank field means all lands are included in the calculation.}
 
 \item{proj_fixed_target_value}{If using a fixed target, set the fixed target value here.}
 
-\item{nesting}{TODO}
+\item{proj_thresholds}{Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).}
 
-\item{nesting_group_by}{TODO}
+\item{scenario_weighting_values}{Defines the weights and integer steps between weights. The values are for min, max, and step.}
 
-\item{nesting_target}{TODO}
-
-\item{nesting_unit}{TODO}
-
-\item{nesting_target_multiplier}{TODO}
-
-\item{weighting_values}{Defines the weights and integer steps between weights. The values are for min, max, and step.}
-
-\item{thresholds}{Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).}
-
-\item{include_stands}{This defines global threshold values to include stands - i.e. for any threshold type.}
-
-\item{output_fields}{This should include the desired fields for the planning area treatment files. Planning area id,
+\item{scenario_output_fields}{This should include the desired fields for the planning area treatment files. Planning area id,
 priority weights and treatment rank are added automatically.}
 
-\item{output_grouping_variables}{Include the smaller and larger groups here for grouping of treated stands.}
+\item{scenario_output_grouping_fields}{Include the smaller and larger groups here for grouping of treated stands.}
 
 \item{overwrite_output}{Overwrite any existing output of the same name?}
 
@@ -108,7 +87,7 @@ priority weights and treatment rank are added automatically.}
 
 \item{fire_random_projects}{TODO}
 
-\item{write_tags}{TODO}
+\item{scenario_write_tags}{TODO}
 }
 \value{
 A serialized vector of input choices in json format
