@@ -164,7 +164,7 @@ write_save_file_helper <- function(input, data_path) {
 	scenario_output_grouping_fields = input$output_grouping_fields,
 	stand_id = input$stand_id_field,
 	stand_pcp_spm = input$priorities_fields,
-	stand_filter = input$treatment_available_field,
+	stand_filter = input$global_threshold,
 	proj_id = input$planning_unit_id_field,
 	proj_thresholds = input$proj_thresholds_expr,
 	proj_fixed_target = FALSE,
