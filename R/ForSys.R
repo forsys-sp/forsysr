@@ -329,5 +329,7 @@ run <- function(
       data.table::fwrite(projects_selected_out, file = project_fn, sep = ",", row.names = FALSE, append = T)
 
       } # END WEIGHT LOOP
+
+    message('Forsys simulation is complete')
   }
 
