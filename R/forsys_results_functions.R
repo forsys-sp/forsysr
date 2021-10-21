@@ -135,3 +135,31 @@ production_frontiers_chart <- function(results_data, proj_field, x_field, y_fiel
 	  directlabels::geom_dl(ggplot2::aes(label = factor(proj_field)), method = list(directlabels::dl.combine("first.points", "last.points")), cex = 0.8) + ggplot2::scale_x_continuous(expand=c(0, .1)) +
 	  ggplot2::labs(title='Tradeoff Analysis', x = x_field, y = y_field, color = "PA_ID")
 }
+
+#' TODO
+#'
+#' @param field TODO
+#' @param operator TODO
+#' @param value TODO
+#' @return TODO
+#'
+#' @importFrom dplyr %>%
+#'
+#' @export
+parse_availability <- function(field, value) {
+	parsed_string <- paste(field, operator, value)
+}
+
+#' TODO
+#'
+#' @param field TODO
+#' @param operator TODO
+#' @param value TODO
+#' @return TODO
+#'
+#' @importFrom dplyr %>%
+#'
+#' @export
+parse_thresholds <- function(field, operator, value) {
+	parsed_string <- paste(field, operator, value)
+}

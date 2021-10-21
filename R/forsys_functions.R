@@ -192,7 +192,7 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
 #'
 #' @importFrom data.table :=
 #'
-calculate_spm_pcp <- function(stands, filter, fields){
+calculate_spm_pcp <- function(stands, filter, fields) {
   for (f in fields) {
     if (length(filter) == 0) {
       maximum <- max(stands[, get(f)])
@@ -269,6 +269,7 @@ set_up_priorities <- function(stands, w, priorities, weights) {
 }
 
 make_thresholds <- function(thresholds) {
+  print(thresholds)
   all_thresholds <- NULL
   all_thresholds <- sapply(1:length(thresholds), function(i) {
     all_thresholds <- rbind(all_thresholds, strsplit(thresholds[i], " ")[1])
@@ -282,7 +283,7 @@ make_thresholds <- function(thresholds) {
 #' @param stands TODO
 #' @param treatment_type TODO
 #' @param treatment_threshold TODO
-#' @param stand_id TODO
+#' @param stand_id_field TODO
 #' @param proj_id TODO
 #' @param proj_fixed_target TODO
 #' @param proj_fixed_area_target TODO
@@ -294,7 +295,7 @@ make_thresholds <- function(thresholds) {
 apply_treatment <- function(stands,
                             treatment_type,
                             treatment_threshold,
-                            stand_id,
+                            stand_id_field,
                             proj_id,
                             proj_fixed_target,
                             proj_target_field=NULL,
@@ -334,7 +335,7 @@ apply_treatment <- function(stands,
     # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
     area_treatedPA <- update_target(treat_stands, proj_id, proj_target_field)
     stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = proj_id]
-    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_type[t], selected = 1), on = stand_id]
+    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_type[t], selected = 1), on = stand_id_field]
     selected_stands <- rbind(selected_stands, stands_updated[selected==1,])
   }
 

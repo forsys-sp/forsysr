@@ -8,7 +8,7 @@ write_save_file(
   config_file = "",
   scenario_name = "",
   scenario_stand_filename = "",
-  stand_id = "",
+  stand_id_field = "",
   stand_pcp_spm = NULL,
   stand_filter = "",
   scenario_priorities = NULL,
@@ -38,13 +38,9 @@ write_save_file(
 
 \item{scenario_stand_filename}{Path to the input dataset}
 
-\item{stand_id}{The field in the scenario_stand_filename which is a unique ID for each stand}
+\item{stand_id_field}{The field in the scenario_stand_filename which is a unique ID for each stand}
 
 \item{stand_pcp_spm}{PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.}
-
-\item{stand_filter}{The land base is the area that is used to calculate the PCP and SPM values.
-It is currently a single, binary variable that must be computed prior to running the ForSysR script.
-A blank field means all lands are included in the calculation.}
 
 \item{scenario_priorities}{Priorities are named here. If only one priority exists, only a weight of one will be used.}
 
@@ -82,6 +78,10 @@ priority weights and treatment rank are added automatically.}
 \item{fire_random_projects}{TODO}
 
 \item{scenario_write_tags}{TODO}
+
+\item{global_threshold_field}{The land base is the area that is used to calculate the PCP and SPM values.
+It is currently a single, binary variable that must be computed prior to running the ForSysR script.
+A blank field means all lands are included in the calculation.}
 }
 \description{
 Write a json config file with the user's selected parameters

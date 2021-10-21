@@ -9,7 +9,7 @@ run(
   config_file = "",
   scenario_name = "",
   scenario_stand_filename = "",
-  stand_id = "",
+  stand_id_field = "",
   stand_pcp_spm = NULL,
   stand_filter = "",
   scenario_priorities = NULL,
@@ -39,7 +39,7 @@ run(
 
 \item{scenario_stand_filename}{Path to the input dataset}
 
-\item{stand_id}{The field in the scenario_stand_filename which is a unique ID for each stand}
+\item{stand_id_field}{The field in the scenario_stand_filename which is a unique ID for each stand}
 
 \item{stand_pcp_spm}{PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.}
 

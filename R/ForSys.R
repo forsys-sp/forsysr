@@ -15,7 +15,7 @@
 #' @param config_file Relative path to a config file that defines needed parameters
 #' @param scenario_name A name for this scenario
 #' @param scenario_stand_filename Path to the input dataset
-#' @param stand_id The field in the scenario_stand_filename which is a unique ID for each stand
+#' @param stand_id_field The field in the scenario_stand_filename which is a unique ID for each stand
 #' @param stand_pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
 #' @param stand_filter The land base is the area that is used to calculate the PCP and SPM values.
 #'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
@@ -49,7 +49,7 @@ run <- function(
     config_file = '',
     scenario_name = '',
     scenario_stand_filename = '',
-    stand_id = '',
+    stand_id_field = '',
     stand_pcp_spm = NULL,
     stand_filter = '',
     scenario_priorities = NULL,
@@ -59,10 +59,10 @@ run <- function(
     proj_target_field = '',
     proj_target_value = NULL,
     scenario_weighting_values = NULL,
-    scenario_output_fields = NULL, 
-    scenario_output_grouping_fields = NULL, 
-    overwrite_output = TRUE, 
-    run_with_shiny = FALSE, 
+    scenario_output_fields = NULL,
+    scenario_output_grouping_fields = NULL,
+    overwrite_output = TRUE,
+    run_with_shiny = FALSE,
     fire_intersect_table = NULL,
     fire_planning_years = 1,
     fire_annual_target_field = NULL,
@@ -130,13 +130,11 @@ run <- function(
     weights <- weight_priorities(numPriorities = length(scenario_priorities),
                                  weights = scenario_weighting_values[1])
 
+
     # Run selection code for each set of weights
     for (w in 1:nrow(weights)) { # START WEIGHT LOOP
 
       ## Step 0: create the weighted priorities.
-      if (run_with_shiny) {
-      } else {
-      }
 
       message(paste0("\n---------------\nWeighting scenario ",  w, " of ", nrow(weights),
                      "\nWeights: ", paste0(weights[w,], collapse = '-'),
@@ -158,16 +156,17 @@ run <- function(
       # threshold = filter
       # constraint = target
 
-      for(yr in 1:fire_planning_years){ # BEGIN YEAR LOOP
 
-        if(fire_planning_years > 1) message(paste('\nYear', yr, '\n---------------'))
+      for (yr in 1:fire_planning_years) { # BEGIN YEAR LOOP
+
+        if (fire_planning_years > 1) message(paste('\nYear', yr, '\n---------------'))
 
         # select stands from project areas until target reached while filtering by threshold
         stands_selected <- stands_available %>%
           apply_treatment(
             treatment_type = threshold_dat$type,
             treatment_threshold = threshold_dat$threshold,
-            stand_id = stand_id,
+            stand_id_field = stand_id_field,
             proj_id = proj_id,
             proj_fixed_target = proj_fixed_target,
             proj_target_field = proj_target_field,
@@ -229,16 +228,16 @@ run <- function(
         # record stands scheduled for treatment in current year
         stands_treated <- stands_selected %>%
           dplyr::inner_join(projects_scheduled, by=proj_id) %>%
-          dplyr::select(stand_id, proj_id, ETrt_YR, treatment_rank) %>%
+          dplyr::select(stand_id_field, proj_id, ETrt_YR, treatment_rank) %>%
           dplyr::bind_rows(stands_treated)
 
         # remove stands or project areas that were treated from available stands
         stands_available <- stands_available %>%
-          dplyr::filter((.data[[stand_id]] %in% stands_treated[[stand_id]] == FALSE) &
+          dplyr::filter((.data[[stand_id_field]] %in% stands_treated[[stand_id_field]] == FALSE) &
                           (.data[[proj_id]] %in% stands_treated[[proj_id]] == FALSE))
 
         # report yearly work
-        s_n = stands_treated %>% dplyr::filter(ETrt_YR == yr) %>% dplyr::pull(stand_id) %>% dplyr::n_distinct()
+        s_n = stands_treated %>% dplyr::filter(ETrt_YR == yr) %>% dplyr::pull(stand_id_field) %>% dplyr::n_distinct()
         p_n = stands_treated %>% dplyr::filter(ETrt_YR == yr) %>% dplyr::pull(proj_id) %>% dplyr::n_distinct()
         message(paste0(s_n, ' stands (', round(s_n/nrow(stands_prioritized) * 100, 2), '%) treated in ', p_n, ' projects'))
 
@@ -246,19 +245,19 @@ run <- function(
           # record stands that burned this year
           stands_burned <- stands %>%
             dplyr::left_join(projects_scheduled, by=proj_id) %>%
-            dplyr::left_join(stands_treated %>% dplyr::select(stand_id), by=stand_id) %>%
-            dplyr::left_join(fires %>% dplyr::select(stand_id, FIRE_YR, FIRE_NUMBER), by=stand_id) %>%
+            dplyr::left_join(stands_treated %>% dplyr::select(stand_id_field), by=stand_id_field) %>%
+            dplyr::left_join(fires %>% dplyr::select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field) %>%
             dplyr::filter(FIRE_YR == !!yr) %>%
-            dplyr::select(stand_id, proj_id, ETrt_YR, FIRE_YR, FIRE_NUMBER, treatment_rank, weightedPriority) %>%
+            dplyr::select(stand_id_field, proj_id, ETrt_YR, FIRE_YR, FIRE_NUMBER, treatment_rank, weightedPriority) %>%
             dplyr::bind_rows(stands_burned)
 
           # report yearly fire
-          b_n = stands_burned %>% dplyr::filter(FIRE_YR == yr) %>% dplyr::pull(stand_id) %>% dplyr::n_distinct()
+          b_n = stands_burned %>% dplyr::filter(FIRE_YR == yr) %>% dplyr::pull(stand_id_field) %>% dplyr::n_distinct()
           message(paste0(b_n, ' (', round(b_n/nrow(stands_prioritized) * 100, 2), '%) stands burned'))
 
           # remove burnt stands from future selection only if running dynamic forsys
           if(fire_dynamic_forsys == TRUE) {
-            stands_available <- stands_available %>% dplyr::filter(.data[[stand_id]] %in% stands_burned[[stand_id]] == FALSE)
+            stands_available <- stands_available %>% dplyr::filter(.data[[stand_id_field]] %in% stands_burned[[stand_id_field]] == FALSE)
           }
         }
       } # END YEAR LOOP
@@ -268,16 +267,16 @@ run <- function(
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       # tag stands with specific scenario attributes
-      stands_selected_out <- stands_treated %>% dplyr::select(!!stand_id, !!proj_id, ETrt_YR)
+      stands_selected_out <- stands_treated %>% dplyr::select(!!stand_id_field, !!proj_id, ETrt_YR)
 
       if(!is.null(fire_intersect_table))
         stands_selected_out <- stands_selected_out %>%
-          dplyr::left_join(fires %>% dplyr::select(stand_id, FIRE_YR, FIRE_NUMBER), by=stand_id)
+          dplyr::left_join(fires %>% dplyr::select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field)
 
       # write out minimal stand information
       stands_selected_out <- stands_selected_out %>% dplyr::bind_cols(scenario_write_tags)
       stands_selected_out <- stands_selected_out %>%
-        dplyr::left_join(stands_prioritized %>% dplyr::select(!!stand_id, scenario_output_fields), by = stand_id)
+        dplyr::left_join(stands_prioritized %>% dplyr::select(!!stand_id_field, scenario_output_fields), by = stand_id_field)
 
       if (length(scenario_write_tags_txt) > 1) {
         stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', scenario_write_tags_txt, ".csv")
@@ -291,9 +290,9 @@ run <- function(
 
       # group *selected* stands by project
       projects_etrt_out <- stands_selected_out %>%
-        dplyr::select(!!stand_id, ETrt_YR) %>%
-        dplyr::left_join(stands_prioritized %>% dplyr::select(stand_id, proj_id, scenario_output_fields, 'weightedPriority'),
-                  by = stand_id) %>%
+        dplyr::select(!!stand_id_field, ETrt_YR) %>%
+        dplyr::left_join(stands_prioritized %>% dplyr::select(stand_id_field, proj_id, scenario_output_fields, 'weightedPriority'),
+                  by = stand_id_field) %>%
         create_grouped_dataset(grouping_vars = c(proj_id, 'ETrt_YR'),
                                summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
         dplyr::arrange(ETrt_YR, -weightedPriority) %>%

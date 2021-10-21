@@ -3,9 +3,9 @@
 #' @param config_file Relative path to a config file that defines needed parameters
 #' @param scenario_name A name for this scenario
 #' @param scenario_stand_filename Path to the input dataset
-#' @param stand_id The field in the scenario_stand_filename which is a unique ID for each stand
+#' @param stand_id_field The field in the scenario_stand_filename which is a unique ID for each stand
 #' @param stand_pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
-#' @param stand_filter The land base is the area that is used to calculate the PCP and SPM values.
+#' @param global_threshold_field The land base is the area that is used to calculate the PCP and SPM values.
 #'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
 #'                  A blank field means all lands are included in the calculation.
 #' @param scenario_priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
@@ -33,7 +33,7 @@ write_save_file <- function(
     config_file = '',
     scenario_name = '',
     scenario_stand_filename = '',
-    stand_id = '',
+    stand_id_field = '',
     stand_pcp_spm = NULL,
     stand_filter = '',
     scenario_priorities = NULL,
@@ -62,7 +62,7 @@ write_save_file <- function(
     'config_file',
     'scenario_name',
     'scenario_stand_filename',
-    'stand_id',
+    'stand_id_field',
     'stand_pcp_spm',
     'stand_filter',
     'scenario_priorities',
@@ -88,7 +88,7 @@ write_save_file <- function(
 	vector_data$config_file = config_file
 	vector_data$scenario_name = scenario_name
 	vector_data$scenario_stand_filename = scenario_stand_filename
-	vector_data$stand_id = stand_id
+	vector_data$stand_id_field = stand_id_field
 	vector_data$stand_pcp_spm = stand_pcp_spm
 	vector_data$stand_filter = stand_filter
 	vector_data$scenario_priorities = scenario_priorities
@@ -155,6 +155,10 @@ write_save_file_helper <- function(input, data_path) {
     au_target_multiplier = 1.0
   }
 
+	# stand_filter <- input$stand_filter
+	stand_filter <- NULL
+	project_filter <- parse_thresholds(input$proj_threshold_field, input$proj_threshold_op, input$proj_threshold_value)
+
   json <- write_save_file(
 	scenario_name = input$scenario_name,
 	scenario_stand_filename = data_path,
@@ -162,11 +166,11 @@ write_save_file_helper <- function(input, data_path) {
 	scenario_weighting_values = weight_values,
 	scenario_output_fields = input$outputs_select,
 	scenario_output_grouping_fields = input$output_grouping_fields,
-	stand_id = input$stand_id_field,
+	stand_id_field = input$stand_id_field,
 	stand_pcp_spm = input$priorities_fields,
-	stand_filter = input$global_threshold,
+	stand_filter = stand_filter,
 	proj_id = input$planning_unit_id_field,
-	proj_thresholds = input$proj_thresholds_expr,
+	proj_thresholds = input$project_filter,
 	proj_fixed_target = FALSE,
 	proj_target_field = input$proj_target_field,
 	proj_target_value = input$proj_target_value,
