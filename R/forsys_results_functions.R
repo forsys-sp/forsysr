@@ -161,5 +161,5 @@ parse_availability <- function(field, value) {
 #'
 #' @export
 parse_thresholds <- function(field, operator, value) {
-	parsed_string <- paste(field, operator, value)
+	parsed_string <- paste("treatment_name", field, operator, value)
 }

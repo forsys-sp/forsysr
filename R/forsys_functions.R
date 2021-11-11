@@ -268,6 +268,9 @@ set_up_priorities <- function(stands, w, priorities, weights) {
   return(stands)
 }
 
+#' Threshold string statement parser
+#' @param thresholds Vector of Boolean string statements to parse
+
 make_thresholds <- function(thresholds) {
   print(thresholds)
   all_thresholds <- NULL

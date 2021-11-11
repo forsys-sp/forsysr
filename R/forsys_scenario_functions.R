@@ -36,6 +36,13 @@ write_save_file <- function(
     stand_id_field = '',
     stand_pcp_spm = NULL,
     stand_filter = '',
+    use_global_threshold = NULL,
+    global_threshold_field = NULL,
+    global_threshold_op = NULL,
+    global_threshold_value = NULL,
+    proj_threshold_field = NULL,
+    proj_threshold_op = NULL,
+    proj_threshold_value = NULL,
     scenario_priorities = NULL,
     proj_id = '',
     proj_thresholds = NULL,
@@ -43,10 +50,10 @@ write_save_file <- function(
     proj_target_field = '',
     proj_target_value = NULL,
     scenario_weighting_values = NULL,
-    scenario_output_fields = NULL, 
-    scenario_output_grouping_fields = NULL, 
-    overwrite_output = TRUE, 
-    run_with_shiny = FALSE, 
+    scenario_output_fields = NULL,
+    scenario_output_grouping_fields = NULL,
+    overwrite_output = TRUE,
+    run_with_shiny = FALSE,
     fire_intersect_table = NULL,
     fire_planning_years = 1,
     fire_annual_target_field = NULL,
@@ -56,9 +63,7 @@ write_save_file <- function(
     scenario_write_tags = NULL
   ) {
 
-	vector_data <- vector(mode='list', length=26)
-
-	names(vector_data) = c(
+	vector_names = c(
     'config_file',
     'scenario_name',
     'scenario_stand_filename',
@@ -66,16 +71,23 @@ write_save_file <- function(
     'stand_pcp_spm',
     'stand_filter',
     'scenario_priorities',
+    'use_global_threshold',
+    'global_threshold_field',
+    'global_threshold_op',
+    'global_threshold_value',
+    'proj_threshold_field',
+    'proj_threshold_op',
+    'proj_threshold_value',
     'proj_id',
     'proj_thresholds',
     'proj_fixed_target',
     'proj_target_field',
     'proj_target_value',
     'scenario_weighting_values',
-    'scenario_output_fields', 
-    'scenario_output_grouping_fields', 
-    'overwrite_output', 
-    'run_with_shiny', 
+    'scenario_output_fields',
+    'scenario_output_grouping_fields',
+    'overwrite_output',
+    'run_with_shiny',
     'fire_intersect_table',
     'fire_planning_years',
     'fire_annual_target_field',
@@ -85,6 +97,9 @@ write_save_file <- function(
     'scenario_write_tags'
 		)
 
+	vector_data <- vector(mode='list', length=length(vector_names))
+	names(vector_data) <- vector_names
+
 	vector_data$config_file = config_file
 	vector_data$scenario_name = scenario_name
 	vector_data$scenario_stand_filename = scenario_stand_filename
@@ -92,6 +107,13 @@ write_save_file <- function(
 	vector_data$stand_pcp_spm = stand_pcp_spm
 	vector_data$stand_filter = stand_filter
 	vector_data$scenario_priorities = scenario_priorities
+	vector_data$use_global_threshold = use_global_threshold
+	vector_data$global_threshold_field = global_threshold_field
+	vector_data$global_threshold_op = global_threshold_op
+	vector_data$global_threshold_value = global_threshold_value
+	vector_data$proj_threshold_field = proj_threshold_field
+	vector_data$proj_threshold_op = proj_threshold_op
+	vector_data$proj_threshold_value = proj_threshold_value
 	vector_data$proj_id = proj_id
 	vector_data$proj_thresholds = proj_thresholds
 	vector_data$proj_fixed_target = proj_fixed_target
@@ -110,10 +132,7 @@ write_save_file <- function(
 	vector_data$fire_random_projects = fire_random_projects
 	vector_data$scenario_write_tags = scenario_write_tags
 
-
-
 	json_data <- jsonlite::toJSON(vector_data, pretty = TRUE)
-
 	print(json_data)
 
 	output_file_name <- paste0('configs/', scenario_name, '.json')
@@ -155,29 +174,46 @@ write_save_file_helper <- function(input, data_path) {
     au_target_multiplier = 1.0
   }
 
-	# stand_filter <- input$stand_filter
 	stand_filter <- NULL
 	project_filter <- parse_thresholds(input$proj_threshold_field, input$proj_threshold_op, input$proj_threshold_value)
 
+	# WIP: alternative specification for writing scenairo configo to JSON
+	# vector_data <- NULL
+	# for(i in 1:length(names(input))){
+	#   print(i)
+	#   nm = names(input)[i]
+	#   val = input[[nm]]
+	#   vector_data[[i]] <- ifelse(is.null(val), NULL, val)
+	#   names(vector_data)[[i]] <- nm
+	# }
+	# json_data <- jsonlite::toJSON(vector_data, pretty = TRUE)
+
   json <- write_save_file(
-	scenario_name = input$scenario_name,
-	scenario_stand_filename = data_path,
-	scenario_priorities = input$priorities_fields,
-	scenario_weighting_values = weight_values,
-	scenario_output_fields = input$outputs_select,
-	scenario_output_grouping_fields = input$output_grouping_fields,
-	stand_id_field = input$stand_id_field,
-	stand_pcp_spm = input$priorities_fields,
-	stand_filter = stand_filter,
-	proj_id = input$planning_unit_id_field,
-	proj_thresholds = input$project_filter,
-	proj_fixed_target = FALSE,
-	proj_target_field = input$proj_target_field,
-	proj_target_value = input$proj_target_value,
-	# proj_fixed_target_value = input$proj_fixed_target_value,
-	# proj_variable_target_multiplier = input$proj_variable_target_multiplier,
-	overwrite_output = input$overwrite_output_chk,
-	run_with_shiny = TRUE
+  	scenario_name = input$scenario_name,
+  	scenario_stand_filename = data_path,
+  	scenario_priorities = input$priorities_fields,
+  	scenario_weighting_values = weight_values,
+  	scenario_output_fields = input$outputs_select,
+  	scenario_output_grouping_fields = input$output_grouping_fields,
+  	stand_id_field = input$stand_id_field,
+  	stand_pcp_spm = input$priorities_fields,
+  	stand_filter = stand_filter,
+  	use_global_threshold = input$use_global_threshold,
+  	global_threshold_field = input$global_threshold_field,
+  	global_threshold_op = input$global_threshold_op,
+  	global_threshold_value = input$global_threshold_value,
+  	proj_threshold_field = input$proj_threshold_field,
+  	proj_threshold_op = input$proj_threshold_op,
+  	proj_threshold_value = input$proj_threshold_value,
+  	proj_id = input$planning_unit_id_field,
+  	proj_thresholds = input$project_filter,
+  	proj_fixed_target = FALSE,
+  	proj_target_field = input$proj_target_field,
+  	proj_target_value = input$proj_target_value,
+  	# proj_fixed_target_value = input$proj_fixed_target_value,
+  	# proj_variable_target_multiplier = input$proj_variable_target_multiplier,
+  	overwrite_output = input$overwrite_output_chk,
+  	run_with_shiny = TRUE
   )
 }
 

@@ -153,9 +153,7 @@ run <- function(
       # 2. SELECT STANDS ------------
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      # threshold = filter
-      # constraint = target
-
+      # Reference note: threshold = filter; constraint = target
 
       for (yr in 1:fire_planning_years) { # BEGIN YEAR LOOP
 
