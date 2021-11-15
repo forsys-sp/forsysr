@@ -21,18 +21,20 @@
 #   3) Revenue (MBF_VALUE)
 #   4) Forest to Faucets (F2F2_Imp)
 
-scenario_name <- "WW_10yr_FS_80p"
+scenario_name <- "WW_10yr_FS_P_80p"
 
 ## Stand layer
 # input_standfile <- c("data/hexnet_west_fs.csv")
-input_standfile <- c('~/Dropbox/!!projects/aa_10yr_uncertainity/data/Hexnet_WestFS.csv')
+input_standfile <- c('~/Dropbox/!!projects/aa_10yr/10yr_protected/data/hex_data_protected.csv')
+input_filter <- "OwnerCat == 'USFS' & Conif_Maj == 1 & Manage == 0 & AllDisturb_flg == 0"
+
 writeStandOutputs <- TRUE
 
 # Create pcp and spm values for these fields.
-pcp_spm <- c("aTR_MS","F2F2_IMP", "TVMBF_STND", "HF_Cost", "Value_MBF", "BurnedSPAHaYr")
+pcp_spm <- c("aTR_MS")
 
 # Creating updated values for target area based on different land bases (binary field where 1 == include)
-land_base <- "western_flag20_NLCD"
+# land_base <- "AllDisturb_flg == 0 & Conif_Maj == 1"
 
 ## Stand field
 stand_field <- "CELL_ID"
@@ -59,28 +61,19 @@ proj_unit <- "aTR_MS"
 proj_target_multiplier <- 0.8
 # proj_unit * proj_target_multiplier
 
-# Set for nesting == TRUE, no nesting == FALSE
-nesting <- FALSE
-nesting_group_by <- "FORESTORGCODE"
-nesting_target <- "ForestTarget"
-nesting_unit <- "AREA_HA"
-nesting_target_multiplier <- 0.5
-
 ## Defines the weights and integer steps between weights. The values are for min, max, and step.
 weighting_values <- c("1 1 1")
 
 ## Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
-thresholds <- c("Commercial western_flag20_NLCD == 1")
+thresholds <- c("RxFire Manage == 0")
 #thresholds <- c("Commercial Manage_new > 1;Commercial TVMBF_STND > 1")#Example with two constraints
 
 ## This should include the desired fields for the planning area treatment files. Planning area id,
 ## priority weights and treatment rank are added automatically.
-output_fields <- c("AREA_HA", "aTR_MS", "aTR_MS_PCP", "TVMBF_STND", "TVMBF_STND_PCP", "TVMBF_STND_SPM", "Standing_MBF",
-                  "HF_Cost", "HF_Cost_PCP", "Value_MBF", "Value_MBF_PCP", "F2F2_IMP", "F2F2_IMP_PCP",
-                  "BurnedSPAHaYr", "BurnedSPAHaYr_PCP")
+output_fields <- c("AREA_HA", "aTR_MS", "aTR_MS_PCP")
 
 ## Include the smaller and larger groups here for grouping of treated stands.
-grouping_variables <- c("PA_ID", "FSHED_ID", "MajNF_PA")
+grouping_variables <- c("PA_ID", "FSHED_ID")
 
 ## Set to have either a fixed area target (TRUE) or a variable area target (FALSE)
 fixed_subunit_target <- c(FALSE, 2000)

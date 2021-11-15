@@ -24,7 +24,7 @@ source('server.R')
 source('R/fire_misc_func.R')
 
 #input_stand_fire_intersect <- 'data/hexnet_west_fsim19_30reps_intersect.csv'
-fire_intersect_table <- 'data/west_usfs_hexnet_fsim19_omernik6x_deciles5x_futures20x_intersect.csv'
+fire_intersect_table <- '~/Dropbox/!!projects/aa_10yr_uncertainity/data/west_usfs_hexnet_fsim19_omernik6x_deciles5x_futures20x_intersect.csv'
 if(exists('f_df') == FALSE) f_df <- fread(fire_intersect_table)
 
 # !! planning_years, annual_project_target, annual_target_field defined in the config file
@@ -35,7 +35,7 @@ if(exists('f_df') == FALSE) f_df <- fread(fire_intersect_table)
 
 # run single scenario ...
 
-run('config_TenYearPlan_WW_FS.R',
+run('config_TenYearFirePlan_WW_FS.R',
     fire_dynamic_forsys = TRUE,
     write_tags = data.frame('DECILE' = 5, 'FUTURE' = 1),
     fire_intersect_table = f_df %>% filter(DECILE == 5, FUTURE == 1))

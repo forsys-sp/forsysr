@@ -47,6 +47,7 @@
     scenario_name = '',
     num_reps = 1,
     input_standfile = '',
+    input_filter = NULL,
     write_stand_outputs = FALSE,
     stand_field = 'CELL_ID',
     pcp_spm = c(),
@@ -126,13 +127,12 @@
 
     # Calculate SPM & PCP values
     stands <- stands %>%
-      calculate_spm_pcp(filter = land_base,
-                        fields = pcp_spm) %>%
+      filter_stands(filter_txt = input_filter) %>%
+      calculate_spm_pcp(fields = pcp_spm) %>%
       add_target_field(proj_unit = proj_unit,
                        proj_target = proj_target,
                        proj_target_multiplier = proj_target_multiplier,
-                       stand_group_by = stand_group_by,
-                       land_base = land_base)
+                       stand_group_by = stand_group_by)
 
     # create objects for tracking treated and burnt stands
     stands_treated <- NULL
