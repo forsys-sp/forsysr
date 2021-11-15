@@ -21,7 +21,7 @@
 #   3) Revenue (MBF_VALUE)
 #   4) Forest to Faucets (F2F2_Imp)
 
-scenario_name <- "WW_10yr_FS_P_80p"
+scenario_name <- "WW_10yr_FS_80p"
 
 ## Stand layer
 # input_standfile <- c("data/hexnet_west_fs.csv")
