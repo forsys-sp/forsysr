@@ -30,6 +30,7 @@ load_dataset <- function(path_to_file) {
 #' constraint value.
 #' @return The selected stands from \code{df}, ordered by \code{prioritize_by}, and selected until the sum of \code{tally_by} is as close to
 #' \code{group_target} as possible.
+#'
 select_simple_greedy_algorithm <- function(dt = dbfFile,
                                         grouped_by = 'PA_ID',
                                         prioritize_by = 'TVMBF_SPM',
@@ -71,9 +72,11 @@ select_simple_greedy_algorithm <- function(dt = dbfFile,
 }
 
 #' Produce a set of stands that can be treated under a given criteria.
+#'
 #' @param dt A data table with all stand information necessary to determine availability for a specific treatment type.
 #' @param filters A list of strings that are used to filter the stands for treatment availability.
 #' @return The final data table with stands available for treatment.
+#'
 stand_filter <- function(dt, filters) {
   for(f in 1:nrow(filters)){
     filter <- paste0(filters[f,2], " ", filters[f,3], " ", filters[f,4])
@@ -87,6 +90,7 @@ stand_filter <- function(dt, filters) {
 }
 
 #' Create a new field in a stand table that flags all stands that include a given set of criteria
+#'
 #' @param dt A data table with all stand information necessary to determine availability for a specific treatment type.
 #' @param filters A list of strings that are used to filter the stands for treatment availability.
 #' @param field The name of a new field
@@ -111,6 +115,7 @@ stand_flag <- function(dt, filters, field) {
 #' @param summing_vars The variables in the original dataset that need to be summed over each subunit.
 #' @return The selected stands from \code{df}, ordered by \code{priority_SPM}, and selected until the sum of \code{priority_STND} is as close to
 #' \code{treat_target} as possible.
+#'
 create_grouped_dataset <- function(dt,
                                  grouping_vars,
                                  summing_vars,
@@ -141,6 +146,7 @@ weight_string_to_values <- function(weight_str) {
 #' @param minimum The minimum value of the weighting schema.
 #' @param maximum The maximum value of the weighting schema.
 #' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
+#'
 weight_priorities <- function(numPriorities, weights = c("1 1 1")){
   if(numPriorities == 1)
     return(data.table(1))
@@ -168,6 +174,7 @@ createWeightedPairs <- function(dt) {
 #' @param subunit TODO
 #' @param unit_area TODO
 #' @return A table with the updated subunit targets for all planning areas that had treatments
+#'
 update_target <-function(treated_stands, subunit, unit_area) {
   treated_subunit_target <- create_grouped_dataset(treated_stands,
                                                subunit,
@@ -192,20 +199,42 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
 
 }
 
-# TODO Add function description
-add_target_field <- function(stands, proj_unit, proj_target, proj_target_multiplier, stand_group_by, land_base) {
-  if(length(land_base) == 0) {
-    stands_updated <- stands[, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = stand_group_by]
-  } else {
-    stands_updated <- stands[get(land_base) == 1, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = stand_group_by]
-  }
+#' Filter data
+#'
+#'
+filter_stands <- function(stands, filter_txt){
+  tryCatch({
+    eval_txt <- paste0("out <- stands[", filter_txt ,"]")
+    eval(parse(text=eval_txt))
+    n0 <- nrow(stands)
+    n1 <- nrow(out)
+    message(glue::glue("{round((1-((n0-n1)/n0))*100,2)}% of stands are available ({round((n0-n1)/n0*100,2)}% excluded)"))
+  }, error = function(e){
+    message(paste0('!! Filter failed; proceeding with unfiltered data. Error message:\n', print(e)))
+  })
+  return(out)
+}
+
+#' TODO Add function description
+#'
+#' @param stands
+#' @param proj_unit
+#' @param proj_target
+#' @param proj_target_multiplier
+#' @param stand_group_by
+#'
+add_target_field <- function(stands, proj_unit, proj_target, proj_target_multiplier, stand_group_by) {
+  stands_updated <- stands[, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = stand_group_by]
   return(stands_updated)
 }
 
-# TODO Add function description
-calculate_spm_pcp <- function(stands, filter, fields){
+#' Add spm and pcp values for specified fields
+#'
+#' @param stands data.table of stands
+#' @param fields vector of character field names to calculate pcm & spm values
+#'
+calculate_spm_pcp <- function(stands, fields){
   for (f in fields) {
-    if (length(filter) == 0) {
       maximum <- max(stands[, get(f)])
       cn <- paste0(f, "_SPM")
       expr <- bquote(.(as.name(cn)):= 0)
@@ -219,22 +248,6 @@ calculate_spm_pcp <- function(stands, filter, fields){
       stands[,eval(expr)]
       expr <- bquote(.(as.name(cn)):= (100 * get(f) / sum.total))
       stands[, eval(expr)]
-    }
-    else {
-      maximum <- max(stands[get(filter) == 1, get(f)])
-      cn <- paste0(f, "_SPM")
-      expr <- bquote(.(as.name(cn)):= 0)
-      stands[,eval(expr)]
-      expr <- bquote(.(as.name(cn)):= (100 * get(f) / maximum))
-      stands[get(filter) == 1, eval(expr)]
-
-      sum.total <- sum(as.numeric(stands[get(filter) == 1, get(f)]))
-      cn <- paste0(f, "_PCP")
-      expr <- bquote(.(as.name(cn)):= 0)
-      stands[,eval(expr)]
-      expr <- bquote(.(as.name(cn)):= (100 * get(f) / sum.total))
-      stands[get(filter) == 1, eval(expr)]
-    }
   }
   return(stands)
 }
