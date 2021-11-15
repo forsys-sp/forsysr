@@ -51,7 +51,7 @@ run <- function(
     scenario_stand_filename = '',
     stand_id_field = '',
     stand_pcp_spm = NULL,
-    stand_filter = '',
+    stand_filter = NULL,
     scenario_priorities = NULL,
     proj_id = '',
     proj_thresholds = NULL,
@@ -75,9 +75,11 @@ run <- function(
 
     # If a config file has been selected, source it to read in variables
     if (length(config_file) > 1) {
-      configuration_file <- config_file
-      setwd(dirname(configuration_file))
-      source(configuration_file, local = TRUE)
+      # setwd(dirname(config_file))
+      if(stringr::str_detect(config_file, '[.]R$'))
+        source(config_file, local = TRUE)
+      if(stringr::str_detect(config_file, '[.]json$'))
+        load_json_config(config_file)
     }
 
     # collapse write tags into string if provided as data.frame

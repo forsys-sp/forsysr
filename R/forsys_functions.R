@@ -1,3 +1,15 @@
+#' Load stored in JSON config into the current enviroment
+#'
+#' @param json_filename character string of forsys json config
+
+load_json_config <- function(json_filename){
+  json_data = readLines(json_filename) %>%
+    jsonlite::fromJSON()
+  for(i in names(json_data)){
+    assign(i, json_data[[i]], env = parent.frame())
+  }
+}
+
 #' Load the input dataset. Supports both CSV and DBF.
 #'
 #' @param path_to_file Path to an input dataset
