@@ -184,50 +184,46 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
 
 }
 
-#' TODO
-#' @param stands TODO
-#' @param filter TODO
-#' @param fields TODO
-#' @return TODO
+#' Filter data
 #'
-#' @importFrom data.table :=
+#' @param stands Data table to filter
+#' @param filter_txt Boolean statement as character string
+filter_stands <- function(stands, filter_txt){
+  tryCatch({
+    eval_txt <- paste0("out <- stands[", filter_txt ,"]")
+    eval(parse(text=eval_txt))
+    n0 <- nrow(stands)
+    n1 <- nrow(out)
+    message(glue::glue("{round((1-((n0-n1)/n0))*100,2)}% of stands are available ({round((n0-n1)/n0*100,2)}% excluded)"))
+  }, error = function(e){
+    message(paste0('!! Filter failed; proceeding with unfiltered data. Error message:\n', print(e)))
+  })
+  return(out)
+}
+
+#' Add spm and pcp values for specified fields
 #'
-calculate_spm_pcp <- function(stands, filter, fields) {
+#' @param stands data.table of stands
+#' @param fields vector of character field names to calculate pcm & spm values
+#'
+calculate_spm_pcp <- function(stands, fields){
   for (f in fields) {
-    if (length(filter) == 0) {
-      maximum <- max(stands[, get(f)])
-      cn <- paste0(f, "_SPM")
-      expr <- bquote(.(as.name(cn)):= 0)
-      stands[,eval(expr)]
-      expr <- bquote(.(as.name(cn)):= (100 * get(f) / maximum))
-      stands[, eval(expr)]
+    maximum <- max(stands[, get(f)])
+    cn <- paste0(f, "_SPM")
+    expr <- bquote(.(as.name(cn)):= 0)
+    stands[,eval(expr)]
+    expr <- bquote(.(as.name(cn)):= (100 * get(f) / maximum))
+    stands[, eval(expr)]
 
-      sum.total <- sum(as.numeric(stands[, get(f)]))
-      cn <- paste0(f, "_PCP")
-      expr <- bquote(.(as.name(cn)):= 0)
-      stands[,eval(expr)]
-      expr <- bquote(.(as.name(cn)):= (100 * get(f) / sum.total))
-      stands[, eval(expr)]
-    }
-    else {
-      maximum <- max(stands[get(filter) == 1, get(f)])
-      cn <- paste0(f, "_SPM")
-      expr <- bquote(.(as.name(cn)):= 0)
-      stands[,eval(expr)]
-      expr <- bquote(.(as.name(cn)):= (100 * get(f) / maximum))
-      stands[get(filter) == 1, eval(expr)]
-
-      sum.total <- sum(as.numeric(stands[get(filter) == 1, get(f)]))
-      cn <- paste0(f, "_PCP")
-      expr <- bquote(.(as.name(cn)):= 0)
-      stands[,eval(expr)]
-      expr <- bquote(.(as.name(cn)):= (100 * get(f) / sum.total))
-      stands[get(filter) == 1, eval(expr)]
-    }
+    sum.total <- sum(as.numeric(stands[, get(f)]))
+    cn <- paste0(f, "_PCP")
+    expr <- bquote(.(as.name(cn)):= 0)
+    stands[,eval(expr)]
+    expr <- bquote(.(as.name(cn)):= (100 * get(f) / sum.total))
+    stands[, eval(expr)]
   }
   return(stands)
 }
-
 
 # Hack the area target - can be set in the shapefile.
 # This code may be updated for looping multiple treatment types.

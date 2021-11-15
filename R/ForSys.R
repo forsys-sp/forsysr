@@ -116,8 +116,8 @@ run <- function(
 
     # Calculate SPM & PCP values
     stands <- stands %>%
-      calculate_spm_pcp(filter = stand_filter,
-                        fields = stand_pcp_spm)
+      filter_stands(filter_txt = stand_filter) %>%
+      calculate_spm_pcp(fields = stand_pcp_spm)
 
     # create objects for tracking treated and burnt stands
     stands_treated <- NULL
