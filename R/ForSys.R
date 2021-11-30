@@ -77,24 +77,29 @@
     fire_annual_target = NA,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
-    write_tags = ''
+    write_tags = NULL
     ) {
 
     set.seed(1)
 
     # If a config file has been selected, source it to read in variables
-    if (length(config_file) > 0) {
-      configuration_file <- config_file
-      setwd(dirname(configuration_file))
-      source(configuration_file, local = TRUE)
+    if (length(config_file) != '') {
+      # setwd(dirname(config_file))
+      if(stringr::str_detect(config_file, '[.]R$'))
+        source(config_file, local = TRUE)
+        # load_R_config(config_file)
+      if(stringr::str_detect(config_file, '[.]json$'))
+        process_json_config(config_file)
     }
 
     source('R/forsys_libraries.R')
     source('R/forsys_functions.R')
 
     # collapse write tags into string if provided as data.frame
-    if(write_tags %>% length > 1 & !names(write_tags) %>% is.null){
+    if(length(write_tags) > 1 & !is.null(names(write_tags))){
       write_tags_txt <- paste(names(write_tags), write_tags, sep='_', collapse = '_')
+    } else if (is.null(write_tags)){
+      write_tags_txt <- ''
     } else write_tags_txt <- write_tags
 
     options(scipen = 9999)
@@ -300,6 +305,7 @@
 
       stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', write_tags_txt, ".csv")
       fwrite(stands_selected_out, stand_fn, row.names = FALSE)
+      message(glue::glue('Selected stands written to: {stand_fn}'))
 
       # WRITE: write project to file ...........
 
@@ -336,6 +342,7 @@
       # write tag for selection scenario
       project_fn = paste0(relative_output_path, "/proj_", scenario_name,  '_', write_tags_txt,".csv")
       fwrite(projects_selected_out, file = project_fn, sep = ",", row.names = FALSE)
+      message(glue::glue('Selected projects written to: {project_fn}'))
 
       } # END WEIGHT LOOP
   }

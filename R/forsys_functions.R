@@ -1,3 +1,11 @@
+load_R_config <- function(config_file){
+  browser()
+  source(config_file, local = TRUE)
+  for(i in ls()){
+    exists(i, envir = parent.frame)
+  }
+}
+
 
 load_dataset <- function(path_to_file) {
   file_type <- str_sub(path_to_file, start= -3)
@@ -12,63 +20,6 @@ load_dataset <- function(path_to_file) {
     message('Input format not recognized')
   }
   return(standDT)
-}
-
-
-#' Select subunits to treat based on a given priority.
-#'
-#' @param dt A data table with all the subunits and attributes.
-#' @param grouped_by The management objective that is being prioritized.
-#' @param prioritize_by The stand value for the priority that is used to constrain the results.
-#' Typically Area or Volume.
-#' @param constrain_by This is a list of lists that includes three fields for each constraint. The
-#' first item in each list, default 'apply', is the name of a binary field in which 1 = apply the constraint
-#' and 0 = do not apply the constraint to a given stand. The second item in each list is the name
-#' of the field that is summed to reach the constraint. The third item in each list is the name of
-#' the constraining field.
-#' @param group_target The variable that contains the subunit values which are summed to meet the
-#' constraint value.
-#' @return The selected stands from \code{df}, ordered by \code{prioritize_by}, and selected until the sum of \code{tally_by} is as close to
-#' \code{group_target} as possible.
-#'
-select_simple_greedy_algorithm <- function(dt = dbfFile,
-                                        grouped_by = 'PA_ID',
-                                        prioritize_by = 'TVMBF_SPM',
-                                        constrain_by = c('apply', 'AREA_HA', 'AREA_PA10P')){
-  # For each grouped_by:
-  # Remove subunits that don't meet threshold:
-  # Order by priority:
-  # Select stands up to treatment target
-  # The operator in the line below determines the directionality and whether the threshold is inclusive or not.
-  dt <- data.table(dt)
-  dt[, considerForTreatment := 1]
-  dt[, current_target := 0]
-  dt[, cumulative_tally_by := 0]
-  dt[, selected := 0]
-  dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
-  #dt <- dt[, activity_code := do_treat(c(.BY, .SD), constrain_by[2]), by = "PA_ID"]
-  # Common issue: if the dataset has na values in the priority field, this will fail.
-  while(sum(dt[,considerForTreatment==1 & selected == 0]) != 0){
-    # Order the data table by the priority.
-    dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
-    # Determine the current target
-    dt[, current_target := 0]
-    # Sum the treated tally by group
-    dt[selected == 1, current_target := sum(get(constrain_by[2])), by=list(get(grouped_by))]
-    # The current target is the target value less the value of the already treated stands, by group.
-    dt[, current_target := get(constrain_by[3]) - max(current_target), by=list(get(grouped_by))]
-    # Compute the cumulative sum for the constrained variable and select subunits
-    dt[considerForTreatment == 1 & selected == 0, cumulative_tally_by := cumsum(get(constrain_by[2])), by=list(get(grouped_by))]
-    dt[considerForTreatment == 1 & selected == 0 & cumulative_tally_by <= current_target, selected := 1 ]
-    # Determine the remaining target
-    dt[, current_target := 0]
-    dt[selected == 1, current_target := sum(get(constrain_by[2])), by=list(get(grouped_by))]
-    dt[, current_target := get(constrain_by[3]) - max(current_target), by=list(get(grouped_by))]
-    # Remove from treatment consideration if subunit value is greater than total target.
-    dt[considerForTreatment == 1 & selected == 0, considerForTreatment := ifelse(get(constrain_by[2]) > current_target, 0, 1 )]
-  }
-  dt <- dt[selected == 1,]
-  return(dt)
 }
 
 #' Produce a set of stands that can be treated under a given criteria.
@@ -209,7 +160,7 @@ filter_stands <- function(stands, filter_txt){
     eval(parse(text=eval_txt))
     n0 <- nrow(stands)
     n1 <- nrow(out)
-    message(glue::glue("{round((1-((n0-n1)/n0))*100,2)}% of stands are available ({round((n0-n1)/n0*100,2)}% excluded)"))
+    message(glue::glue("----------\nFiltering stands where: {filter_txt} ({round((n0-n1)/n0*100,2)}% excluded)\n-----------"))
   }, error = function(e){
     message(paste0('!! Filter failed; proceeding with unfiltered data. Error message:\n', print(e)))
   })
@@ -236,14 +187,14 @@ add_target_field <- function(stands, proj_unit, proj_target, proj_target_multipl
 #'
 calculate_spm_pcp <- function(stands, fields){
   for (f in fields) {
-      maximum <- max(stands[, get(f)])
+      maximum <- max(stands[, get(f)], na.rm=T)
       cn <- paste0(f, "_SPM")
       expr <- bquote(.(as.name(cn)):= 0)
       stands[,eval(expr)]
       expr <- bquote(.(as.name(cn)):= (100 * get(f) / maximum))
       stands[, eval(expr)]
 
-      sum.total <- sum(as.numeric(stands[, get(f)]))
+      sum.total <- sum(as.numeric(stands[, get(f)]), na.rm=T)
       cn <- paste0(f, "_PCP")
       expr <- bquote(.(as.name(cn)):= 0)
       stands[,eval(expr)]
@@ -318,13 +269,28 @@ set_up_priorities <- function(stands, w, priorities, weights) {
 }
 
 make_thresholds <- function(thresholds) {
-  all_thresholds <- NULL
-  all_thresholds <- sapply(1:length(thresholds), function(i) {
-    all_thresholds <- rbind(all_thresholds, strsplit(thresholds[i], " ")[1])
-  })
-  treatment_types <- unique(sapply(all_thresholds, function(x) x[1]))
-  all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
-  return(list(type = treatment_types, threshold = all_thresholds))
+  # txt <- 'RxFire: FRG %in% 1:3 & Manage == 0; RxReburn: RxFire == 1'
+  txt <- thresholds
+  if(grepl(txt, ':')==FALSE){
+    txt <- str_replace(txt, ' ', ': ')
+    warning(glue::glue('!! Rx threshold statement "{txt}" missing a colon. Assuming string before first space is the treatment name.'))
+  }
+  out <- txt %>%
+    str_replace_all(' ','') %>%
+    str_split(';', simplify = T) %>%
+    str_split(':', simplify = T, n=2) %>%
+    as.data.frame() %>%
+    rename(type = 1, threshold = 2)
+  return(out)
+
+# Previously
+#   all_thresholds <- NULL
+#   all_thresholds <- sapply(1:length(thresholds), function(i) {
+#     all_thresholds <- rbind(all_thresholds, strsplit(thresholds[i], " ")[1])
+#   })
+#   treatment_types <- unique(sapply(all_thresholds, function(x) x[1]))
+#   all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
+#   return(list(type = treatment_types, threshold = all_thresholds))
 }
 
 apply_treatment <- function(stands,
@@ -344,9 +310,9 @@ apply_treatment <- function(stands,
   for (t in 1:length(treatment_type)) {
 
     # filter stands by threshold type criteria
-    filtered_stands <- stand_filter(stands, treatment_threshold[V1 == treatment_type[t], ])
+    filtered_stands <- stands %>% filter_stands(treatment_threshold[t])
 
-    message(paste0(round(nrow(filtered_stands)/nrow(stands)*100), "% of stands met threshold for ", treatment_type[t]))
+    # message(paste0(round(nrow(filtered_stands)/nrow(stands)*100), "% of stands met threshold for ", treatment_type[t]))
 
     # set project target
     if (proj_fixed_target == TRUE) {
@@ -369,6 +335,62 @@ apply_treatment <- function(stands,
   }
 
   return(selected_stands)
+}
+
+#' Select subunits to treat based on a given priority.
+#'
+#' @param dt A data table with all the subunits and attributes.
+#' @param grouped_by The management objective that is being prioritized.
+#' @param prioritize_by The stand value for the priority that is used to constrain the results.
+#' Typically Area or Volume.
+#' @param constrain_by This is a list of lists that includes three fields for each constraint. The
+#' first item in each list, default 'apply', is the name of a binary field in which 1 = apply the constraint
+#' and 0 = do not apply the constraint to a given stand. The second item in each list is the name
+#' of the field that is summed to reach the constraint. The third item in each list is the name of
+#' the constraining field.
+#' @param group_target The variable that contains the subunit values which are summed to meet the
+#' constraint value.
+#' @return The selected stands from \code{df}, ordered by \code{prioritize_by}, and selected until the sum of \code{tally_by} is as close to
+#' \code{group_target} as possible.
+#'
+select_simple_greedy_algorithm <- function(dt = dbfFile,
+                                           grouped_by = 'PA_ID',
+                                           prioritize_by = 'TVMBF_SPM',
+                                           constrain_by = c('apply', 'AREA_HA', 'AREA_PA10P')){
+  # For each grouped_by:
+  # Remove subunits that don't meet threshold:
+  # Order by priority:
+  # Select stands up to treatment target
+  # The operator in the line below determines the directionality and whether the threshold is inclusive or not.
+  dt <- data.table(dt)
+  dt[, considerForTreatment := 1]
+  dt[, current_target := 0]
+  dt[, cumulative_tally_by := 0]
+  dt[, selected := 0]
+  dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
+  #dt <- dt[, activity_code := do_treat(c(.BY, .SD), constrain_by[2]), by = "PA_ID"]
+  # Common issue: if the dataset has na values in the priority field, this will fail.
+  while(sum(dt[,considerForTreatment==1 & selected == 0], na.rm=T) != 0){
+    # Order the data table by the priority.
+    dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
+    # Determine the current target
+    dt[, current_target := 0]
+    # Sum the treated tally by group
+    dt[selected == 1, current_target := sum(get(constrain_by[2]), na.rm=T), by=list(get(grouped_by))]
+    # The current target is the target value less the value of the already treated stands, by group.
+    dt[, current_target := get(constrain_by[3]) - max(current_target, na.rm=T), by=list(get(grouped_by))]
+    # Compute the cumulative sum for the constrained variable and select subunits
+    dt[considerForTreatment == 1 & selected == 0, cumulative_tally_by := cumsum(get(constrain_by[2])), by=list(get(grouped_by))]
+    dt[considerForTreatment == 1 & selected == 0 & cumulative_tally_by <= current_target, selected := 1 ]
+    # Determine the remaining target
+    dt[, current_target := 0]
+    dt[selected == 1, current_target := sum(get(constrain_by[2]), na.rm=T), by=list(get(grouped_by))]
+    dt[, current_target := get(constrain_by[3]) - max(current_target, na.rm=T), by=list(get(grouped_by))]
+    # Remove from treatment consideration if subunit value is greater than total target.
+    dt[considerForTreatment == 1 & selected == 0, considerForTreatment := ifelse(get(constrain_by[2]) > current_target, 0, 1 )]
+  }
+  dt <- dt[selected == 1,]
+  return(dt)
 }
 
 set_fixed_area_target <- function(stands, fixed_area_target) {

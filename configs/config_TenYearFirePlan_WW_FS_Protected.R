@@ -31,21 +31,22 @@ input_filter <- "OwnerCat == 'USFS' & Conif_Maj == 1 & Manage == 0 & AllDisturb_
 writeStandOutputs <- TRUE
 
 # Create pcp and spm values for these fields.
-pcp_spm <- c("aTR_MS")
+pcp_spm <- c("aTR_MS",'FireDef')
 
 # Creating updated values for target area based on different land bases (binary field where 1 == include)
 # land_base <- "AllDisturb_flg == 0 & Conif_Maj == 1"
 
 ## Stand field
 stand_field <- "CELL_ID"
-include_stands <- c("aTR_MS > 0")
+# include_stands <- c("aTR_MS > 0")
 ## This defines global threshold values to include stands - i.e. for any threshold type.
 #"Conif_Maj == 1", "forest_fla == 1",
 # Echo fields are values that should be included *without* aggregation.
 #echo_fields <- c("FSHED_ID")
 
 ## Priorities are named here. If only one priority exists, only a weight of one will be used.
-priorities <- c("aTR_MS_SPM")
+# priorities <- c("aTR_MS_SPM")
+priorities <- c('FireDef_SPM')
 # priorities <- c("aTR_MS_SPM","TVMBF_STND_SPM")
 
 ## Area-level constraints. Currently this system can handle a two-step constraint system. The first
@@ -56,6 +57,8 @@ priorities <- c("aTR_MS_SPM")
 ## FIELDS BELOW ARE REQUIRED ##
 ## Set the constraint variables:
 stand_group_by <- "PA_ID"
+# proj_target <- "FireDef_Tot"
+# proj_unit <- "FireDef"
 proj_target <- "aTR_MS_Tot"
 proj_unit <- "aTR_MS"
 proj_target_multiplier <- 0.8
@@ -65,12 +68,12 @@ proj_target_multiplier <- 0.8
 weighting_values <- c("1 1 1")
 
 ## Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
-thresholds <- c("RxFire Manage == 0")
+thresholds <- c("RxFire FRG <= 3")
 #thresholds <- c("Commercial Manage_new > 1;Commercial TVMBF_STND > 1")#Example with two constraints
 
 ## This should include the desired fields for the planning area treatment files. Planning area id,
 ## priority weights and treatment rank are added automatically.
-output_fields <- c("AREA_HA", "aTR_MS", "aTR_MS_PCP")
+output_fields <- c("AREA_HA", "aTR_MS", "aTR_MS_PCP", "FireDef", "FireDef_PCP")
 
 ## Include the smaller and larger groups here for grouping of treated stands.
 grouping_variables <- c("PA_ID", "FSHED_ID")
@@ -97,10 +100,10 @@ fire_annual_target_field = 'ETrt_AREA_HA'
 
 # 10-year ramp (6.6 M ha treated)
 max_rx_rate = 1200000 # maximum 1.2 million ha per year
-# fire_annual_target = max_rx_rate * logisticFunc(yr = 1:10, mid = 5, normalize = T)
+fire_annual_target = max_rx_rate * logisticFunc(yr = 1:10, mid = 5, normalize = T)
 
 # 20-year plan w/ 10-year ramp-up
-fire_annual_target = logisticFunc(seq(1,10,length.out=10), start=0, end=4.332e5); fire_annual_target[11:20] <- 0
+# fire_annual_target = logisticFunc(seq(1,10,length.out=10), start=0, end=4.332e5); fire_annual_target[11:20] <- 0
 
 #########################################
 ## Parameters for SPATIAL OPTIMIZATION ##

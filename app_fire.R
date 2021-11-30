@@ -33,9 +33,19 @@ if(exists('f_df') == FALSE) f_df <- fread(fire_intersect_table)
 ## Run FORSYS W/ FIRE                  ##
 #########################################
 
-# run single scenario ...
+# run single scenario using json config...
 
-run('config_TenYearFirePlan_WW_FS.R',
+run('configs/config_TenYearFirePlan_WW_FS_Protected.R',
+    fire_dynamic_forsys = TRUE,
+    write_tags = data.frame('DECILE' = 5, 'FUTURE' = 1),
+    fire_intersect_table = f_df %>% filter(DECILE == 5, FUTURE == 1))
+
+# run single scenario using R config...
+
+run('configs/config_TenYearFirePlan_WW_FS_Protected.R')
+
+run('configs/config_TenYearFirePlan_WW_FS_Protected.R',
+    fire_planning_years = 20,
     fire_dynamic_forsys = TRUE,
     write_tags = data.frame('DECILE' = 5, 'FUTURE' = 1),
     fire_intersect_table = f_df %>% filter(DECILE == 5, FUTURE == 1))
