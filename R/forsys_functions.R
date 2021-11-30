@@ -1,5 +1,4 @@
 load_R_config <- function(config_file){
-  browser()
   source(config_file, local = TRUE)
   for(i in ls()){
     exists(i, envir = parent.frame)
@@ -154,13 +153,16 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
 #'
 #' @param stands Data table to filter
 #' @param filter_txt Boolean statement as character string
-filter_stands <- function(stands, filter_txt){
+#' @param verbose Boolean statement to report filtered results
+#'
+filter_stands <- function(stands, filter_txt, verbose = TRUE){
   tryCatch({
     eval_txt <- paste0("out <- stands[", filter_txt ,"]")
     eval(parse(text=eval_txt))
     n0 <- nrow(stands)
     n1 <- nrow(out)
-    message(glue::glue("----------\nFiltering stands where: {filter_txt} ({round((n0-n1)/n0*100,2)}% excluded)\n-----------"))
+    if(verbose)
+      message(glue::glue("----------\nFiltering stands where: {filter_txt} ({round((n0-n1)/n0*100,2)}% excluded)\n-----------"))
   }, error = function(e){
     message(paste0('!! Filter failed; proceeding with unfiltered data. Error message:\n', print(e)))
   })
@@ -271,14 +273,14 @@ set_up_priorities <- function(stands, w, priorities, weights) {
 make_thresholds <- function(thresholds) {
   # txt <- 'RxFire: FRG %in% 1:3 & Manage == 0; RxReburn: RxFire == 1'
   txt <- thresholds
-  if(grepl(txt, ':')==FALSE){
-    txt <- str_replace(txt, ' ', ': ')
+  if(stringr::str_detect(txt, ':')==FALSE){
+    txt <- stringr::str_replace(txt, ' ', ': ')
     warning(glue::glue('!! Rx threshold statement "{txt}" missing a colon. Assuming string before first space is the treatment name.'))
   }
   out <- txt %>%
-    str_replace_all(' ','') %>%
-    str_split(';', simplify = T) %>%
-    str_split(':', simplify = T, n=2) %>%
+    stringr::str_replace_all(' ','') %>%
+    stringr::str_split(';', simplify = T) %>%
+    stringr::str_split(':', simplify = T, n=2) %>%
     as.data.frame() %>%
     rename(type = 1, threshold = 2)
   return(out)
@@ -310,8 +312,7 @@ apply_treatment <- function(stands,
   for (t in 1:length(treatment_type)) {
 
     # filter stands by threshold type criteria
-    filtered_stands <- stands %>% filter_stands(treatment_threshold[t])
-
+    filtered_stands <- stands %>% filter_stands(treatment_threshold[t], verbose = F)
     # message(paste0(round(nrow(filtered_stands)/nrow(stands)*100), "% of stands met threshold for ", treatment_type[t]))
 
     # set project target
