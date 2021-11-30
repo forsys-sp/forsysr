@@ -1,3 +1,9 @@
+load_R_config <- function(config_file){
+  source(config_file, local = TRUE)
+  for(i in ls()){
+    exists(i, envir = parent.frame)
+  }
+}
 #' Load stored in JSON config into the current enviroment
 #'
 #' @param json_filename character string of forsys json config
@@ -91,6 +97,7 @@ select_simple_greedy_algorithm <- function(dt = NULL,
 #' @param dt A data table with all stand information necessary to determine availability for a specific treatment type.
 #' @param filters A list of strings that are used to filter the stands for treatment availability.
 #' @return The final data table with stands available for treatment.
+#'
 stand_filter <- function(dt, filters) {
   for(f in 1:nrow(filters)){
     filter <- paste0(filters[f,2], " ", filters[f,3], " ", filters[f,4])
@@ -104,6 +111,7 @@ stand_filter <- function(dt, filters) {
 }
 
 #' Create a new field in a stand table that flags all stands that include a given set of criteria
+#'
 #' @param dt A data table with all stand information necessary to determine availability for a specific treatment type.
 #' @param filters A list of strings that are used to filter the stands for treatment availability.
 #' @param field The name of a new field
@@ -151,6 +159,7 @@ create_grouped_dataset <- function(dt,
 #' @param numPriorities TODO
 #' @param weights TODO
 #' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
+#'
 weight_priorities <- function(numPriorities, weights = c("1 1 1")){
   if(numPriorities == 1)
     return(data.table::data.table(1))
@@ -172,6 +181,7 @@ weight_priorities <- function(numPriorities, weights = c("1 1 1")){
 #' @param subunit TODO
 #' @param unit_area TODO
 #' @return A table with the updated subunit targets for all planning areas that had treatments
+#'
 update_target <-function(treated_stands, subunit, unit_area) {
   treated_subunit_target <- create_grouped_dataset(treated_stands,
                                                subunit,
@@ -211,6 +221,19 @@ filter_stands <- function(stands, filter_txt){
     message(paste0('!! Filter failed; proceeding with unfiltered data. Error message:\n', print(e)))
   })
   return(out)
+}
+
+#' Sum of objective metric by project
+#'
+#' @param stands Data table to filter
+#' @param proj_unit
+#' @param proj_target
+#' @param proj_target_multiplier
+#' @param stand_group_by Field name to group by
+#'
+add_target_field <- function(stands, proj_unit, proj_target, proj_target_multiplier, stand_group_by) {
+  stands_updated <- stands[, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = stand_group_by]
+  return(stands_updated)
 }
 
 #' Add spm and pcp values for specified fields
@@ -280,14 +303,28 @@ set_up_priorities <- function(stands, w, priorities, weights) {
 #' @param thresholds Vector of Boolean string statements to parse
 
 make_thresholds <- function(thresholds) {
-  print(thresholds)
-  all_thresholds <- NULL
-  all_thresholds <- sapply(1:length(thresholds), function(i) {
-    all_thresholds <- rbind(all_thresholds, strsplit(thresholds[i], " ")[1])
-  })
-  treatment_types <- unique(sapply(all_thresholds, function(x) x[1]))
-  all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
-  return(list(type = treatment_types, threshold = all_thresholds))
+  # txt <- 'RxFire: FRG %in% 1:3 & Manage == 0; RxReburn: RxFire == 1'
+  txt <- thresholds
+  if(stringr::str_detect(txt, ':')==FALSE){
+    txt <- stringr::str_replace(txt, ' ', ': ')
+    warning(glue::glue('!! Rx threshold statement "{txt}" missing a colon. Assuming string before first space is the treatment name.'))
+  }
+  out <- txt %>%
+    stringr::str_replace_all(' ','') %>%
+    stringr::str_split(';', simplify = T) %>%
+    stringr::str_split(':', simplify = T, n=2) %>%
+    as.data.frame() %>%
+    rename(type = 1, threshold = 2)
+  return(out)
+
+# Previously
+#   all_thresholds <- NULL
+#   all_thresholds <- sapply(1:length(thresholds), function(i) {
+#     all_thresholds <- rbind(all_thresholds, strsplit(thresholds[i], " ")[1])
+#   })
+#   treatment_types <- unique(sapply(all_thresholds, function(x) x[1]))
+#   all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
+#   return(list(type = treatment_types, threshold = all_thresholds))
 }
 
 #' TODO
@@ -320,11 +357,11 @@ apply_treatment <- function(stands,
   # for each treatment type
   for (t in 1:length(treatment_type)) {
 
-    # stands by threshold type criteria
-    filtered_stands <- stand_filter(stands, treatment_threshold[V1 == treatment_type[t], ])
+    # filter stands by threshold type criteria
+    filtered_stands <- stands %>% filter_stands(treatment_threshold[t], verbose = F)
     # message(paste0(round(nrow(filtered_stands)/nrow(stands)*100), "% of stands met threshold for ", treatment_type[t]))
 
-    # set project target to filtered stands
+    # set project target
     if (proj_fixed_target == TRUE) {
       # target based on fixed total
       filtered_stands <- filtered_stands %>%

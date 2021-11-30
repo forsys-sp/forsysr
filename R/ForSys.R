@@ -48,6 +48,7 @@
 run <- function(
     config_file = '',
     scenario_name = '',
+    num_reps = 1,
     scenario_stand_filename = '',
     stand_id_field = '',
     stand_pcp_spm = NULL,
@@ -116,10 +117,14 @@ run <- function(
     stands <- load_dataset(scenario_stand_filename)
     if(!is.null(fire_intersect_table)) fires <- fire_intersect_table
 
-    # Calculate SPM & PCP values
+    # Calculate SPM & PCP values ## TODO check add_target_field names after merge
     stands <- stands %>%
       filter_stands(filter_txt = stand_filter) %>%
-      calculate_spm_pcp(fields = stand_pcp_spm)
+      calculate_spm_pcp(fields = stand_pcp_spm) %>%
+      add_target_field(proj_unit = proj_unit,
+                       proj_target = proj_target,
+                       proj_target_multiplier = proj_target_multiplier,
+                       stand_group_by = stand_group_by)
 
     # create objects for tracking treated and burnt stands
     stands_treated <- NULL
