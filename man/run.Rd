@@ -8,10 +8,11 @@ in a config file and pass the name of the file to this run function.}
 run(
   config_file = "",
   scenario_name = "",
+  num_reps = 1,
   scenario_stand_filename = "",
   stand_id_field = "",
   stand_pcp_spm = NULL,
-  stand_filter = "",
+  stand_filter = NULL,
   scenario_priorities = NULL,
   proj_id = "",
   proj_thresholds = NULL,

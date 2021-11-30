@@ -2,20 +2,15 @@
 % Please edit documentation in R/forsys_functions.R
 \name{calculate_spm_pcp}
 \alias{calculate_spm_pcp}
-\title{TODO}
+\title{Add spm and pcp values for specified fields}
 \usage{
-calculate_spm_pcp(stands, filter, fields)
+calculate_spm_pcp(stands, fields)
 }
 \arguments{
-\item{stands}{TODO}
+\item{stands}{data.table of stands}
 
-\item{filter}{TODO}
-
-\item{fields}{TODO}
-}
-\value{
-TODO
+\item{fields}{vector of character field names to calculate pcm & spm values}
 }
 \description{
-TODO
+Add spm and pcp values for specified fields
 }
