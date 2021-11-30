@@ -24,3 +24,8 @@ prioritized_proj <- read.csv('output/WW_10yr_FS_80p/proj_WW_10yr_FS_80p_.csv')
 map_projects(prioritized_proj, proj_geom, 'ETrt_AREA_HA')
 map_projects(prioritized_proj, proj_geom, 'ETrt_FireDef')
 map_projects(prioritized_proj, proj_geom, 'treatment_rank')
+
+
+stand_output <- read.csv('output/WW_10yr_FS_80p/DECILE_5_FUTURE_1/stnd_WW_10yr_FS_80p_DECILE_5_FUTURE_1.csv')
+xtabs(stand_output$AREA_HA ~ stand_output$FIRE_YR)
+xtabs(stand_output$AREA_HA ~ stand_output$ETrt_YR)/1e6

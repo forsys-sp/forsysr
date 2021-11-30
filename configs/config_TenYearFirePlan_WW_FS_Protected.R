@@ -21,7 +21,7 @@
 #   3) Revenue (MBF_VALUE)
 #   4) Forest to Faucets (F2F2_Imp)
 
-scenario_name <- "WW_10yr_FS_80p"
+scenario_name <- "WW_10yr_FS_Protected"
 
 ## Stand layer
 # input_standfile <- c("data/hexnet_west_fs.csv")
@@ -57,10 +57,10 @@ priorities <- c('FireDef_SPM')
 ## FIELDS BELOW ARE REQUIRED ##
 ## Set the constraint variables:
 stand_group_by <- "PA_ID"
-# proj_target <- "FireDef_Tot"
-# proj_unit <- "FireDef"
-proj_target <- "aTR_MS_Tot"
-proj_unit <- "aTR_MS"
+proj_target <- "FireDef_Tot"
+proj_unit <- "FireDef"
+# proj_target <- "aTR_MS_Tot"
+# proj_unit <- "aTR_MS"
 proj_target_multiplier <- 0.8
 # proj_unit * proj_target_multiplier
 
@@ -68,7 +68,7 @@ proj_target_multiplier <- 0.8
 weighting_values <- c("1 1 1")
 
 ## Thresholds are defined by type (the first value in the string). The current code only uses one type (Commercial).
-thresholds <- c("RxFire FRG <= 3")
+thresholds <- c("RxFire: FRG <= 3")
 #thresholds <- c("Commercial Manage_new > 1;Commercial TVMBF_STND > 1")#Example with two constraints
 
 ## This should include the desired fields for the planning area treatment files. Planning area id,
@@ -99,7 +99,7 @@ fire_planning_years = 20
 fire_annual_target_field = 'ETrt_AREA_HA'
 
 # 10-year ramp (6.6 M ha treated)
-max_rx_rate = 1200000 # maximum 1.2 million ha per year
+max_rx_rate = 5e5 # maximum 1.2 million ha per year
 fire_annual_target = max_rx_rate * logisticFunc(yr = 1:10, mid = 5, normalize = T)
 
 # 20-year plan w/ 10-year ramp-up

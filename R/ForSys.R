@@ -120,11 +120,7 @@ run <- function(
     # Calculate SPM & PCP values ## TODO check add_target_field names after merge
     stands <- stands %>%
       filter_stands(filter_txt = stand_filter) %>%
-      calculate_spm_pcp(fields = stand_pcp_spm) %>%
-      add_target_field(proj_unit = proj_unit,
-                       proj_target = proj_target,
-                       proj_target_multiplier = proj_target_multiplier,
-                       stand_group_by = stand_group_by)
+      calculate_spm_pcp(fields = stand_pcp_spm)
 
     # create objects for tracking treated and burnt stands
     stands_treated <- NULL

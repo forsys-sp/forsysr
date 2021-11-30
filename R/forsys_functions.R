@@ -223,19 +223,6 @@ filter_stands <- function(stands, filter_txt){
   return(out)
 }
 
-#' Sum of objective metric by project
-#'
-#' @param stands Data table to filter
-#' @param proj_unit
-#' @param proj_target
-#' @param proj_target_multiplier
-#' @param stand_group_by Field name to group by
-#'
-add_target_field <- function(stands, proj_unit, proj_target, proj_target_multiplier, stand_group_by) {
-  stands_updated <- stands[, ':='(paste0(proj_target), (sum(get(proj_unit)))), by = stand_group_by]
-  return(stands_updated)
-}
-
 #' Add spm and pcp values for specified fields
 #'
 #' @param stands data.table of stands
@@ -316,15 +303,6 @@ make_thresholds <- function(thresholds) {
     as.data.frame() %>%
     rename(type = 1, threshold = 2)
   return(out)
-
-# Previously
-#   all_thresholds <- NULL
-#   all_thresholds <- sapply(1:length(thresholds), function(i) {
-#     all_thresholds <- rbind(all_thresholds, strsplit(thresholds[i], " ")[1])
-#   })
-#   treatment_types <- unique(sapply(all_thresholds, function(x) x[1]))
-#   all_thresholds <- data.table(matrix(unlist(all_thresholds), nrow=length(all_thresholds), byrow=T))
-#   return(list(type = treatment_types, threshold = all_thresholds))
 }
 
 #' TODO
@@ -411,9 +389,9 @@ set_fixed_target <- function(stands, target_value) {
 #' @importFrom data.table :=
 #'
 set_variable_target <- function(stands, group_by, target_field, multiplier){
-  stands[, master_target := sum(get(target_field)) * multiplier, by=list(get(group_by))]
+    stands[, ':='(proj_target, sum(get(target_field))), by = list(get(group_by))]
+    stands[, master_target :=  proj_target * multiplier]
 }
-
 
 # #' TODO
 # #' @param grouped_by_pa TODO
