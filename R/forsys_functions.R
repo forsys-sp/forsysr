@@ -70,22 +70,22 @@ select_simple_greedy_algorithm <- function(dt = NULL,
   dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
   #dt <- dt[, activity_code := do_treat(c(.BY, .SD), constrain_by[2]), by = "PA_ID"]
   # Common issue: if the dataset has na values in the priority field, this will fail.
-  while(sum(dt[,considerForTreatment==1 & selected == 0]) != 0){
+  while(sum(dt[,considerForTreatment==1 & selected == 0], na.rm=T) != 0){
     # Order the data table by the priority.
     dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
     # Determine the current target
     dt[, current_target := 0]
     # Sum the treated tally by group
-    dt[selected == 1, current_target := sum(get(constrain_by[2])), by=list(get(grouped_by))]
+    dt[selected == 1, current_target := sum(get(constrain_by[2]), na.rm=T), by=list(get(grouped_by))]
     # The current target is the target value less the value of the already treated stands, by group.
-    dt[, current_target := get(constrain_by[3]) - max(current_target), by=list(get(grouped_by))]
+    dt[, current_target := get(constrain_by[3]) - max(current_target, na.rm=T), by=list(get(grouped_by))]
     # Compute the cumulative sum for the constrained variable and select subunits
     dt[considerForTreatment == 1 & selected == 0, cumulative_tally_by := cumsum(get(constrain_by[2])), by=list(get(grouped_by))]
     dt[considerForTreatment == 1 & selected == 0 & cumulative_tally_by <= current_target, selected := 1 ]
     # Determine the remaining target
     dt[, current_target := 0]
-    dt[selected == 1, current_target := sum(get(constrain_by[2])), by=list(get(grouped_by))]
-    dt[, current_target := get(constrain_by[3]) - max(current_target), by=list(get(grouped_by))]
+    dt[selected == 1, current_target := sum(get(constrain_by[2]), na.rm=T), by=list(get(grouped_by))]
+    dt[, current_target := get(constrain_by[3]) - max(current_target, na.rm=T), by=list(get(grouped_by))]
     # Remove from treatment consideration if subunit value is greater than total target.
     dt[considerForTreatment == 1 & selected == 0, considerForTreatment := ifelse(get(constrain_by[2]) > current_target, 0, 1 )]
   }
@@ -210,13 +210,16 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
 #'
 #' @param stands Data table to filter
 #' @param filter_txt Boolean statement as character string
-filter_stands <- function(stands, filter_txt){
+#' @param verbose Boolean statement to report filtered results
+#'
+filter_stands <- function(stands, filter_txt, verbose = TRUE){
   tryCatch({
     eval_txt <- paste0("out <- stands[", filter_txt ,"]")
     eval(parse(text=eval_txt))
     n0 <- nrow(stands)
     n1 <- nrow(out)
-    message(glue::glue("{round((1-((n0-n1)/n0))*100,2)}% of stands are available ({round((n0-n1)/n0*100,2)}% excluded)"))
+    if(verbose)
+      message(glue::glue("----------\nFiltering stands where: {filter_txt} ({round((n0-n1)/n0*100,2)}% excluded)\n-----------"))
   }, error = function(e){
     message(paste0('!! Filter failed; proceeding with unfiltered data. Error message:\n', print(e)))
   })
@@ -230,14 +233,14 @@ filter_stands <- function(stands, filter_txt){
 #'
 calculate_spm_pcp <- function(stands, fields){
   for (f in fields) {
-    maximum <- max(stands[, get(f)])
+    maximum <- max(stands[, get(f)], na.rm=T)
     cn <- paste0(f, "_SPM")
     expr <- bquote(.(as.name(cn)):= 0)
     stands[,eval(expr)]
     expr <- bquote(.(as.name(cn)):= (100 * get(f) / maximum))
     stands[, eval(expr)]
 
-    sum.total <- sum(as.numeric(stands[, get(f)]))
+    sum.total <- sum(as.numeric(stands[, get(f)]), na.rm=T)
     cn <- paste0(f, "_PCP")
     expr <- bquote(.(as.name(cn)):= 0)
     stands[,eval(expr)]
@@ -337,7 +340,6 @@ apply_treatment <- function(stands,
 
     # filter stands by threshold type criteria
     filtered_stands <- stands %>% filter_stands(treatment_threshold[t], verbose = F)
-    # message(paste0(round(nrow(filtered_stands)/nrow(stands)*100), "% of stands met threshold for ", treatment_type[t]))
 
     # set project target
     if (proj_fixed_target == TRUE) {

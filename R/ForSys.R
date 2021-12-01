@@ -36,8 +36,8 @@
 #' @param fire_planning_years = TODO
 #' @param fire_annual_target_field TODO
 #' @param fire_annual_target TODO
-#' @param fire_dynamic_forsys TODO
-#' @param fire_random_projects TODO
+#' @param fire_dynamic_forsys logical. Prevent burnt stands from being selected if TRUE
+#' @param fire_random_projects logical. Randomly shuffle project prioritization if TRUE
 #' @param scenario_write_tags TODO
 #'
 #' @return
@@ -46,7 +46,7 @@
 #' @importFrom rlang .data
 #' @export
 run <- function(
-    config_file = '',
+    config_file = NULL,
     scenario_name = '',
     num_reps = 1,
     scenario_stand_filename = '',
@@ -75,7 +75,7 @@ run <- function(
     ) {
 
     # If a config file has been selected, source it to read in variables
-    if (length(config_file) > 1) {
+    if (length(config_file) > 0) {
       # setwd(dirname(config_file))
       if(stringr::str_detect(config_file, '[.]R$'))
         source(config_file, local = TRUE)
