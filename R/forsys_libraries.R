@@ -5,6 +5,7 @@ pacman::p_load(
   directlabels,   # geom_dl
   dplyr,
   doParallel,     # Patchmax
+  extRemes,
   foreign,        # DBF
   gtools,         # permutation
   jsonlite,       # Config files

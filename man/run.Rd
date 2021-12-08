@@ -6,7 +6,7 @@
 in a config file and pass the name of the file to this run function.}
 \usage{
 run(
-  config_file = "",
+  config_file = NULL,
   scenario_name = "",
   num_reps = 1,
   scenario_stand_filename = "",
@@ -79,9 +79,9 @@ priority weights and treatment rank are added automatically.}
 
 \item{fire_annual_target}{TODO}
 
-\item{fire_dynamic_forsys}{TODO}
+\item{fire_dynamic_forsys}{logical. Prevent burnt stands from being selected if TRUE}
 
-\item{fire_random_projects}{TODO}
+\item{fire_random_projects}{logical. Randomly shuffle project prioritization if TRUE}
 
 \item{scenario_write_tags}{TODO}
 }

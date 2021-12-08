@@ -45,3 +45,5 @@ vignettes/*.pdf
 
 # Mac OSX
 .DS_Store
+
+*sublime*

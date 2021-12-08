@@ -18,6 +18,20 @@ cumulate_results <- function(results_data) {
 		dplyr::mutate()
 }
 
+#' Pass-through function while we shore up the graphing logic. This just sends ALL column
+#' names back to the caller
+#'
+#' @param results_data TODO
+#' @return List of priorities identified in results file
+#'
+#'
+#' @importFrom dplyr %>%
+#'
+#' @export
+get_results_columns <- function(results_data) {
+	cols = results_data %>% colnames()
+}
+
 #' Right now this is a dumb function that returns all ETrt columns. Ideally we should have
 #' logic that detects only the targets in the output file
 #'
@@ -46,10 +60,10 @@ get_result_targets <- function(results_data) {
 get_result_priorities <- function(results_data) {
 	targets <- results_data %>%
 				colnames() %>%
-				purrr::keep(function(x) {stringr::str_detect(x, 'ETrt')}) %>%
-				purrr::keep(function(x) {stringr::str_detect(x, 'PCP')}) %>%
-				purrr::map(function(x) {stringr::str_sub(x, 6)}) %>%
-				purrr::map(function(x) {stringr::str_sub(x, 1, -5)})
+				purrr::keep(function(x) {stringr::str_detect(x, 'ETrt')}) # %>%
+				# purrr::keep(function(x) {stringr::str_detect(x, 'PCP')}) %>%
+				# purrr::map(function(x) {stringr::str_sub(x, 6)}) %>%
+				# purrr::map(function(x) {stringr::str_sub(x, 1, -5)})
 }
 
 #' From a priority (i.e. TVMBF) and get the associated Pr_ column
@@ -63,6 +77,7 @@ get_result_priorities <- function(results_data) {
 #'
 #' @export
 priority_column_name <- function(results_data, priority) {
+	priority <- stringr::str_replace(priority, 'ETrt', '')
 	priority <- results_data %>%
 					colnames() %>%
 					purrr::keep(function(x) {stringr::str_detect(x, 'Pr_')}) %>%
@@ -131,8 +146,11 @@ production_frontiers_chart <- function(results_data, proj_field, x_field, y_fiel
 
 	# TODO make x scale dynamic (scale_x_continuous)
 	ggplot2::ggplot(top_proj_ids, ggplot2::aes(x = get(x_field), y = get(y_field), group = factor(proj_field), color = factor(proj_field))) +
-	  ggplot2::geom_line() + ggplot2::theme_classic() + ggplot2::scale_color_manual(values = safe_colorblind_palette) +
-	  directlabels::geom_dl(ggplot2::aes(label = factor(proj_field)), method = list(directlabels::dl.combine("first.points", "last.points")), cex = 0.8) + ggplot2::scale_x_continuous(expand=c(0, .1)) +
+	  ggplot2::geom_line() + 
+	  ggplot2::theme_classic() + 
+	  ggplot2::scale_color_manual(values = safe_colorblind_palette) +
+	  directlabels::geom_dl(ggplot2::aes(label = factor(proj_field)), method = list(directlabels::dl.combine("first.points", "last.points")), cex = 0.8) + 
+	  ggplot2::scale_x_continuous(expand=c(0, .1)) +
 	  ggplot2::labs(title='Tradeoff Analysis', x = x_field, y = y_field, color = "PA_ID")
 }
 

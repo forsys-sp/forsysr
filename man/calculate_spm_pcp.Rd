@@ -4,7 +4,7 @@
 \alias{calculate_spm_pcp}
 \title{Add spm and pcp values for specified fields}
 \usage{
-calculate_spm_pcp(stands, fields)
+calculate_spm_pcp(stands, fields, env = parent.frame())
 }
 \arguments{
 \item{stands}{data.table of stands}

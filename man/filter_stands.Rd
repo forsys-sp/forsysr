@@ -4,12 +4,14 @@
 \alias{filter_stands}
 \title{Filter data}
 \usage{
-filter_stands(stands, filter_txt)
+filter_stands(stands, filter_txt, verbose = TRUE)
 }
 \arguments{
 \item{stands}{Data table to filter}
 
 \item{filter_txt}{Boolean statement as character string}
+
+\item{verbose}{Boolean statement to report filtered results}
 }
 \description{
 Filter data

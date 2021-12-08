@@ -231,7 +231,10 @@ filter_stands <- function(stands, filter_txt, verbose = TRUE){
 #' @param stands data.table of stands
 #' @param fields vector of character field names to calculate pcm & spm values
 #'
-calculate_spm_pcp <- function(stands, fields){
+#' @export
+calculate_spm_pcp <- function(stands, fields, env = parent.frame()){
+  print(fields)
+  print(stands)
   for (f in fields) {
     maximum <- max(stands[, get(f)], na.rm=T)
     cn <- paste0(f, "_SPM")
