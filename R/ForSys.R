@@ -103,7 +103,7 @@ run <- function(
     } else {
       if (run_with_shiny) {
         message(paste0("output directory, ", absolute_output_path, ", already exists"))
-        if(overwrite_output) list.files(absolute_output_path, full.names = T) %>% file.remove()
+        if (overwrite_output) list.files(absolute_output_path, full.names = T) %>% file.remove()
       } else {
         message(paste0("output directory, ", absolute_output_path, ", already exists"))
       }
@@ -268,7 +268,9 @@ run <- function(
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       # tag stands with specific scenario attributes
-      stands_selected_out <- stands_treated %>% dplyr::select(!!stand_id_field, !!proj_id, ETrt_YR)
+      stands_selected_out <- stands_treated %>% 
+                              dplyr::select(!!stand_id_field, !!proj_id, ETrt_YR) 
+
 
       if(!is.null(fire_intersect_table))
         stands_selected_out <- stands_selected_out %>%
@@ -291,9 +293,9 @@ run <- function(
 
       # group *selected* stands by project
       projects_etrt_out <- stands_selected_out %>%
+        calculate_spm_pcp(fields = scenario_output_fields) %>%
         dplyr::select(!!stand_id_field, ETrt_YR) %>%
-        dplyr::left_join(stands_prioritized %>% dplyr::select(stand_id_field, proj_id, scenario_output_fields, 'weightedPriority'),
-                  by = stand_id_field) %>%
+        dplyr::left_join(stands_prioritized %>% dplyr::select(stand_id_field, proj_id, scenario_output_fields, 'weightedPriority'), by = stand_id_field) %>%
         create_grouped_dataset(grouping_vars = c(proj_id, 'ETrt_YR'),
                                summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
         dplyr::arrange(ETrt_YR, -weightedPriority) %>%
@@ -326,7 +328,7 @@ run <- function(
         project_fn = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
       }
 
-      data.table::fwrite(projects_selected_out, file = project_fn, sep = ",", row.names = FALSE, append = T)
+      data.table::fwrite(projects_selected_out, file = project_fn, sep = ",", row.names = FALSE, append = TRUE)
 
       } # END WEIGHT LOOP
 
