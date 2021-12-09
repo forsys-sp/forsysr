@@ -180,8 +180,7 @@ run <- function(
 
         # group selected stands by project
         projects_selected <- stands_selected %>%
-          create_grouped_dataset(grouping_vars = proj_id,
-                                 summing_vars = c(scenario_output_fields, "weightedPriority")) %>%
+          create_grouped_dataset(grouping_vars = proj_id, summing_vars = c(scenario_output_fields, "weightedPriority")) %>%
           dplyr::rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields) %>%
           replace(is.na(.), 0) %>%
           dplyr::arrange(-weightedPriority) %>%
@@ -274,8 +273,12 @@ run <- function(
         stands_selected_out <- stands_selected_out %>%
           dplyr::left_join(fires %>% dplyr::select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field)
 
-      # write out minimal stand information
-      stands_selected_out <- stands_selected_out %>% dplyr::bind_cols(scenario_write_tags)
+      # ........................................
+      # write stands to file ...................
+      # ........................................
+
+      stands_selected_out <- stands_selected_out %>%
+        dplyr::bind_cols(scenario_write_tags)
       stands_selected_out <- stands_selected_out %>%
         dplyr::left_join(stands_prioritized %>% dplyr::select(!!stand_id_field, scenario_output_fields), by = stand_id_field)
 
@@ -287,15 +290,19 @@ run <- function(
 
       data.table::fwrite(stands_selected_out, stand_fn, row.names = FALSE)
 
-      # WRITE: write project to file ...........
+      # ........................................
+      # write project to file ..................
+      # ........................................
+
+      # update project output fields to include all PCP fields if present
+      pcp_fields <- dplyr::select(stands, matches('_PCP$')) %>% names()
+      scenario_output_fields <- c(scenario_output_fields, pcp_fields)
 
       # group *selected* stands by project
       projects_etrt_out <- stands_selected_out %>%
         dplyr::select(!!stand_id_field, ETrt_YR) %>%
-        dplyr::left_join(stands_prioritized %>% dplyr::select(stand_id_field, proj_id, scenario_output_fields, 'weightedPriority'),
-                  by = stand_id_field) %>%
-        create_grouped_dataset(grouping_vars = c(proj_id, 'ETrt_YR'),
-                               summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
+        dplyr::left_join(stands_prioritized %>% dplyr::select(stand_id_field, proj_id, scenario_output_fields, 'weightedPriority'), by = stand_id_field) %>%
+        create_grouped_dataset(grouping_vars = c(proj_id, 'ETrt_YR'), summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
         dplyr::arrange(ETrt_YR, -weightedPriority) %>%
         dplyr::rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields) %>%
         replace(is.na(.), 0)

@@ -231,10 +231,13 @@ filter_stands <- function(stands, filter_txt, verbose = TRUE){
 #' @param stands data.table of stands
 #' @param fields vector of character field names to calculate pcm & spm values
 #'
-#' @export
-calculate_spm_pcp <- function(stands, fields, env = parent.frame()){
-  print(fields)
-  print(stands)
+calculate_spm_pcp <- function(stands, fields=NULL){
+
+  if(fields %>% is.null){
+    x <- stands %>% lapply(is.numeric) %>% unlist()
+    fields <- names(x)[x == TRUE]
+  }
+
   for (f in fields) {
     maximum <- max(stands[, get(f)], na.rm=T)
     cn <- paste0(f, "_SPM")
@@ -318,9 +321,8 @@ make_thresholds <- function(thresholds) {
 #' @param stand_id_field TODO
 #' @param proj_id TODO
 #' @param proj_fixed_target TODO
-#' @param proj_fixed_area_target TODO
+#' @param proj_target_value TODO
 #' @param proj_target_field TODO
-#' @param proj_variable_target_multiplier TODO
 #' @return TODO
 #'
 #'
