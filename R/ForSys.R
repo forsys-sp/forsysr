@@ -120,7 +120,8 @@ run <- function(
     # Calculate SPM & PCP values ## TODO check add_target_field names after merge
     stands <- stands %>%
       filter_stands(filter_txt = stand_filter) %>%
-      calculate_spm_pcp(fields = stand_pcp_spm)
+      calculate_spm_pcp(fields = stand_pcp_spm) %>%
+      calculate_spm_pcp(fields = scenario_output_fields)
 
     # create objects for tracking treated and burnt stands
     stands_treated <- NULL
@@ -293,7 +294,6 @@ run <- function(
 
       # group *selected* stands by project
       projects_etrt_out <- stands_selected_out %>%
-        calculate_spm_pcp(fields = scenario_output_fields) %>%
         dplyr::select(!!stand_id_field, ETrt_YR) %>%
         dplyr::left_join(stands_prioritized %>% dplyr::select(stand_id_field, proj_id, scenario_output_fields, 'weightedPriority'), by = stand_id_field) %>%
         create_grouped_dataset(grouping_vars = c(proj_id, 'ETrt_YR'),
