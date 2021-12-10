@@ -6,19 +6,19 @@
 \usage{
 attainment_chart_by_target_treated(
   results_data,
-  pcp_field,
-  target_field,
+  pcp_fields,
+  constraint_field,
   priority
 )
 }
 \arguments{
-\item{results_data}{TODO}
+\item{results_data}{The results data frame, probably starts with 'proj_'}
 
-\item{pcp_field}{TODO}
+\item{pcp_fields}{PCPs to chart, will be the Y axis values.}
 
-\item{target_field}{TODO}
+\item{constraint_field}{Field used to constrain simulation. Usually some form of area.}
 
-\item{priority}{TODO}
+\item{priority}{The weight of priority to select. Different combinations of weights result in different outcomes}
 }
 \value{
 TODO

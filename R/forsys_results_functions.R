@@ -61,9 +61,9 @@ get_result_priorities <- function(results_data) {
 	targets <- results_data %>%
 				colnames() %>%
 				purrr::keep(function(x) {stringr::str_detect(x, 'ETrt')}) # %>%
-				# purrr::keep(function(x) {stringr::str_detect(x, 'PCP')}) %>%
-				# purrr::map(function(x) {stringr::str_sub(x, 6)}) %>%
-				# purrr::map(function(x) {stringr::str_sub(x, 1, -5)})
+				purrr::keep(function(x) {stringr::str_detect(x, 'PCP')}) %>%
+				purrr::map(function(x) {stringr::str_sub(x, 6)}) %>%
+				purrr::map(function(x) {stringr::str_sub(x, 1, -5)})
 }
 
 #' From a priority (i.e. TVMBF) and get the associated Pr_ column
@@ -96,26 +96,46 @@ get_result_pcp_name <- function(priority) {
 
 #' TODO
 #'
-#' @param results_data TODO
-#' @param pcp_field TODO
-#' @param target_field TODO
-#' @param priority TODO
+#' @param results_data The results data frame, probably starts with 'proj_'
+#' @param pcp_fields PCPs to chart, will be the Y axis values. 
+#' @param constraint_field Field used to constrain simulation. Usually some form of area.
+#' @param priority The weight of priority to select. Different combinations of weights result in different outcomes
 #' @return TODO
 #'
 #' @importFrom dplyr %>%
 #'
 #' @export
-attainment_chart_by_target_treated <- function(results_data, pcp_field, target_field, priority) {
+attainment_chart_by_target_treated <- function(results_data, pcp_fields, constraint_field, priority) {
+	
+	pcp_field <- pcp_fields[1]
+	priority_name <- pcp_field
+
+	priority_name <- stringr::str_replace(priority_name, 'ETrt', 'Pr_1')
+	priority_name <- stringr::str_replace(priority_name, '_PCP', '')
+
 	g <- results_data %>%
-		dplyr::filter(get(priority) == 1.0) %>%
-		dplyr::mutate(x = cumsum(get(target_field))) %>%
-		dplyr::mutate(y = cumsum(get(pcp_field)))
+		dplyr::filter(.data[[priority_name]] == priority) %>%
+		dplyr::mutate(x = cumsum(.data[[constraint_field]])) %>%
+		dplyr::mutate(y = cumsum(.data[[pcp_field]]))
+
+	print(g)
 
 	g %>%
 		ggplot2::ggplot() %>%
 		+ ggplot2::geom_line(mapping=ggplot2::aes(x, y)) %>%
-		+ ggplot2::labs(title='Attainment By Priority', x=target_field, y=pcp_field) %>%
+		+ ggplot2::labs(title='Attainment By Priority', x=constraint_field, y=pcp_field) %>%
 		+ ggplot2::theme_set(ggplot2::theme_bw())
+
+	if (length(pcp_fields) > 1) {
+		for (p in 2:length(pcp_fields)) {
+			pcp_field <- pcp_fields[p]
+			q <- results_data %>%
+				dplyr::filter(.data[[priority_name]] == priority) %>%
+				dplyr::mutate(x = cumsum(.data[[constraint_field]])) %>%
+				dplyr::mutate(y = cumsum(.data[[pcp_field]]))
+			g %>% ggplot2::geom_line(mapping=ggplot2::aes(x, y))
+		}
+	}
 
 }
 
@@ -125,18 +145,18 @@ attainment_chart_by_target_treated <- function(results_data, pcp_field, target_f
 #' @param proj_field TODO
 #' @param x_field TODO
 #' @param y_field TODO
-#' @param target_field TODO
+#' @param constraint_field TODO
 #' @return TODO
 #'
 #' @importFrom dplyr %>%
 #'
 #' @export
-production_frontiers_chart <- function(results_data, proj_field, x_field, y_field, target_field) {
+production_frontiers_chart <- function(results_data, proj_field, x_field, y_field, constraint_field) {
 	# First, find the top PA_IDs in terms of target performance
 	# Right now it's set to top 10, maybe make this dynamic?
 	dat <- results_data %>%
 			dplyr::group_by_at(proj_field) %>%
-			dplyr::summarize(sum = sum(get(target_field))) %>%
+			dplyr::summarize(sum = sum(get(constraint_field))) %>%
 			dplyr::slice_max(n = 10, order_by = sum)
 
 	# print(dat)

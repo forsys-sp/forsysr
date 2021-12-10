@@ -30,9 +30,7 @@ apply_treatment(
 
 \item{proj_target_field}{TODO}
 
-\item{proj_fixed_area_target}{TODO}
-
-\item{proj_variable_target_multiplier}{TODO}
+\item{proj_target_value}{TODO}
 }
 \value{
 TODO

@@ -9,7 +9,7 @@ production_frontiers_chart(
   proj_field,
   x_field,
   y_field,
-  target_field
+  constraint_field
 )
 }
 \arguments{
@@ -21,7 +21,7 @@ production_frontiers_chart(
 
 \item{y_field}{TODO}
 
-\item{target_field}{TODO}
+\item{constraint_field}{TODO}
 }
 \value{
 TODO
