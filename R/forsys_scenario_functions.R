@@ -63,7 +63,7 @@ write_save_file <- function(
     scenario_write_tags = NULL
   ) {
 
-	vector_names = c(
+  vector_names = c(
     'config_file',
     'scenario_name',
     'scenario_stand_filename',
@@ -95,56 +95,56 @@ write_save_file <- function(
     'fire_dynamic_forsys',
     'fire_random_projects',
     'scenario_write_tags'
-		)
+    )
 
-	vector_data <- vector(mode='list', length=length(vector_names))
-	names(vector_data) <- vector_names
+  vector_data <- vector(mode='list', length=length(vector_names))
+  names(vector_data) <- vector_names
 
-	vector_data$config_file = config_file
-	vector_data$scenario_name = scenario_name
-	vector_data$scenario_stand_filename = scenario_stand_filename
-	vector_data$stand_id_field = stand_id_field
-	vector_data$stand_pcp_spm = stand_pcp_spm
-	vector_data$stand_filter = stand_filter
-	vector_data$scenario_priorities = scenario_priorities
-	vector_data$use_global_threshold = use_global_threshold
-	vector_data$global_threshold_field = global_threshold_field
-	vector_data$global_threshold_op = global_threshold_op
-	vector_data$global_threshold_value = global_threshold_value
-	vector_data$proj_threshold_field = proj_threshold_field
-	vector_data$proj_threshold_op = proj_threshold_op
-	vector_data$proj_threshold_value = proj_threshold_value
-	vector_data$proj_id = proj_id
-	vector_data$proj_thresholds = proj_thresholds
-	vector_data$proj_fixed_target = proj_fixed_target
-	vector_data$proj_target_field = proj_target_field
-	vector_data$proj_target_value = proj_target_value
-	vector_data$scenario_weighting_values = scenario_weighting_values
-	vector_data$scenario_output_fields = scenario_output_fields
-	vector_data$scenario_output_grouping_fields = scenario_output_grouping_fields
-	vector_data$overwrite_output = overwrite_output
-	vector_data$run_with_shiny = run_with_shiny
-	vector_data$fire_intersect_table = fire_intersect_table
-	vector_data$fire_planning_years = fire_planning_years
-	vector_data$fire_annual_target_field = fire_annual_target_field
-	vector_data$fire_annual_target = fire_annual_target
-	vector_data$fire_dynamic_forsys = fire_dynamic_forsys
-	vector_data$fire_random_projects = fire_random_projects
-	vector_data$scenario_write_tags = scenario_write_tags
+  vector_data$config_file = config_file
+  vector_data$scenario_name = scenario_name
+  vector_data$scenario_stand_filename = scenario_stand_filename
+  vector_data$stand_id_field = stand_id_field
+  vector_data$stand_pcp_spm = stand_pcp_spm
+  vector_data$stand_filter = stand_filter
+  vector_data$scenario_priorities = scenario_priorities
+  vector_data$use_global_threshold = use_global_threshold
+  vector_data$global_threshold_field = global_threshold_field
+  vector_data$global_threshold_op = global_threshold_op
+  vector_data$global_threshold_value = global_threshold_value
+  vector_data$proj_threshold_field = proj_threshold_field
+  vector_data$proj_threshold_op = proj_threshold_op
+  vector_data$proj_threshold_value = proj_threshold_value
+  vector_data$proj_id = proj_id
+  vector_data$proj_thresholds = proj_thresholds
+  vector_data$proj_fixed_target = proj_fixed_target
+  vector_data$proj_target_field = proj_target_field
+  vector_data$proj_target_value = proj_target_value
+  vector_data$scenario_weighting_values = scenario_weighting_values
+  vector_data$scenario_output_fields = scenario_output_fields
+  vector_data$scenario_output_grouping_fields = scenario_output_grouping_fields
+  vector_data$overwrite_output = overwrite_output
+  vector_data$run_with_shiny = run_with_shiny
+  vector_data$fire_intersect_table = fire_intersect_table
+  vector_data$fire_planning_years = fire_planning_years
+  vector_data$fire_annual_target_field = fire_annual_target_field
+  vector_data$fire_annual_target = fire_annual_target
+  vector_data$fire_dynamic_forsys = fire_dynamic_forsys
+  vector_data$fire_random_projects = fire_random_projects
+  vector_data$scenario_write_tags = scenario_write_tags
 
-	json_data <- jsonlite::toJSON(vector_data, pretty = TRUE)
-	print(json_data)
+  json_data <- jsonlite::toJSON(vector_data, pretty = TRUE)
+  print(json_data)
 
-	output_file_name <- paste0('configs/', scenario_name, '.json')
+  output_file_name <- paste0('configs/', scenario_name, '.json')
 
-	if (!dir.exists(file.path(getwd(), 'configs'))) {
-	  print(paste0('Making output directory: ', file.path(getwd(), 'configs')))
-	  dir.create(file.path(getwd(), "configs"))
-	}
+  if (!dir.exists(file.path(getwd(), 'configs'))) {
+    print(paste0('Making output directory: ', file.path(getwd(), 'configs')))
+    dir.create(file.path(getwd(), "configs"))
+  }
 
-	writeLines(json_data, output_file_name)
+  writeLines(json_data, output_file_name)
 
-	return(vector_data)
+  return(vector_data)
 
 }
 
@@ -158,7 +158,7 @@ write_save_file <- function(
 #'
 write_save_file_helper <- function(input, data_path) {
 
-	weight_values <- forsys::weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
+  weight_values <- forsys::weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
 
   if (input$use_au) {
     nesting = TRUE
@@ -174,46 +174,46 @@ write_save_file_helper <- function(input, data_path) {
     au_target_multiplier = 1.0
   }
 
-	stand_filter <- NULL
-	project_filter <- parse_thresholds(input$proj_threshold_field, input$proj_threshold_op, input$proj_threshold_value)
+  stand_filter <- NULL
+  project_filter <- parse_thresholds(input$proj_threshold_field, input$proj_threshold_op, input$proj_threshold_value)
 
-	# WIP: alternative specification for writing scenairo configo to JSON
-	# vector_data <- NULL
-	# for(i in 1:length(names(input))){
-	#   print(i)
-	#   nm = names(input)[i]
-	#   val = input[[nm]]
-	#   vector_data[[i]] <- ifelse(is.null(val), NULL, val)
-	#   names(vector_data)[[i]] <- nm
-	# }
-	# json_data <- jsonlite::toJSON(vector_data, pretty = TRUE)
+  # WIP: alternative specification for writing scenairo configo to JSON
+  # vector_data <- NULL
+  # for(i in 1:length(names(input))){
+  #   print(i)
+  #   nm = names(input)[i]
+  #   val = input[[nm]]
+  #   vector_data[[i]] <- ifelse(is.null(val), NULL, val)
+  #   names(vector_data)[[i]] <- nm
+  # }
+  # json_data <- jsonlite::toJSON(vector_data, pretty = TRUE)
 
   json <- write_save_file(
-  	scenario_name = input$scenario_name,
-  	scenario_stand_filename = data_path,
-  	scenario_priorities = input$priorities_fields,
-  	scenario_weighting_values = weight_values,
-  	scenario_output_fields = input$outputs_select,
-  	scenario_output_grouping_fields = input$output_grouping_fields,
-  	stand_id_field = input$stand_id_field,
-  	stand_pcp_spm = input$priorities_fields,
-  	stand_filter = stand_filter,
-  	use_global_threshold = input$use_global_threshold,
-  	global_threshold_field = input$global_threshold_field,
-  	global_threshold_op = input$global_threshold_op,
-  	global_threshold_value = input$global_threshold_value,
-  	proj_threshold_field = input$proj_threshold_field,
-  	proj_threshold_op = input$proj_threshold_op,
-  	proj_threshold_value = input$proj_threshold_value,
-  	proj_id = input$planning_unit_id_field,
-  	proj_thresholds = input$project_filter,
-  	proj_fixed_target = FALSE,
-  	proj_target_field = input$proj_target_field,
-  	proj_target_value = input$proj_target_value,
-  	# proj_fixed_target_value = input$proj_fixed_target_value,
-  	# proj_variable_target_multiplier = input$proj_variable_target_multiplier,
-  	overwrite_output = input$overwrite_output_chk,
-  	run_with_shiny = TRUE
+    scenario_name = input$scenario_name,
+    scenario_stand_filename = data_path,
+    scenario_priorities = input$priorities_fields,
+    scenario_weighting_values = weight_values,
+    scenario_output_fields = input$outputs_select,
+    scenario_output_grouping_fields = input$output_grouping_fields,
+    stand_id_field = input$stand_id_field,
+    stand_pcp_spm = input$priorities_fields,
+    stand_filter = stand_filter,
+    use_global_threshold = input$use_global_threshold,
+    global_threshold_field = input$global_threshold_field,
+    global_threshold_op = input$global_threshold_op,
+    global_threshold_value = input$global_threshold_value,
+    proj_threshold_field = input$proj_threshold_field,
+    proj_threshold_op = input$proj_threshold_op,
+    proj_threshold_value = input$proj_threshold_value,
+    proj_id = input$planning_unit_id_field,
+    proj_thresholds = input$project_filter,
+    proj_fixed_target = FALSE,
+    proj_target_field = input$proj_target_field,
+    proj_target_value = input$proj_target_value,
+    # proj_fixed_target_value = input$proj_fixed_target_value,
+    # proj_variable_target_multiplier = input$proj_variable_target_multiplier,
+    overwrite_output = input$overwrite_output_chk,
+    run_with_shiny = TRUE
   )
 }
 
@@ -225,11 +225,11 @@ write_save_file_helper <- function(input, data_path) {
 #'
 read_save_file <- function(filename = '') {
 
-	# TODO check if file exists
-	# print(filename)
+  # TODO check if file exists
+  # print(filename)
 
-	json_data = readLines(filename)
-	json_data = jsonlite::fromJSON(json_data)
+  json_data = readLines(filename)
+  json_data = jsonlite::fromJSON(json_data)
 }
 
 #' List json files in the configs folder, if it exists.
@@ -238,9 +238,9 @@ read_save_file <- function(filename = '') {
 #' @export
 #'
 list_scenarios <- function() {
-	if (dir.exists(file.path(getwd(), 'configs'))) {
-		output_files <- sapply(list.files('configs'), function(x) paste0('configs/', x))
-	}
+  if (dir.exists(file.path(getwd(), 'configs'))) {
+    output_files <- sapply(list.files('configs'), function(x) paste0('configs/', x))
+  }
 }
 
 write_config_file <- function(...) {
