@@ -207,12 +207,13 @@ attainment_chart_by_target_treated <- function(results_data, priority, constrain
 
   p <- g_long %>%
       ggplot2::ggplot() %>%
-      + ggplot2::geom_line(mapping=ggplot2::aes(x = x, y = value, color = pcp)) %>%
+      + ggplot2::geom_line(mapping=ggplot2::aes(x = x, y = value, color = pcp), size=2) %>%
       + ggplot2::labs(title="Attainment By Priority", x = constraint_field) %>%
       + ggplot2::theme_set(ggplot2::theme_classic())
 
   return(p)
 }
+
 
 #' TODO
 #'
@@ -226,7 +227,12 @@ attainment_chart_by_target_treated <- function(results_data, priority, constrain
 #' @importFrom dplyr %>%
 #'
 #' @export
-production_frontiers_chart <- function(results_data, proj_field, x_field, y_field, constraint_field) {
+tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field, constraint_field) {
+
+  x_field = priority_etrt_pcp_name(x_field)
+  y_field = priority_etrt_pcp_name(y_field)
+  constraint_field = priority_etrt_pcp_name(constraint_field)
+
   # First, find the top PA_IDs in terms of target performance
   # Right now it's set to top 10, maybe make this dynamic?
   dat <- results_data %>%
@@ -246,7 +252,7 @@ production_frontiers_chart <- function(results_data, proj_field, x_field, y_fiel
     ggplot2::scale_color_manual(values = safe_colorblind_palette) +
     directlabels::geom_dl(ggplot2::aes(label = factor(proj_field)), method = list(directlabels::dl.combine("first.points", "last.points")), cex = 0.8) + 
     ggplot2::scale_x_continuous(expand=c(0, .1)) +
-    ggplot2::labs(title="Tradeoff Analysis", x = x_field, y = y_field, color = "PA_ID")
+    ggplot2::labs(title="Tradeoff Analysis", x = x_field, y = y_field, color = proj_field)
 }
 
 #' TODO
