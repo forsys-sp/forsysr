@@ -156,7 +156,6 @@ attainment_data_filter <- function(results_data, priority, constraint_field, sec
   } 
 
   # Sort on treatment rank JUST IN CASE it got out of order somewhere, then append the x and y columns
-  # TODO This needs to be tested in the context of a function call. {} seem to be finicky when called externally.
   g <- results_data %>%
         dplyr::arrange(.data[["treatment_rank"]]) %>%
         dplyr::mutate(x = cumsum(.data[[constraint_pcp_field]])) %>%
@@ -164,13 +163,38 @@ attainment_data_filter <- function(results_data, priority, constraint_field, sec
         dplyr::mutate(across(secondary_fields, cumsum, .names = "y_{.col}"))
 }
 
+#' Get a list of 'y' columns, calculated in attainment_data_filter, which show cumulative attainment in terms of PCP
+#'
+#' @param results_data The results data frame
+#' @return List of attainment columns
+#'
+#' @importFrom dplyr %>%
+#'
+attainment_data_format <- function(results_data) {
+  foi <- c('treatment_rank', 'x', list_attainment_targets(results_data))
+  data <- results_data[, foi]
+  data_long <- data %>% tidyr::gather(pcp, value, -c(treatment_rank, x))
+}
+
+#' Get a list of 'y' columns, calculated in attainment_data_filter, which show cumulative attainment in terms of PCP
+#'
+#' @param results_data The results data frame
+#' @return List of attainment columns
+#'
+#' @importFrom dplyr %>%
+#'
+list_attainment_targets <- function(results_data) {
+  targets <- results_data %>%
+              colnames() %>%
+              purrr::keep(function(x) {stringr::str_detect(x, "y_")})
+}
 
 #' TODO
 #'
 #' @param results_data The results data frame
-#' @param pcp_fields PCPs to chart, will be the Y axis values. 
-#' @param constraint_field Field used to constrain simulation. Usually some form of area.
-#' @param priority The weight of priority to select. Different combinations of weights result in different outcomes
+#' @param priority The NAME of the main priority. This will be the filter for weight, and will add ETrt_*_PCP to access the value field
+#' @param constraint_field Field used to constrain simulation. Usually some form of area. 
+#' @param secondary_effects (optional) Any other NAMES to select. It will automatically add ETrt_*_PCP to the names
 #' @return TODO
 #'
 #' @importFrom dplyr %>%
@@ -179,25 +203,13 @@ attainment_data_filter <- function(results_data, priority, constraint_field, sec
 attainment_chart_by_target_treated <- function(results_data, priority, constraint_field, secondary_effects=c()) {
   
   g <- attainment_data_filter(results_data, priority, constraint_field, secondary_effects)
+  g_long <- attainment_data_format(g)
 
-  p <- g %>%
+  p <- g_long %>%
       ggplot2::ggplot() %>%
-      + ggplot2::geom_line(mapping=ggplot2::aes(x = x, y = y)) %>%
-      + ggplot2::labs(title="Attainment By Priority", x = constraint_field, y = pcp_field) # %>%
-      # + ggplot2::theme_set(ggplot2::theme_classic())
-
-  if (length(pcp_fields) > 1) {
-    for (p in 2:length(pcp_fields)) {
-      pcp_field <- pcp_fields[p]
-      print(paste("field:", pcp_field))
-      q <- results_data %>%
-        dplyr::filter(.data[[priority_name]] == priority) %>%
-        dplyr::mutate(x = cumsum(.data[[constraint_field]])) %>%
-        dplyr::mutate(y = cumsum(.data[[pcp_field]]))
-      print(q)
-      p <- p + ggplot2::geom_line(data=q, mapping=ggplot2::aes(y = y))
-    }
-  }
+      + ggplot2::geom_line(mapping=ggplot2::aes(x = x, y = value, color = pcp)) %>%
+      + ggplot2::labs(title="Attainment By Priority", x = constraint_field) %>%
+      + ggplot2::theme_set(ggplot2::theme_classic())
 
   return(p)
 }
