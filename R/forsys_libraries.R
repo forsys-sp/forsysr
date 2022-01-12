@@ -13,6 +13,7 @@ pacman::p_load(
   rgdal,
   rgeos,          # ?
   roxygen2,       # documentation
+  scales, 
   sp,             # ? do we use
   sf,
   tidyverse

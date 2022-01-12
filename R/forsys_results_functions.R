@@ -140,7 +140,8 @@ attainment_data_filter <- function(results_data, priority, constraint_field, sec
   # If there are secondary effects, also get their ETrt_*_PCP names
   secondary_fields <- lapply(secondary_effects, priority_etrt_pcp_name) %>% unlist()
   # Lastly get the ETrt_*_PCP name for the constraint. Note it might come in ok already, but this guarantees it
-  constraint_pcp_field = priority_etrt_pcp_name(constraint_field)
+  # constraint_pcp_field = priority_etrt_pcp_name(constraint_field)
+  constraint_pcp_field = paste0("ETrt_", constraint_field)
 
   # Get the "Pr" field corresponding to the selected priority
   priority_weight_field <- priority_column_name(results_data, priority)
@@ -207,9 +208,49 @@ attainment_chart_by_target_treated <- function(results_data, priority, constrain
 
   p <- g_long %>%
       ggplot2::ggplot() %>%
-      + ggplot2::geom_line(mapping=ggplot2::aes(x = x, y = value, color = pcp), size=2) %>%
-      + ggplot2::labs(title="Attainment By Priority", x = constraint_field) %>%
-      + ggplot2::theme_set(ggplot2::theme_classic())
+      + ggplot2::aes(x = x, y = value, color = pcp) %>%
+      + ggplot2::geom_line(size = 2) %>%
+      + ggplot2::labs(title="Attainment By Priority", x = "Cumulative Area Treated", y = "PCP") %>%
+      + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
+      + ggplot2::scale_color_brewer(palette = "Dark2") %>%
+      + ggplot2::scale_x_continuous(labels = function(x) {format(x, scientific=FALSE)}) %>% 
+      + ggplot2::theme(axis.text.x = element_text(size = rel(1))) %>%
+      + ggplot2::theme(axis.title.x = element_text(size = rel(1.4))) %>%
+      + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
+      + ggplot2::theme(legend.title = element_text(size = rel(1.2))) %>%
+      + ggplot2::theme(plot.title = element_text(size = rel(2)))
+
+  return(p)
+}
+
+#' TODO
+#'
+#' @param results_data The results data frame
+#' @param priority The NAME of the main priority. This will be the filter for weight, and will add ETrt_*_PCP to access the value field
+#' @param constraint_field Field used to constrain simulation. Usually some form of area. 
+#' @param secondary_effects (optional) Any other NAMES to select. It will automatically add ETrt_*_PCP to the names
+#' @return TODO
+#'
+#' @importFrom dplyr %>%
+#'
+#' @export
+cumulative_attainment_chart <- function(results_data, priority, constraint_field, secondary_effects=c()) {
+  g <- attainment_data_filter(results_data, priority, constraint_field, secondary_effects)
+  g_long <- attainment_data_format(g)
+
+  p <- g_long %>%
+      ggplot2::ggplot() %>%
+      + ggplot2::aes(x = x, y = value, fill = pcp) %>% 
+      + ggplot2::geom_area(size = 2, alpha = 0.7) %>%
+      + ggplot2::labs(title="Cumulative Attainment By Priority", x = "Cumulative Area Treated", y = "PCP") %>%
+      + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
+      + ggplot2::scale_color_brewer(palette = "Dark2") %>%
+      + ggplot2::scale_x_continuous(labels = function(x) {format(x, scientific=FALSE)}) %>% 
+      + ggplot2::theme(axis.text.x = element_text(size = rel(1))) %>%
+      + ggplot2::theme(axis.title.x = element_text(size = rel(1.4))) %>%
+      + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
+      + ggplot2::theme(legend.title = element_text(size = rel(1.2))) %>%
+      + ggplot2::theme(plot.title = element_text(size = rel(2)))
 
   return(p)
 }
@@ -233,12 +274,14 @@ tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field, 
   y_field = priority_etrt_pcp_name(y_field)
   constraint_field = priority_etrt_pcp_name(constraint_field)
 
+  results_data['rank'] = results_data[x_field] * results_data[y_field]
+
   # First, find the top PA_IDs in terms of target performance
   # Right now it's set to top 10, maybe make this dynamic?
   dat <- results_data %>%
       dplyr::group_by_at(proj_field) %>%
-      dplyr::summarize(sum = sum(get(constraint_field))) %>%
-      dplyr::slice_max(n = 10, order_by = sum)
+      dplyr::summarize(sum = sum(get('rank'))) %>%
+      dplyr::slice_max(n = 8, order_by = sum)
 
   # print(dat)
 
@@ -246,13 +289,22 @@ tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field, 
   top_proj_ids <- results_data[results_data[[proj_field]] %in% dat[[proj_field]], ]
 
   # TODO make x scale dynamic (scale_x_continuous)
-  ggplot2::ggplot(top_proj_ids, ggplot2::aes(x = get(x_field), y = get(y_field), group = factor(proj_field), color = factor(proj_field))) +
-    ggplot2::geom_line() + 
-    ggplot2::theme_classic() + 
-    ggplot2::scale_color_manual(values = safe_colorblind_palette) +
-    directlabels::geom_dl(ggplot2::aes(label = factor(proj_field)), method = list(directlabels::dl.combine("first.points", "last.points")), cex = 0.8) + 
-    ggplot2::scale_x_continuous(expand=c(0, .1)) +
-    ggplot2::labs(title="Tradeoff Analysis", x = x_field, y = y_field, color = proj_field)
+  p <- top_proj_ids %>% 
+        ggplot2::ggplot() %>% 
+        + ggplot2::aes(x = get(x_field), y = get(y_field), group = factor(get(proj_field)), color = factor(get(proj_field))) %>%
+        + ggplot2::geom_line() %>%
+        + directlabels::geom_dl(ggplot2::aes(label = factor(get(proj_field))), method = list(directlabels::dl.combine("first.points", "last.points")), cex = 0.8) %>%
+        # ggplot2::scale_x_continuous(expand=c(0, .1)) +
+        + ggplot2::labs(title="Tradeoff Analysis", x = x_field, y = y_field, color = proj_field) %>%
+        + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
+        + ggplot2::scale_color_brewer(palette = "Dark2") %>%
+        + ggplot2::theme(axis.text.x = element_text(size = rel(1))) %>%
+        + ggplot2::theme(axis.title.x = element_text(size = rel(1.4))) %>%
+        + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
+        + ggplot2::theme(legend.title = element_text(size = rel(1.2))) %>%
+        + ggplot2::theme(plot.title = element_text(size = rel(2)))
+
+  return(p)
 }
 
 #' TODO

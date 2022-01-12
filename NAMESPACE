@@ -2,6 +2,7 @@
 
 export(attainment_chart_by_target_treated)
 export(attainment_data_filter)
+export(cumulative_attainment_chart)
 export(list_results_etrt_pcp_columns)
 export(list_results_pr_columns)
 export(list_scenarios)
