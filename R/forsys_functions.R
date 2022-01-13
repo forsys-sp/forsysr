@@ -286,7 +286,6 @@ set_up_priorities_helper <- function(stands, i, weight, priority) {
 }
 
 set_up_priorities <- function(stands, w, priorities, weights) {
-
   for (i in 1:ncol(weights)) {
     curr_weight = weights[[i]][w]
     curr_priority = priorities[[i]][1]

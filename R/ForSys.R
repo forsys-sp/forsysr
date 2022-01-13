@@ -148,7 +148,8 @@ run <- function(
       stands_prioritized <- stands %>%
         set_up_treatment_types() %>%
         set_up_priorities(w = w,
-                          priorities = scenario_priorities,
+                          # priorities = scenario_priorities,
+                          priorities = paste0(scenario_priorities, '_SPM'),
                           weights = weights)
 
       stands_available <- stands_prioritized
