@@ -103,7 +103,8 @@ run <- function(
     } else {
       if (run_with_shiny) {
         message(paste0("output directory, ", absolute_output_path, ", already exists"))
-        if (overwrite_output) list.files(absolute_output_path, full.names = T) %>% file.remove()
+        # if (overwrite_output) list.files(absolute_output_path, full.names = T) %>% file.remove()
+        list.files(absolute_output_path, full.names = T) %>% file.remove()
       } else {
         message(paste0("output directory, ", absolute_output_path, ", already exists"))
       }
@@ -123,10 +124,6 @@ run <- function(
       calculate_spm_pcp(fields = stand_pcp_spm) %>%
       calculate_spm_pcp(fields = scenario_output_fields)
 
-    # create objects for tracking treated and burnt stands
-    stands_treated <- NULL
-    stands_burned <- NULL
-
     # specify thresholds
     threshold_dat <- make_thresholds(thresholds = proj_thresholds)
 
@@ -134,15 +131,16 @@ run <- function(
     weights <- weight_priorities(numPriorities = length(scenario_priorities),
                                  weights = scenario_weighting_values[1])
 
-
     # Run selection code for each set of weights
     for (w in 1:nrow(weights)) { # START WEIGHT LOOP
 
       ## Step 0: create the weighted priorities.
-
       message(paste0("\n---------------\nWeighting scenario ",  w, " of ", nrow(weights),
-                     "\nWeights: ", paste0(weights[w,], collapse = '-'),
-                     "\n---------------"))
+                     ": ", paste0(weights[w,], collapse = '-')))
+
+      # create objects for tracking treated and burnt stands
+      stands_treated <- NULL
+      stands_burned <- NULL
 
       # prep stand data
       stands_prioritized <- stands %>%
@@ -269,9 +267,8 @@ run <- function(
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       # tag stands with specific scenario attributes
-      stands_selected_out <- stands_treated %>% 
-                              dplyr::select(!!stand_id_field, !!proj_id, ETrt_YR) 
-
+      stands_selected_out <- stands_treated %>%
+                              dplyr::select(!!stand_id_field, !!proj_id, ETrt_YR)
 
       if(!is.null(fire_intersect_table))
         stands_selected_out <- stands_selected_out %>%
