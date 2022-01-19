@@ -4,7 +4,91 @@
 \alias{write_save_file}
 \title{Write a json config file with the user's selected parameters}
 \usage{
-write_save_file(...)
+write_save_file(
+  config_file = "",
+  scenario_name = "",
+  scenario_stand_filename = "",
+  stand_id_field = "",
+  stand_pcp_spm = NULL,
+  stand_filter = "",
+  use_global_threshold = NULL,
+  global_threshold_field = NULL,
+  global_threshold_op = NULL,
+  global_threshold_value = NULL,
+  proj_threshold_field = NULL,
+  proj_threshold_op = NULL,
+  proj_threshold_value = NULL,
+  scenario_priorities = NULL,
+  proj_id = "",
+  proj_thresholds = NULL,
+  proj_fixed_target = FALSE,
+  proj_target_field = "",
+  proj_target_value = NULL,
+  scenario_weighting_values = NULL,
+  scenario_output_fields = NULL,
+  scenario_output_grouping_fields = NULL,
+  overwrite_output = TRUE,
+  run_with_shiny = FALSE,
+  fire_intersect_table = NULL,
+  fire_planning_years = 1,
+  fire_annual_target_field = NULL,
+  fire_annual_target = NA,
+  fire_dynamic_forsys = FALSE,
+  fire_random_projects = FALSE,
+  scenario_write_tags = NULL
+)
+}
+\arguments{
+\item{config_file}{Relative path to a config file that defines needed parameters}
+
+\item{scenario_name}{A name for this scenario}
+
+\item{scenario_stand_filename}{Path to the input dataset}
+
+\item{stand_id_field}{The field in the scenario_stand_filename which is a unique ID for each stand}
+
+\item{stand_pcp_spm}{PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.}
+
+\item{global_threshold_field}{The land base is the area that is used to calculate the PCP and SPM values.
+It is currently a single, binary variable that must be computed prior to running the ForSysR script.
+A blank field means all lands are included in the calculation.}
+
+\item{scenario_priorities}{Priorities are named here. If only one priority exists, only a weight of one will be used.}
+
+\item{proj_id}{The field in the scenario_stand_filename that indicates which project or planning area a stand belongs to}
+
+\item{proj_thresholds}{TODO}
+
+\item{proj_fixed_target}{TODO}
+
+\item{proj_target_field}{TODO}
+
+\item{proj_target_value}{TODO}
+
+\item{scenario_weighting_values}{Defines the weights and integer steps between weights. The values are for min, max, and step.}
+
+\item{scenario_output_fields}{This should include the desired fields for the planning area treatment files. Planning area id,
+priority weights and treatment rank are added automatically.}
+
+\item{scenario_output_grouping_fields}{Include the smaller and larger groups here for grouping of treated stands.}
+
+\item{overwrite_output}{Overwrite any existing output of the same name?}
+
+\item{run_with_shiny}{Sets some output business for better shiny interaction}
+
+\item{fire_intersect_table}{TOTO}
+
+\item{fire_planning_years}{= TODO}
+
+\item{fire_annual_target_field}{TODO}
+
+\item{fire_annual_target}{TODO}
+
+\item{fire_dynamic_forsys}{TODO}
+
+\item{fire_random_projects}{TODO}
+
+\item{scenario_write_tags}{TODO}
 }
 \description{
 Write a json config file with the user's selected parameters

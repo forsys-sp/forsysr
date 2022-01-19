@@ -5,6 +5,7 @@ pacman::p_load(
   directlabels,   # geom_dl
   dplyr,
   doParallel,     # Patchmax
+  extRemes,
   foreign,        # DBF
   gtools,         # permutation
   jsonlite,       # Config files
@@ -12,6 +13,7 @@ pacman::p_load(
   rgdal,
   rgeos,          # ?
   roxygen2,       # documentation
+  scales, 
   sp,             # ? do we use
   sf,
   tidyverse

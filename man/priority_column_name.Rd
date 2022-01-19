@@ -7,7 +7,7 @@
 priority_column_name(results_data, priority)
 }
 \arguments{
-\item{results_data}{TODO}
+\item{results_data}{The results data frame}
 
 \item{priority}{TODO}
 }
