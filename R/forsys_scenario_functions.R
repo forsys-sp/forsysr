@@ -207,7 +207,7 @@ write_save_file_helper <- function(input, data_path) {
     proj_threshold_value = input$proj_threshold_value,
     proj_id = input$planning_unit_id_field,
     proj_thresholds = input$project_filter,
-    proj_fixed_target = FALSE,
+    proj_fixed_target = input$proj_fixed_target,
     proj_target_field = input$proj_target_field,
     proj_target_value = input$proj_target_value,
     # proj_fixed_target_value = input$proj_fixed_target_value,
