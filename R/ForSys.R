@@ -280,8 +280,12 @@ run <- function(
 
       stands_selected_out <- stands_selected_out %>%
         dplyr::bind_cols(scenario_write_tags)
+
       stands_selected_out <- stands_selected_out %>%
         dplyr::left_join(stands_prioritized %>% dplyr::select(!!stand_id_field, scenario_output_fields), by = stand_id_field)
+
+      # assign weight scenario values to stand out out
+      stands_selected_out[,paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[w,]
 
       if (length(scenario_write_tags_txt) > 1) {
         stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', scenario_write_tags_txt, ".csv")
@@ -289,7 +293,7 @@ run <- function(
         stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, ".csv")
       }
 
-      data.table::fwrite(stands_selected_out, stand_fn, row.names = FALSE)
+      data.table::fwrite(stands_selected_out, stand_fn, row.names = FALSE, append = TRUE)
 
       # ........................................
       # write project to file ..................
@@ -322,7 +326,8 @@ run <- function(
         dplyr::mutate(treatment_rank = ifelse(weightedPriority > 0, 1:dplyr::n(), NA))
 
       # tag project with specific scenario attributes
-      projects_selected_out <- projects_selected_out %>% dplyr::bind_cols(scenario_write_tags)
+      projects_selected_out <- projects_selected_out %>%
+        dplyr::bind_cols(scenario_write_tags)
 
       # assign weight scenario values to project out
       projects_selected_out[,paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[w,]
