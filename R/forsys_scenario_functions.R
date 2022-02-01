@@ -160,19 +160,25 @@ write_save_file_helper <- function(input, data_path) {
 
   weight_values <- forsys::weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
 
-  if (input$use_au) {
-    nesting = TRUE
-    nesting_group_by = input$au_id_field
-    nesting_target = input$au_target_field
-    nesting_unit = input$au_unit_field
-    au_target_multiplier = input$au_target_multiplier
-  } else {
-    nesting = FALSE
-    nesting_group_by = NULL
-    nesting_target = NULL
-    nesting_unit = NULL
-    au_target_multiplier = 1.0
-  }
+  # if (input$use_au) {
+  #   nesting = TRUE
+  #   nesting_group_by = input$au_id_field
+  #   nesting_target = input$au_target_field
+  #   nesting_unit = input$au_unit_field
+  #   au_target_multiplier = input$au_target_multiplier
+  # } else {
+  #   nesting = FALSE
+  #   nesting_group_by = NULL
+  #   nesting_target = NULL
+  #   nesting_unit = NULL
+  #   au_target_multiplier = 1.0
+  # }
+
+  nesting = FALSE
+  nesting_group_by = NULL
+  nesting_target = NULL
+  nesting_unit = NULL
+  au_target_multiplier = 1.0
 
   stand_filter <- NULL
   project_filter <- parse_thresholds(input$proj_threshold_field, input$proj_threshold_op, input$proj_threshold_value)
