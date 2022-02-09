@@ -162,6 +162,28 @@ run <- function(
 
         if (fire_planning_years > 1) message(paste('\nYear', yr, '\n---------------'))
 
+        # TODO switch for using PatchMax to build projects. 1) build projects
+        # until annual target is reached. 2) compile project statistics based on
+        # selected stands (basically sum weightingValue and scenario output
+        # fields), 3) repeat in subsequent year. Of these, only 1 is unique to
+        # patchMax, which would be run instead of apply_treatment.
+
+        # TODO run patchmax function using following arguments
+        # simulate_projects(
+        # St_id: stand id vector;
+        # St_adj = adjacency object;
+        # St_area = stand area vector;
+        # St_objective = stand objective to maximize;
+        # St_threshold = stand threshold vector;
+        # St_threshold_value = minimum (?) threshold value;
+        # P_constraint = project constraint vector;
+        # P_constraint_max_value = maximum constraint (including Inf);
+        # P_constraint_min_value = minimum project constraint;
+        # P_size = project area target;
+        # P_size_slack = slack (as percent in achieving project target);
+        # P_number = number of projects to build;
+        # Candidate_min_size = minimize sized project considered)
+
         # select stands from project areas until target reached while filtering by threshold
         stands_selected <- stands_available %>%
           apply_treatment(
