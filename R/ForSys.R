@@ -274,6 +274,11 @@ run <- function(
         stands_selected_out <- stands_selected_out %>%
           dplyr::left_join(fires %>% dplyr::select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field)
 
+
+      # update project output fields to include all PCP fields if present
+      pcp_fields <- dplyr::select(stands, matches('_PCP$')) %>% names()
+      scenario_output_fields <- c(scenario_output_fields, pcp_fields)
+
       # ........................................
       # write stands to file ...................
       # ........................................
@@ -298,10 +303,6 @@ run <- function(
       # ........................................
       # write project to file ..................
       # ........................................
-
-      # update project output fields to include all PCP fields if present
-      pcp_fields <- dplyr::select(stands, matches('_PCP$')) %>% names()
-      scenario_output_fields <- c(scenario_output_fields, pcp_fields)
 
       # group *selected* stands by project
       projects_etrt_out <- stands_selected_out %>%
