@@ -9,35 +9,48 @@
 
 
 
-#' Run the ForSys treatment planner. Either provide parameters, or define parameters
-#' in a config file and pass the name of the file to this run function.
+#' Run the ForSys treatment planner. Either provide parameters, or define
+#' parameters in a config file and pass the name of the file to this run
+#' function.
 #'
-#' @param config_file Relative path to a config file that defines needed parameters
+#' @param config_file Relative path to a config file that defines needed
+#'   parameters
 #' @param scenario_name A name for this scenario
 #' @param scenario_stand_filename Path to the input dataset
-#' @param stand_id_field The field in the scenario_stand_filename which is a unique ID for each stand
-#' @param stand_pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
-#' @param stand_filter The land base is the area that is used to calculate the PCP and SPM values.
-#'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
-#'                  A blank field means all lands are included in the calculation.
-#' @param scenario_priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
-#' @param proj_id The field in the scenario_stand_filename that indicates which project or planning area a stand belongs to
+#' @param stand_id_field The field in the scenario_stand_filename which is a
+#'   unique ID for each stand
+#' @param stand_area_field Field containing stand area
+#' @param stand_pcp_spm PCP and SPM values will be calculated for these
+#'   variables. This should include the priorities and any value outputs.
+#' @param stand_filter The land base is the area that is used to calculate the
+#'   PCP and SPM values. It is currently a single, binary variable that must be
+#'   computed prior to running the ForSysR script. A blank field means all lands
+#'   are included in the calculation.
+#' @param scenario_priorities Priorities are named here. If only one priority
+#'   exists, only a weight of one will be used.
+#' @param proj_id The field in the scenario_stand_filename that indicates which
+#'   project or planning area a stand belongs to
 #' @param proj_thresholds TODO
 #' @param proj_fixed_target TODO
 #' @param proj_target_field TODO
 #' @param proj_target_value TODO
-#' @param scenario_weighting_values Defines the weights and integer steps between weights. The values are for min, max, and step.
-#' @param scenario_output_fields This should include the desired fields for the planning area treatment files. Planning area id,
-#'                      priority weights and treatment rank are added automatically.
-#' @param scenario_output_grouping_fields Include the smaller and larger groups here for grouping of treated stands.
+#' @param scenario_weighting_values Defines the weights and integer steps
+#'   between weights. The values are for min, max, and step.
+#' @param scenario_output_fields This should include the desired fields for the
+#'   planning area treatment files. Planning area id, priority weights and
+#'   treatment rank are added automatically.
+#' @param scenario_output_grouping_fields Include the smaller and larger groups
+#'   here for grouping of treated stands.
 #' @param overwrite_output Overwrite any existing output of the same name?
 #' @param run_with_shiny Sets some output business for better shiny interaction
 #' @param fire_intersect_table TOTO
 #' @param fire_planning_years = TODO
 #' @param fire_annual_target_field TODO
 #' @param fire_annual_target TODO
-#' @param fire_dynamic_forsys logical. Prevent burnt stands from being selected if TRUE
-#' @param fire_random_projects logical. Randomly shuffle project prioritization if TRUE
+#' @param fire_dynamic_forsys logical. Prevent burnt stands from being selected
+#'   if TRUE
+#' @param fire_random_projects logical. Randomly shuffle project prioritization
+#'   if TRUE
 #' @param scenario_write_tags TODO
 #'
 #' @return
@@ -51,6 +64,7 @@ run <- function(
     num_reps = 1,
     scenario_stand_filename = '',
     stand_id_field = '',
+    stand_area_field = NULL,
     stand_pcp_spm = NULL,
     stand_filter = NULL,
     scenario_priorities = NULL,
@@ -63,15 +77,27 @@ run <- function(
     scenario_output_fields = NULL,
     scenario_output_grouping_fields = NULL,
     overwrite_output = TRUE,
+    # module toggles
     run_with_shiny = FALSE,
+    run_with_patchmax = FALSE,
+    run_with_fire = FALSE,
+    # fire arguments
     fire_intersect_table = NULL,
     fire_planning_years = 1,
     fire_annual_target_field = NULL,
     fire_annual_target = NA,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
+    # patchmax arguments
+    patchmax_stnd_adj = NULL, # NEW (REQ)
+    patchmax_proj_number = 1, # NEW (REQ)
+    patchmax_proj_size = Inf, # NEW (REQ)
+    patchmax_proj_size_slack  = NULL, # NEW (REQ)
+    patchmax_candidate_min_size = NULL, # NEW (OPT)
+    patchmax_sample_n = NULL, # NEW (OPT)
+    patchmax_sample_seed = NULL, # NEW (OPT)
+    # misc
     scenario_write_tags = NULL
-
     ) {
 
     # If a config file has been selected, source it to read in variables
@@ -162,27 +188,73 @@ run <- function(
 
         if (fire_planning_years > 1) message(paste('\nYear', yr, '\n---------------'))
 
-        # TODO switch for using PatchMax to build projects. 1) build projects
-        # until annual target is reached. 2) compile project statistics based on
-        # selected stands (basically sum weightingValue and scenario output
-        # fields), 3) repeat in subsequent year. Of these, only 1 is unique to
-        # patchMax, which would be run instead of apply_treatment.
+        # browser()
 
-        # TODO run patchmax function using following arguments
-        # simulate_projects(
-        # St_id: stand id vector;
-        # St_adj = adjacency object;
-        # St_area = stand area vector;
-        # St_objective = stand objective to maximize;
-        # St_threshold = stand threshold vector;
-        # St_threshold_value = minimum (?) threshold value;
-        # P_constraint = project constraint vector;
-        # P_constraint_max_value = maximum constraint (including Inf);
-        # P_constraint_min_value = minimum project constraint;
-        # P_size = project area target;
-        # P_size_slack = slack (as percent in achieving project target);
-        # P_number = number of projects to build;
-        # Candidate_min_size = minimize sized project considered)
+        if(patchmax){
+          # TODO switch for using PatchMax to build projects. 1) build projects
+          # until annual target is reached (NOTE: while statement needed). 2)
+          # compile project statistics based on selected stands (basically sum
+          # weightingValue and scenario output fields), 3) repeat in subsequent
+          # year. Of these, only 1 is unique to patchMax, which would be run
+          # instead of apply_treatment. The function simulate_projects has
+          # parameters for thresholds and constraints. The function assumes that
+          # the threshold must be exceeded, but allows for min and/or max values
+          # for the constraint. The function requires the project size to be
+          # declared as well, which is used as a maximal constraint.
+
+          patchmax_prep_constraint <- function(proj_target_field, proj_target_value){
+            out <- list(
+              P_constraint = stands_available %>% pull(proj_target_field),
+              P_constraint_min = NULL,
+              P_constraint_max = proj_target_value
+              )
+            return(out)
+          }
+
+          patchmax_prep_threshold <- function(threshold_dat){
+            x <- threshold_dat$threshold %>%
+              stringr::str_split('>=|<=|>|<|==', simplify = T)
+            out <- list(
+              St_threshold = x[1],
+              St_threshold_value = as.numeric(x[2])
+              )
+            return(out)
+          }
+
+          # create patchmax arguments using helper functions
+          patchmax_args <- c(
+            patchmax_prep_constraint(proj_target_field, proj_target_value),
+            patchmax_prep_threshold(threshold_dat)
+          )
+
+          # TODO needs to be pulled from forsys shiny
+          stand_area_field <- 'AREA_HA'
+
+          # TODO helper function to build adj network if not present
+          shp <- st_read('data/STF_forsystest/STF_hexnet_test.shp') %>% st_make_valid()
+          adj_object <- Patchmax::calculate_adj(shp, St_id = shp$CELL_ID)
+
+
+          # stands_selected <- Patchmax::simulate_projects(
+          stands_selected <- simulate_projects(
+            St_id = stands_available %>% pull(!!stand_id_field),
+            St_area = stands_available %>% pull(!!stand_area_field),
+            St_objective = stands_available %>% pull(weightedPriority),
+            St_adj = adj_object, #                      NEW (REQ)
+            P_size = Inf, #                       NEW (REQ)
+            P_size_slack  = NULL, #               NEW (REQ)
+            P_number = 1, #                    NEW (REQ)
+            St_threshold = patchmax_args$St_threshold,
+            St_threshold_value = patchmax_args$St_threshold_value,
+            P_constraint = patchmax_args$P_constraint,
+            P_constraint_min_value = 0, #          (OPT) target
+            P_constraint_max_value = patchmax_args$P_constraint_max,
+            Candidate_min_size = NULL, #          NEW (OPT)
+            Sample_n = 1000, #                    NEW (OPT)
+            Sample_seed = NULL #                  NEW (OPT)
+          )
+        }
+
 
         # select stands from project areas until target reached while filtering by threshold
         stands_selected <- stands_available %>%
