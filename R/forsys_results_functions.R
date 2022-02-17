@@ -214,10 +214,12 @@ attainment_chart_by_target_treated <- function(results_data, priority, constrain
       + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
       + ggplot2::scale_color_brewer(palette = "Dark2") %>%
       + ggplot2::scale_x_continuous(labels = function(x) {format(x, scientific=FALSE)}) %>% 
+      + ggplot2::theme(title = element_text(colour = "#F2F2F2")) %>%
       + ggplot2::theme(axis.text.x = element_text(size = rel(1))) %>%
       + ggplot2::theme(axis.title.x = element_text(size = rel(1.4))) %>%
       + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
       + ggplot2::theme(legend.title = element_text(size = rel(1.2))) %>%
+      + ggplot2::theme(legend.text = element_text(size = rel(1.2), colour = "#F2F2F2")) %>%
       + ggplot2::theme(plot.title = element_text(size = rel(2)))
 
   return(p)
@@ -246,10 +248,12 @@ cumulative_attainment_chart <- function(results_data, priority, constraint_field
       + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
       + ggplot2::scale_color_brewer(palette = "Dark2") %>%
       + ggplot2::scale_x_continuous(labels = function(x) {format(x, scientific=FALSE)}) %>% 
+      + ggplot2::theme(title = element_text(colour = "#F2F2F2")) %>%
       + ggplot2::theme(axis.text.x = element_text(size = rel(1))) %>%
       + ggplot2::theme(axis.title.x = element_text(size = rel(1.4))) %>%
       + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
       + ggplot2::theme(legend.title = element_text(size = rel(1.2))) %>%
+      + ggplot2::theme(legend.text = element_text(size = rel(1.2), colour = "#F2F2F2")) %>%
       + ggplot2::theme(plot.title = element_text(size = rel(2)))
 
   return(p)
@@ -298,10 +302,12 @@ tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field, 
         + ggplot2::labs(title="Tradeoff Analysis", x = x_field, y = y_field, color = proj_field) %>%
         + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
         + ggplot2::scale_color_brewer(palette = "Dark2") %>%
+        + ggplot2::theme(title = element_text(colour = "#F2F2F2")) %>%
         + ggplot2::theme(axis.text.x = element_text(size = rel(1))) %>%
         + ggplot2::theme(axis.title.x = element_text(size = rel(1.4))) %>%
         + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
         + ggplot2::theme(legend.title = element_text(size = rel(1.2))) %>%
+        + ggplot2::theme(legend.text = element_text(size = rel(1.2), colour = "#F2F2F2")) %>%
         + ggplot2::theme(plot.title = element_text(size = rel(2)))
 
   return(p)
