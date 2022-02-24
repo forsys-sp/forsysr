@@ -1,3 +1,63 @@
+library(R6)
+
+ForsysScenario <- R6::R6Class("ForsysScenario",
+  public = list(
+    #' @field config_file Relative path to a config file that defines needed
+    #' parameters
+    config_file = NULL,
+    #' @field scenario_name A name for this scenario
+    scenario_name = "",
+    #' @field num_reps TODO
+    num_reps = 1,
+    #' @field scenario_stand_filename Path to the input dataset
+    scenario_stand_filename = "",
+    #' @field stand_id_field The field in the scenario_stand_filename which
+    #' is a unique ID for each stand
+    stand_id_field = "",
+    #' @field stand_pcp_spm PCP and SPM values will be calculated for these
+    #' variables. This should include the priorities and any value outputs.
+    stand_pcp_spm = NULL,
+    #' @field stand_filter The land base is the area that is used to calculate
+    #' the PCP and SPM values. It is currently a single, binary variable that
+    #' must be computed prior to running the ForSysR script. A blank field
+    #' means all lands are included in the calculation.
+    stand_filter = NULL,
+    #' @field scenario_priorities Priorities are named here. If only one
+    #' priority exists, only a weight of one will be used.
+    scenario_priorities = NULL,
+    #' @field proj_id The field in the scenario_stand_filename that indicates
+    #' which project or planning area a stand belongs to
+    proj_id = "",
+    proj_thresholds = NULL,
+    proj_fixed_target = FALSE,
+    proj_target_field = "",
+    proj_target_value = NULL,
+    scenario_weighting_values = NULL,
+    scenario_output_fields = NULL,
+    scenario_output_grouping_fields = NULL,
+    overwrite_output = TRUE,
+    run_with_shiny = FALSE,
+    fire_intersect_table = NULL,
+    fire_planning_years = 1,
+    fire_annual_target_field = NULL,
+    fire_annual_target = NA,
+    fire_dynamic_forsys = FALSE,
+    fire_random_projects = FALSE,
+    scenario_write_tags = NULL,
+
+    initialize = function() {
+      self$load_message()
+    },
+
+    load_message = function() {
+      cat(paste0("ForsysScenario class created"))
+    }
+  )
+
+)
+
+
+
 #' Write a json config file with the user's selected parameters
 #'
 #' @param config_file Relative path to a config file that defines needed parameters
