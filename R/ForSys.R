@@ -61,8 +61,9 @@ run <- function(
     config_file = NULL,
     scenario_name = "",
     num_reps = 1,
-    scenario_stand_filename = "",
-    stand_id_field = "",
+    scenario_stand_filename = '',
+    shiny_data = '',
+    stand_id_field = '',
     stand_pcp_spm = NULL,
     stand_filter = NULL,
     scenario_priorities = NULL,
@@ -127,7 +128,14 @@ run <- function(
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # # # Load data
-    stands <- load_dataset(scenario_stand_filename)
+    if (!is.null(shiny_data)){
+      message("Forsys Shiny data detected.")
+      stands <- shiny_data
+    }else{
+      message("No Forsys Shiny data detected.")
+      stands <- load_dataset(scenario_stand_filename)
+    }
+
     if(!is.null(fire_intersect_table)) fires <- fire_intersect_table
 
     # Calculate SPM & PCP values ## TODO check add_target_field names after merge
