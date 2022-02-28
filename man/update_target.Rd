@@ -14,7 +14,8 @@ update_target(treated_stands, subunit, unit_area)
 \item{unit_area}{TODO}
 }
 \value{
-A table with the updated subunit targets for all planning areas that had treatments
+A table with the updated subunit targets for all planning areas that
+had treatments
 }
 \description{
 Update target area for treatment after each activity

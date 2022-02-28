@@ -2,14 +2,17 @@
 % Please edit documentation in R/forsys_functions.R
 \name{stand_flag}
 \alias{stand_flag}
-\title{Create a new field in a stand table that flags all stands that include a given set of criteria}
+\title{Create a new field in a stand table that flags all stands that include a
+given set of criteria}
 \usage{
 stand_flag(dt, filters, field)
 }
 \arguments{
-\item{dt}{A data table with all stand information necessary to determine availability for a specific treatment type.}
+\item{dt}{A data table with all stand information necessary to determine
+availability for a specific treatment type.}
 
-\item{filters}{A list of strings that are used to filter the stands for treatment availability.}
+\item{filters}{A list of strings that are used to filter the stands for
+treatment availability.}
 
 \item{field}{The name of a new field}
 }
@@ -17,5 +20,6 @@ stand_flag(dt, filters, field)
 The final data table with stands available for treatment.
 }
 \description{
-Create a new field in a stand table that flags all stands that include a given set of criteria
+Create a new field in a stand table that flags all stands that include a
+given set of criteria
 }

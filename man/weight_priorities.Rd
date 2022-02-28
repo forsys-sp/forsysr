@@ -4,15 +4,16 @@
 \alias{weight_priorities}
 \title{Weight priorities for selection}
 \usage{
-weight_priorities(numPriorities, weights = c("1 1 1"))
+weight_priorities(num_priorities, weights = c("1 1 1"))
 }
 \arguments{
-\item{numPriorities}{TODO}
-
 \item{weights}{TODO}
+
+\item{numPriorities}{TODO}
 }
 \value{
-A datatable with the weighted values for the priorities in the \code{priorityList}.
+A datatable with the weighted values for the priorities in the
+\code{priorityList}.
 }
 \description{
 Weight priorities for selection

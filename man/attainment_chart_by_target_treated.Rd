@@ -14,11 +14,14 @@ attainment_chart_by_target_treated(
 \arguments{
 \item{results_data}{The results data frame}
 
-\item{priority}{The NAME of the main priority. This will be the filter for weight, and will add ETrt_*_PCP to access the value field}
+\item{priority}{The NAME of the main priority. This will be the filter for
+weight, and will add ETrt_*_PCP to access the value field}
 
-\item{constraint_field}{Field used to constrain simulation. Usually some form of area.}
+\item{constraint_field}{Field used to constrain simulation. Usually some
+form of area.}
 
-\item{secondary_effects}{(optional) Any other NAMES to select. It will automatically add ETrt_*_PCP to the names}
+\item{secondary_effects}{(optional) Any other NAMES to select. It will
+automatically add ETrt_*_PCP to the names}
 }
 \value{
 TODO

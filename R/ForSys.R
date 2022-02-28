@@ -90,9 +90,9 @@ run <- function(
     # If a config file has been selected, source it to read in variables
     if (length(config_file) > 0) {
       # setwd(dirname(config_file))
-      if(stringr::str_detect(config_file, '[.]R$'))
+      if (stringr::str_detect(config_file, '[.]R$'))
         source(config_file, local = TRUE)
-      if(stringr::str_detect(config_file, '[.]json$'))
+      if (stringr::str_detect(config_file, '[.]json$'))
         load_json_config(config_file)
     }
 
@@ -112,7 +112,7 @@ run <- function(
       } else {
         message(paste0("Making output directory: ", absolute_output_path))
       }
-      dir.create(absolute_output_path, recursive=TRUE)
+      dir.create(absolute_output_path, recursive = TRUE)
     } else {
       if (run_with_shiny) {
         message(paste0("output directory, ", absolute_output_path, ", already exists"))
@@ -148,7 +148,7 @@ run <- function(
     threshold_dat <- make_thresholds(thresholds = proj_thresholds)
 
     # set up weighting scenarios
-    weights <- weight_priorities(numPriorities = length(scenario_priorities),
+    weights <- weight_priorities(num_priorities = length(scenario_priorities),
                                  weights = scenario_weighting_values[1])
 
     # Run selection code for each set of weights
