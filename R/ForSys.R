@@ -12,32 +12,45 @@
 #' Run the ForSys treatment planner. Either provide parameters, or define parameters
 #' in a config file and pass the name of the file to this run function.
 #'
-#' @param config_file Relative path to a config file that defines needed parameters
+#' @param shiny_data If data has already been loaded, pass the object here
+#' @param num_years TODO
+#' @param config_file Relative path to a config file that defines needed
+#' parameters
 #' @param scenario_name A name for this scenario
 #' @param scenario_stand_filename Path to the input dataset
-#' @param stand_id_field The field in the scenario_stand_filename which is a unique ID for each stand
-#' @param stand_pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
-#' @param stand_filter The land base is the area that is used to calculate the PCP and SPM values.
-#'                  It is currently a single, binary variable that must be computed prior to running the ForSysR script.
-#'                  A blank field means all lands are included in the calculation.
-#' @param scenario_priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
-#' @param proj_id The field in the scenario_stand_filename that indicates which project or planning area a stand belongs to
-#' @param proj_thresholds TODO
+#' @param stand_id_field The field in the scenario_stand_filename which is a
+#' unique ID for each stand
+#' @param stand_pcp_spm PCP and SPM values will be calculated for these
+#' variables. This should include the priorities and any value outputs.
+#' @param global_threshold The land base is the area that is used to calculate
+#' the PCP and SPM values. It is currently a single, binary variable that must
+#' be computed prior to running the ForSysR script. A blank field means all
+#' lands are included in the calculation.
+#' @param scenario_priorities Priorities are named here. If only one priority
+#' exists, only a weight of one will be used.
+#' @param proj_id The field in the scenario_stand_filename that indicates which
+#' project or planning area a stand belongs to
+#' @param stand_threshold TODO
 #' @param proj_fixed_target TODO
 #' @param proj_target_field TODO
 #' @param proj_target_value TODO
-#' @param scenario_weighting_values Defines the weights and integer steps between weights. The values are for min, max, and step.
-#' @param scenario_output_fields This should include the desired fields for the planning area treatment files. Planning area id,
-#'                      priority weights and treatment rank are added automatically.
-#' @param scenario_output_grouping_fields Include the smaller and larger groups here for grouping of treated stands.
+#' @param scenario_weighting_values Defines the weights and integer steps
+#' between weights. The values are for min, max, and step.
+#' @param scenario_output_fields This should include the desired fields for the
+#' planning area treatment files. Planning area id, priority weights and
+#' treatment rank are added automatically.
+#' @param scenario_output_grouping_fields Include the smaller and larger groups
+#' here for grouping of treated stands.
 #' @param overwrite_output Overwrite any existing output of the same name?
 #' @param run_with_shiny Sets some output business for better shiny interaction
 #' @param fire_intersect_table TOTO
 #' @param fire_planning_years = TODO
 #' @param fire_annual_target_field TODO
 #' @param fire_annual_target TODO
-#' @param fire_dynamic_forsys logical. Prevent burnt stands from being selected if TRUE
-#' @param fire_random_projects logical. Randomly shuffle project prioritization if TRUE
+#' @param fire_dynamic_forsys logical. Prevent burnt stands from being selected
+#' if TRUE
+#' @param fire_random_projects logical. Randomly shuffle project prioritization
+#' if TRUE
 #' @param scenario_write_tags TODO
 #'
 #' @return
@@ -46,19 +59,19 @@
 #' @importFrom rlang .data
 #' @export
 run <- function(
-    config_file = NULL,
-    scenario_name = '',
+    shiny_data = NULL,
     num_reps = 1,
-    scenario_stand_filename = '',
-    shiny_data = '',
-    stand_id_field = '',
+    config_file = NULL,
+    scenario_name = "",
+    scenario_stand_filename = "",
+    stand_id_field = "",
     stand_pcp_spm = NULL,
-    stand_filter = NULL,
+    global_threshold = NULL,
     scenario_priorities = NULL,
-    proj_id = '',
-    proj_thresholds = NULL,
+    proj_id = "",
+    stand_threshold = NULL,
     proj_fixed_target = FALSE,
-    proj_target_field = '',
+    proj_target_field = "",
     proj_target_value = NULL,
     scenario_weighting_values = NULL,
     scenario_output_fields = NULL,
@@ -116,10 +129,10 @@ run <- function(
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # # # Load data
-    if (!is.null(shiny_data)){
+    if (!is.null(shiny_data)) {
       message("Forsys Shiny data detected.")
       stands <- shiny_data
-    }else{
+    } else {
       message("No Forsys Shiny data detected.")
       stands <- load_dataset(scenario_stand_filename)
     }
@@ -128,12 +141,12 @@ run <- function(
 
     # Calculate SPM & PCP values ## TODO check add_target_field names after merge
     stands <- stands %>%
-      filter_stands(filter_txt = stand_filter) %>%
+      filter_stands(filter_txt = global_threshold) %>%
       calculate_spm_pcp(fields = stand_pcp_spm) %>%
       calculate_spm_pcp(fields = scenario_output_fields)
 
     # specify thresholds
-    threshold_dat <- make_thresholds(thresholds = proj_thresholds)
+    threshold_dat <- make_thresholds(thresholds = stand_threshold)
 
     # set up weighting scenarios
     weights <- weight_priorities(numPriorities = length(scenario_priorities),

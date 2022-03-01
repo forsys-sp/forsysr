@@ -1,6 +1,6 @@
 Package: forsys
 Title: ForSys Scenario Planning
-Version: 0.12
+Version: 0.13
 Authors@R: 
     c(
         person(given = "Rachel",
