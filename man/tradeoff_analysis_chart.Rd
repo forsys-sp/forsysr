@@ -15,7 +15,7 @@ tradeoff_analysis_chart(
 \arguments{
 \item{results_data}{TODO}
 
-\item{proj_field}{TODO}
+\item{proj_field}{The planning area or project ID}
 
 \item{x_field}{TODO}
 

@@ -2,8 +2,8 @@
 % Please edit documentation in R/forsys_results_functions.R
 \name{results_columns}
 \alias{results_columns}
-\title{Pass-through function while we shore up the graphing logic. This just sends ALL column
-names back to the caller}
+\title{Pass-through function while we shore up the graphing logic. This just sends
+ALL column names back to the caller}
 \usage{
 results_columns(results_data)
 }
@@ -14,6 +14,6 @@ results_columns(results_data)
 List of priorities identified in results file
 }
 \description{
-Pass-through function while we shore up the graphing logic. This just sends ALL column
-names back to the caller
+Pass-through function while we shore up the graphing logic. This just sends
+ALL column names back to the caller
 }

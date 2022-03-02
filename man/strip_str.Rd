@@ -2,7 +2,8 @@
 % Please edit documentation in R/forsys_results_functions.R
 \name{strip_str}
 \alias{strip_str}
-\title{For safety and sanity, take a string and rip off common output prefixes and suffixes}
+\title{For safety and sanity, take a string and rip off common output prefixes and
+suffixes}
 \usage{
 strip_str(str_name)
 }
@@ -13,5 +14,6 @@ strip_str(str_name)
 The stripped string
 }
 \description{
-For safety and sanity, take a string and rip off common output prefixes and suffixes
+For safety and sanity, take a string and rip off common output prefixes and
+suffixes
 }
