@@ -8,6 +8,7 @@ write_save_file(
   config_file = "",
   scenario_name = "",
   scenario_stand_filename = "",
+  shape_file = "",
   stand_id_field = "",
   stand_pcp_spm = NULL,
   use_global_threshold = FALSE,
