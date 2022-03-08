@@ -187,7 +187,7 @@ write_save_file_helper <- function(input, r_data) {
     stand_threshold <- NULL
   }
 
-  # WIP: alternative specification for writing scenairo configo to JSON
+  # WIP: alternative specification for writing scenario config to JSON
   # vector_data <- NULL
   # for (i in 1:length(names(input))) {
   #   print(i)

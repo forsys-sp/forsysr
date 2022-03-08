@@ -139,14 +139,14 @@ run <- function(
 
     if(!is.null(fire_intersect_table)) fires <- fire_intersect_table
 
-    # Calculate SPM & PCP values ## TODO check add_target_field names after merge
+    # filter stands by availability
     stands <- stands %>%
-      filter_stands(filter_txt = global_threshold) %>%
+      filter_stands(filter_txt = global_threshold)
+
+    # Calculate SPM & PCP values
+    stands <- stands %>%
       calculate_spm_pcp(fields = stand_pcp_spm) %>%
       calculate_spm_pcp(fields = scenario_output_fields)
-
-    # specify thresholds
-    threshold_dat <- make_thresholds(thresholds = stand_threshold)
 
     # set up weighting scenarios
     weights <- weight_priorities(numPriorities = length(scenario_priorities),
@@ -156,7 +156,8 @@ run <- function(
     for (w in 1:nrow(weights)) { # START WEIGHT LOOP
 
       ## Step 0: create the weighted priorities.
-      message(paste0("\n---------------\nWeighting scenario ",  w, " of ", nrow(weights),
+      message(paste0("\n---------------\nWeighting scenario ",  w,
+                     " of ", nrow(weights),
                      ": ", paste0(weights[w,], collapse = '-')))
 
       # create objects for tracking treated and burnt stands
@@ -166,10 +167,10 @@ run <- function(
       # prep stand data
       stands_prioritized <- stands %>%
         set_up_treatment_types() %>%
-        set_up_priorities(w = w,
-                          # priorities = scenario_priorities,
-                          priorities = paste0(scenario_priorities, '_SPM'),
-                          weights = weights)
+        set_up_priorities(
+          w = w,
+          priorities = paste0(scenario_priorities, '_SPM'),
+          weights = weights)
 
       stands_available <- stands_prioritized
 
@@ -183,17 +184,38 @@ run <- function(
 
         if (fire_planning_years > 1) message(paste('\nYear', yr, '\n---------------'))
 
-        # select stands from project areas until target reached while filtering by threshold
-        stands_selected <- stands_available %>%
-          apply_treatment(
-            treatment_type = threshold_dat$type,
-            treatment_threshold = threshold_dat$threshold,
-            stand_id_field = stand_id_field,
+        # specify thresholds
+        threshold_dat <- make_thresholds(stand_threshold)
+        # (threshold_dat <- make_thresholds('trt 1: threshold1 == 1; trt 2: priority3 > 0.5'))
+        # (threshold_dat <- make_thresholds('trt 1: priority3 > 0.5'))
+
+        stands_selected <- stands_available
+
+        # for(t in 1:length(threshold_dat$type)){
+
+        # set treatment target
+        stands_selected <- stands_selected %>%
+          set_treatment_target(
             proj_id = proj_id,
             proj_fixed_target = proj_fixed_target,
             proj_target_field = proj_target_field,
-            proj_target_value = proj_target_value
-          )
+            proj_target_value = proj_target_value) %>%
+          # apply treatment thresholds
+          filter_stands(
+            filter_txt = threshold_dat$threshold,
+            verbose = T) %>%
+          # select stands
+          apply_treatment(
+            stand_id_field = stand_id_field,
+            proj_id = proj_id,
+            proj_objective = 'weightedPriority',
+            proj_target_field = proj_target_field,
+            proj_target = 'master_target'
+          ) %>%
+          # record treatment name
+          dplyr::mutate(treatment_type = !!threshold_dat$type)
+
+        # }
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!
         # 3. RANK PROJECTS ----------
@@ -201,14 +223,16 @@ run <- function(
 
         # group selected stands by project
         projects_selected <- stands_selected %>%
-          create_grouped_dataset(grouping_vars = proj_id, summing_vars = c(scenario_output_fields, "weightedPriority")) %>%
+          create_grouped_dataset(
+            grouping_vars = proj_id,
+            summing_vars = c(scenario_output_fields, "weightedPriority")) %>%
           dplyr::rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields) %>%
-          replace(is.na(.), 0) %>%
+          base::replace(is.na(.), 0) %>%
           dplyr::arrange(-weightedPriority) %>%
           dplyr::mutate(treatment_rank = ifelse(weightedPriority > 0, 1:dplyr::n(), NA)) %>%
           tidyr::drop_na(treatment_rank)
 
-        # randomize project rank if desired
+        # FIRE: randomize project rank if desired
         if(fire_random_projects){
           message('!! Randomizing projects')
 
@@ -262,7 +286,8 @@ run <- function(
         p_n = stands_treated %>% dplyr::filter(ETrt_YR == yr) %>% dplyr::pull(proj_id) %>% dplyr::n_distinct()
         message(paste0(s_n, ' stands (', round(s_n/nrow(stands_prioritized) * 100, 2), '%) treated in ', p_n, ' projects'))
 
-        if(!is.null(fire_intersect_table)) {
+        if(!is.null(fire_intersect_table)) { # BEGIN ANNUAL FIRES
+
           # record stands that burned this year
           stands_burned <- stands %>%
             dplyr::left_join(projects_scheduled, by=proj_id) %>%
@@ -278,9 +303,11 @@ run <- function(
 
           # remove burnt stands from future selection only if running dynamic forsys
           if(fire_dynamic_forsys == TRUE) {
-            stands_available <- stands_available %>% dplyr::filter(.data[[stand_id_field]] %in% stands_burned[[stand_id_field]] == FALSE)
+            stands_available <- stands_available %>%
+              dplyr::filter(.data[[stand_id_field]] %in% stands_burned[[stand_id_field]] == FALSE)
           }
-        }
+
+        } # END ANNUAL FIRES
       } # END YEAR LOOP
 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -308,7 +335,9 @@ run <- function(
         dplyr::bind_cols(scenario_write_tags)
 
       stands_selected_out <- stands_selected_out %>%
-        dplyr::left_join(stands_prioritized %>% dplyr::select(!!stand_id_field, scenario_output_fields), by = stand_id_field)
+        dplyr::left_join(stands_prioritized %>%
+                           dplyr::select(!!stand_id_field, scenario_output_fields),
+                         by = stand_id_field)
 
       # assign weight scenario values to stand out out
       stands_selected_out[,paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[w,]
@@ -325,27 +354,46 @@ run <- function(
       # write project to file ..................
       # ........................................
 
-      # group *selected* stands by project
+      # summarize selected stands by grouping fields (eg project)
       projects_etrt_out <- stands_selected_out %>%
         dplyr::select(!!stand_id_field, ETrt_YR) %>%
-        dplyr::left_join(stands_prioritized %>% dplyr::select(stand_id_field, proj_id, scenario_output_fields, 'weightedPriority'), by = stand_id_field) %>%
-        create_grouped_dataset(grouping_vars = c(proj_id, 'ETrt_YR'), summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
+        dplyr::left_join(stands_prioritized %>%
+                           dplyr::select(
+                             stand_id_field,
+                             proj_id,
+                             scenario_output_grouping_fields,
+                             scenario_output_fields,
+                             'weightedPriority'),
+                         by = stand_id_field) %>%
+        create_grouped_dataset(
+          grouping_vars = c(scenario_output_grouping_fields, 'ETrt_YR'),
+          summing_vars = c(scenario_output_fields, 'weightedPriority')
+          ) %>%
         dplyr::arrange(ETrt_YR, -weightedPriority) %>%
         dplyr::rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields) %>%
-        replace(is.na(.), 0)
+        base::replace(is.na(.), 0)
 
-      # group *all* stands by project
+      # rank projects
+      projects_rank <- projects_etrt_out %>%
+        dplyr::group_by(!!proj_id := get(proj_id)) %>%
+        dplyr::summarize_at('weightedPriority', sum) %>%
+        dplyr::arrange(-weightedPriority) %>%
+        dplyr::mutate(treatment_rank = rank(-weightedPriority)) %>%
+        dplyr::select(!!proj_id, treatment_rank)
+
+      # summarize available stands by grouping fields (eg project)
       projects_esum_out <- stands %>%
-        compile_planning_areas_and_stands(unique_weights = uniqueWeights,
-                                          group_by = proj_id,
-                                          output_fields = scenario_output_fields)
+        compile_planning_areas_and_stands(
+          unique_weights = uniqueWeights,
+          group_by = scenario_output_grouping_fields,
+          output_fields = scenario_output_fields)
 
-      # combine etrt w/ esum
+      # combine etrt w/ esum w/ project treatment rank
       projects_selected_out <- projects_etrt_out %>%
-        dplyr::inner_join(projects_esum_out, by=proj_id) %>%
-        replace(is.na(.), 0) %>%
-        dplyr::arrange(ETrt_YR, -weightedPriority) %>%
-        dplyr::mutate(treatment_rank = ifelse(weightedPriority > 0, 1:dplyr::n(), NA))
+        dplyr::inner_join(projects_esum_out, by=scenario_output_grouping_fields) %>%
+        dplyr::left_join(projects_rank, by = proj_id) %>%
+        base::replace(is.na(.), 0) %>%
+        dplyr::arrange(treatment_rank)
 
       # tag project with specific scenario attributes
       projects_selected_out <- projects_selected_out %>%
