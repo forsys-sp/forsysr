@@ -317,19 +317,21 @@ set_treatment_target <- function(stands,
                                  ) {
 
   # target based on fixed total
-  if (proj_fixed_target == TRUE) {
-    stands <- stands %>%
-      set_fixed_target(
-        target_value = proj_target_value
-      )
-    # target based on percent total of field
-  } else if (proj_fixed_target == FALSE) {
-    stands <- stands %>%
-      set_variable_target(
-        group_by = proj_id,
-        target_field = proj_target_field,
-        multiplier = proj_target_value
-      )
+  if(length(proj_fixed_target > 0)){
+    if (proj_fixed_target == TRUE) {
+      stands <- stands %>%
+        set_fixed_target(
+          target_value = proj_target_value
+        )
+      # target based on percent total of field
+    } else if (proj_fixed_target == FALSE) {
+      stands <- stands %>%
+        set_variable_target(
+          group_by = proj_id,
+          target_field = proj_target_field,
+          multiplier = proj_target_value
+        )
+    }
   }
 
   return(stands)
