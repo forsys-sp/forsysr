@@ -5,12 +5,12 @@
 \title{Take the input object from a shiny server function all at once and then call the write_save_file function
 This function helps keep the server code clean.}
 \usage{
-write_save_file_helper(input, data_path)
+write_save_file_helper(input, r_data)
 }
 \arguments{
 \item{input}{input object from a shiny server function}
 
-\item{data_path}{System path to save the output file to}
+\item{r_data}{shiny server data object}
 }
 \value{
 A serialized vector of input choices in json format
