@@ -2,33 +2,24 @@
 % Please edit documentation in R/forsys_functions.R
 \name{apply_treatment}
 \alias{apply_treatment}
-\title{TODO}
+\title{Select stands for treatment based on project stand thresholds and
+threshold/targets}
 \usage{
 apply_treatment(
   stands,
-  treatment_type,
-  treatment_threshold,
   stand_id_field,
   proj_id,
-  proj_fixed_target,
-  proj_target_field = NULL,
-  proj_target_value = NULL
+  proj_objective = "weightedPriority",
+  proj_target_field,
+  proj_target = "master_target"
 )
 }
 \arguments{
 \item{stands}{TODO}
 
-\item{treatment_type}{TODO}
-
-\item{treatment_threshold}{TODO}
-
 \item{stand_id_field}{TODO}
 
 \item{proj_id}{TODO}
-
-\item{proj_fixed_target}{TODO}
-
-\item{proj_target_field}{TODO}
 
 \item{proj_target_value}{TODO}
 }
@@ -36,5 +27,6 @@ apply_treatment(
 TODO
 }
 \description{
-TODO
+Select stands for treatment based on project stand thresholds and
+threshold/targets
 }

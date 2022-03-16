@@ -7,9 +7,11 @@
 stand_filter(dt, filters)
 }
 \arguments{
-\item{dt}{A data table with all stand information necessary to determine availability for a specific treatment type.}
+\item{dt}{A data table with all stand information necessary to determine
+availability for a specific treatment type.}
 
-\item{filters}{A list of strings that are used to filter the stands for treatment availability.}
+\item{filters}{A list of strings that are used to filter the stands for
+treatment availability.}
 }
 \value{
 The final data table with stands available for treatment.

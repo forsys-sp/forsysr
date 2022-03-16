@@ -45,6 +45,7 @@ write_save_file <- function(
     config_file = "",
     scenario_name = "",
     scenario_stand_filename = "",
+    shape_file = "",
     stand_id_field = "",
     stand_pcp_spm = NULL,
     use_global_threshold = FALSE,
@@ -74,6 +75,7 @@ write_save_file <- function(
     "config_file",
     "scenario_name",
     "scenario_stand_filename",
+    "shape_file",
     "stand_id_field",
     "stand_pcp_spm",
     "use_global_threshold",
@@ -105,6 +107,7 @@ write_save_file <- function(
   vector_data$config_file <- config_file
   vector_data$scenario_name <- scenario_name
   vector_data$scenario_stand_filename <- scenario_stand_filename
+  vector_data$shape_file <- shape_file
   vector_data$stand_id_field <- stand_id_field
   vector_data$stand_pcp_spm <- stand_pcp_spm
   vector_data$use_global_threshold <- use_global_threshold
@@ -187,7 +190,7 @@ write_save_file_helper <- function(input, r_data) {
     stand_threshold <- NULL
   }
 
-  # WIP: alternative specification for writing scenairo configo to JSON
+  # WIP: alternative specification for writing scenario config to JSON
   # vector_data <- NULL
   # for (i in 1:length(names(input))) {
   #   print(i)
@@ -200,6 +203,7 @@ write_save_file_helper <- function(input, r_data) {
   json <- write_save_file(
     scenario_name = input$scenario_name,
     scenario_stand_filename = r_data$data_path,
+    shape_file = r_data$shape_file,
     stand_id_field = input$stand_id_field,
     stand_pcp_spm = input$priorities_fields,
     use_global_threshold = input$use_global_threshold,
