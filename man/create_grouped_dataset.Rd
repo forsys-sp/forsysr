@@ -2,8 +2,9 @@
 % Please edit documentation in R/forsys_functions.R
 \name{create_grouped_dataset}
 \alias{create_grouped_dataset}
-\title{Create a dataset by subsetting subunits that were selected in the selectSubunits function
-and grouping the data by a larger subunit (usually planning areas).}
+\title{Create a dataset by subsetting subunits that were selected in the
+selectSubunits function and grouping the data by a larger subunit (usually
+planning areas).}
 \usage{
 create_grouped_dataset(dt, grouping_vars, summing_vars, subset_var = NULL)
 }
@@ -12,15 +13,18 @@ create_grouped_dataset(dt, grouping_vars, summing_vars, subset_var = NULL)
 
 \item{grouping_vars}{The variable names by which the data will be grouped.}
 
-\item{summing_vars}{The variables in the original dataset that need to be summed over each subunit.}
+\item{summing_vars}{The variables in the original dataset that need to be
+summed over each subunit.}
 
 \item{subset_var}{TODO}
 }
 \value{
-The selected stands from \code{df}, ordered by \code{priority_SPM}, and selected until the sum of \code{priority_STND} is as close to
+The selected stands from \code{df}, ordered by \code{priority_SPM},
+and selected until the sum of \code{priority_STND} is as close to
 \code{treat_target} as possible.
 }
 \description{
-Create a dataset by subsetting subunits that were selected in the selectSubunits function
-and grouping the data by a larger subunit (usually planning areas).
+Create a dataset by subsetting subunits that were selected in the
+selectSubunits function and grouping the data by a larger subunit (usually
+planning areas).
 }

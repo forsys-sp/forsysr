@@ -12,7 +12,8 @@ weight_priorities(numPriorities, weights = c("1 1 1"))
 \item{weights}{TODO}
 }
 \value{
-A datatable with the weighted values for the priorities in the \code{priorityList}.
+A datatable with the weighted values for the priorities in the
+\code{priorityList}.
 }
 \description{
 Weight priorities for selection
