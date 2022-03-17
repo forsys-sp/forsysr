@@ -2,8 +2,9 @@
 % Please edit documentation in R/forsys_results_functions.R
 \name{parse_priority_name}
 \alias{parse_priority_name}
-\title{Get a list of priorities used in the run. This takes a results file (loaded object)
-and parses it, so a loaded scenario isn't necessary. It looks for the ETrt*PCP columns}
+\title{Get a list of priorities used in the run. This takes a results file
+(loaded object) and parses it, so a loaded scenario isn't necessary. It
+looks for the ETrt*PCP columns}
 \usage{
 parse_priority_name(column_name)
 }
@@ -14,6 +15,7 @@ parse_priority_name(column_name)
 Parsed priority name which can be used to match a Pr_ column
 }
 \description{
-Get a list of priorities used in the run. This takes a results file (loaded object)
-and parses it, so a loaded scenario isn't necessary. It looks for the ETrt*PCP columns
+Get a list of priorities used in the run. This takes a results file
+(loaded object) and parses it, so a loaded scenario isn't necessary. It
+looks for the ETrt*PCP columns
 }

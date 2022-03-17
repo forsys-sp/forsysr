@@ -16,17 +16,19 @@ select_simple_greedy_algorithm(
 
 \item{grouped_by}{The management objective that is being prioritized.}
 
-\item{prioritize_by}{The stand value for the priority that is used to constrain the results.
-Typically Area or Volume.}
+\item{prioritize_by}{The stand value for the priority that is used to
+constrain the results. Typically Area or Volume.}
 
-\item{constrain_by}{This is a list of lists that includes three fields for each constraint. The
-first item in each list, default 'apply', is the name of a binary field in which 1 = apply the constraint
-and 0 = do not apply the constraint to a given stand. The second item in each list is the name
-of the field that is summed to reach the constraint. The third item in each list is the name of
-the constraining field.}
+\item{constrain_by}{This is a list of lists that includes three fields for
+each constraint. The first item in each list, default 'apply', is the name
+of a binary field in which 1 = apply the constraint and 0 = do not apply
+the constraint to a given stand. The second item in each list is the name
+of the field that is summed to reach the constraint. The third item in each
+list is the name of the constraining field.}
 }
 \value{
-The selected stands from \code{df}, ordered by \code{prioritize_by}, and selected until the sum of \code{tally_by} is as close to
+The selected stands from \code{df}, ordered by \code{prioritize_by},
+and selected until the sum of \code{tally_by} is as close to
 \code{group_target} as possible.
 }
 \description{

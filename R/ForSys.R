@@ -91,7 +91,7 @@ run <- function(
     # If a config file has been selected, source it to read in variables
     if (length(config_file) > 0) {
       # setwd(dirname(config_file))
-      if(stringr::str_detect(config_file, '[.]R$'))
+      if (stringr::str_detect(config_file, '[.]R$'))
         source(config_file, local = TRUE)
       if(stringr::str_detect(config_file, '[.]json$'))
         load_json_config(config_file)

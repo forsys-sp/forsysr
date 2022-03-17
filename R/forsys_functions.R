@@ -317,7 +317,7 @@ set_treatment_target <- function(stands,
                                  ) {
 
   # target based on fixed total
-  if(length(proj_fixed_target)>0){
+  if(length(proj_fixed_target > 0)){
     if (proj_fixed_target == TRUE) {
       stands <- stands %>%
         set_fixed_target(

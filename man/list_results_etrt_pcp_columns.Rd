@@ -2,8 +2,9 @@
 % Please edit documentation in R/forsys_results_functions.R
 \name{list_results_etrt_pcp_columns}
 \alias{list_results_etrt_pcp_columns}
-\title{Get a list of priorities used in the run. This takes a results file (loaded object)
-and parses it, so a loaded scenario isn't necessary. It looks for the ETrt*PCP columns}
+\title{Get a list of priorities used in the run. This takes a results file
+(loaded object) and parses it, so a loaded scenario isn't necessary. It
+looks for the ETrt*PCP columns}
 \usage{
 list_results_etrt_pcp_columns(results_data)
 }
@@ -14,6 +15,7 @@ list_results_etrt_pcp_columns(results_data)
 List of priorities identified in results file
 }
 \description{
-Get a list of priorities used in the run. This takes a results file (loaded object)
-and parses it, so a loaded scenario isn't necessary. It looks for the ETrt*PCP columns
+Get a list of priorities used in the run. This takes a results file
+(loaded object) and parses it, so a loaded scenario isn't necessary. It
+looks for the ETrt*PCP columns
 }
