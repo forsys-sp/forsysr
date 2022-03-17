@@ -241,7 +241,7 @@ attainment_chart_by_target_treated <- function(results_data, priority, constrain
       + ggplot2::theme(legend.background = element_rect(fill = 'transparent')) %>%
       + ggplot2::theme(plot.background = element_rect(fill = 'transparent', color = NA)) %>%
       + ggplot2::theme(panel.background = element_rect(fill = 'transparent')) %>%
-      + ggplot2::theme(panel.grid.major = element_line(color = theme_palette) %>%
+      + ggplot2::theme(panel.grid.major = element_line(color = theme_palette)) %>%
       + ggplot2::theme(axis.text.x = element_text(size = rel(1))) %>%
       + ggplot2::theme(axis.title.x = element_text(size = rel(1.4))) %>%
       + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
@@ -249,7 +249,7 @@ attainment_chart_by_target_treated <- function(results_data, priority, constrain
       + ggplot2::theme(legend.text = element_text(size = rel(1.2), color = theme_palette)) %>%
       + ggplot2::theme(plot.title = element_text(size = rel(2)))
 
-  return(p)
+  return(p) 
 }
 
 #' TODO
@@ -281,7 +281,7 @@ cumulative_attainment_chart <- function(results_data, priority, constraint_field
       + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
       + ggplot2::theme(legend.title = element_text(size = rel(1.2))) %>%
       + ggplot2::theme(legend.text = element_text(size = rel(1.2), color = theme_palette)) %>%
-       + ggplot2::theme(panel.grid.major = element_line(color = theme_palette) %>%
+      + ggplot2::theme(panel.grid.major = element_line(color = theme_palette)) %>%
       + ggplot2::theme(plot.title = element_text(size = rel(2)))
 
   return(p)
@@ -339,7 +339,7 @@ tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field, 
         + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
         + ggplot2::theme(legend.title = element_text(size = rel(1.2))) %>%
         + ggplot2::theme(legend.text = element_text(size = rel(1.2), color = theme_palette)) %>%
-         + ggplot2::theme(panel.grid.major = element_line(color = theme_palette) %>%
+         + ggplot2::theme(panel.grid.major = element_line(color = theme_palette)) %>%
         + ggplot2::theme(plot.title = element_text(size = rel(2)))
 
   return(p)
@@ -412,7 +412,7 @@ project_boxplot <- function(results_data, proj_field, x_field, y_field, constrai
         + ggplot2::theme(axis.title.x = element_text(size = rel(1.4))) %>%
         + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
         + ggplot2::theme(legend.title = element_text(size = rel(1.2))) %>%
-         + ggplot2::theme(panel.grid.major = element_line(color = theme_palette) %>%
+         + ggplot2::theme(panel.grid.major = element_line(color = theme_palette)) %>%
         + ggplot2::theme(plot.title = element_text(size = rel(2)))
 
   return(p)
