@@ -378,11 +378,9 @@ stacked_barchart <- function(results_data, priority, constraint_field, group_fie
 #' @importFrom dplyr %>%
 #'
 #' @export
-project_boxplot <- function(results_data, proj_field, priority, constraint_field) {
+project_boxplot <- function(results_data, proj_field, x_field, y_field, constraint_field) {
   # First, find the top PA_IDs in terms of target performance
   # Right now it's set to top 10, maybe make this dynamic?
-  x_name <- x_field
-  y_name <- y_field
 
   x_field <- priority_etrt_pcp_name(x_field)
   y_field <- priority_etrt_pcp_name(y_field)
