@@ -9,7 +9,7 @@ set_fixed_target(stands, target_value)
 \arguments{
 \item{stands}{TODO}
 
-\item{fixed_area_target}{TODO}
+\item{target_value}{TODO}
 }
 \value{
 TODO

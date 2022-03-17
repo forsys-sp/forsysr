@@ -5,3 +5,8 @@ a^forsys\.Rproj$
 ^output$
 ^output_graphics$
 ^\.github$
+^configs$
+^Dockerfile$
+^docs$
+^misc$
+^^\.*\\.Rproj$

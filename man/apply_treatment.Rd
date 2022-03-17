@@ -21,7 +21,11 @@ apply_treatment(
 
 \item{proj_id}{TODO}
 
-\item{proj_target_value}{TODO}
+\item{proj_objective}{TODO}
+
+\item{proj_target_field}{TODO}
+
+\item{proj_target}{TODO}
 }
 \value{
 TODO

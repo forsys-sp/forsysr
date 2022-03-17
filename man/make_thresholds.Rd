@@ -7,7 +7,7 @@
 make_thresholds(txt)
 }
 \arguments{
-\item{thresholds}{Vector of Boolean string statements to parse}
+\item{txt}{Vector of Boolean string statements to parse}
 }
 \description{
 Threshold string statement parser

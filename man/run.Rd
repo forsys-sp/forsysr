@@ -37,6 +37,8 @@ run(
 \arguments{
 \item{shiny_data}{If data has already been loaded, pass the object here}
 
+\item{num_reps}{TODO}
+
 \item{config_file}{Relative path to a config file that defines needed
 parameters}
 
@@ -98,11 +100,9 @@ if TRUE}
 if TRUE}
 
 \item{scenario_write_tags}{TODO}
-
-\item{num_years}{TODO}
 }
 \value{
-
+Forsys results with weightedPriority, treatmentRank, and weights
 }
 \description{
 Run the ForSys treatment planner. Either provide parameters, or define parameters
