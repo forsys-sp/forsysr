@@ -45,6 +45,7 @@ write_save_file <- function(
     config_file = "",
     scenario_name = "",
     scenario_stand_filename = "",
+    area_field = "",
     shape_file = "",
     stand_id_field = "",
     stand_pcp_spm = NULL,
@@ -75,6 +76,7 @@ write_save_file <- function(
     "config_file",
     "scenario_name",
     "scenario_stand_filename",
+    "area_field",
     "shape_file",
     "stand_id_field",
     "stand_pcp_spm",
@@ -107,6 +109,7 @@ write_save_file <- function(
   vector_data$config_file <- config_file
   vector_data$scenario_name <- scenario_name
   vector_data$scenario_stand_filename <- scenario_stand_filename
+  vector_data$area_field <- area_field
   vector_data$shape_file <- shape_file
   vector_data$stand_id_field <- stand_id_field
   vector_data$stand_pcp_spm <- stand_pcp_spm
@@ -203,6 +206,7 @@ write_save_file_helper <- function(input, r_data) {
   json <- write_save_file(
     scenario_name = input$scenario_name,
     scenario_stand_filename = r_data$data_path,
+    area_field = input$area_field,
     shape_file = r_data$shape_file,
     stand_id_field = input$stand_id_field,
     stand_pcp_spm = input$priorities_fields,
