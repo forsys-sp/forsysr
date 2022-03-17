@@ -22,7 +22,7 @@ compile_planning_areas_and_stands(
 \item{output_fields}{TODO}
 }
 \value{
-
+TODO
 }
 \description{
 TODO

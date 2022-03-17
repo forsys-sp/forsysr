@@ -4,15 +4,18 @@
 \alias{project_boxplot}
 \title{TODO}
 \usage{
-project_boxplot(results_data, proj_field, priority, constraint_field)
+project_boxplot(results_data, proj_field, x_field, y_field, constraint_field)
 }
 \arguments{
 \item{results_data}{The results data frame}
 
 \item{proj_field}{The planning area or project ID}
 
-\item{priority}{The NAME of the main priority. This will be the filter for
+\item{x_field}{The NAME of the first priority. This will be the filter for
 weight, and will add ETrt_*_PCP to access the value field}
+
+\item{y_field}{The NAME of the secondary priority. This will be used to
+rank projects between weighting scenarios}
 
 \item{constraint_field}{Field used to constrain simulation. Usually some
 form of area.}

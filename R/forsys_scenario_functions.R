@@ -4,6 +4,8 @@
 #' parameters
 #' @param scenario_name A name for this scenario
 #' @param scenario_stand_filename Path to the input dataset
+#' @param area_field Field for spatial area of the data
+#' @param shape_file The path to the saved shapefile
 #' @param stand_id_field The field in the scenario_stand_filename which is a
 #' unique ID for each stand
 #' @param stand_pcp_spm PCP and SPM values will be calculated for these
@@ -266,38 +268,37 @@ load_json_config <- function(json_filename){
   json_data = readLines(json_filename) %>%
     jsonlite::fromJSON()
   for(i in names(json_data)){
-    assign(i, json_data[[i]], env = parent.frame())
+    assign(i, json_data[[i]], envir = parent.frame())
   }
 }
 
-#' Process JSON within ForSys
-#'
-#'
+# #' Process JSON within ForSys
+# #'
+# #' @param json_filename TODO
+# #'
+# process_json_config <- function(json_filename){
 
-process_json_config <- function(json_filename){
+#   load_json_config(json_filename)
 
-  load_json_config(json_filename)
+#   # prepare forsys fields not otherwise saved in json
+#   weight_values <- forsys::weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
+#   project_filter <- forsys::parse_thresholds(proj_threshold_field, proj_threshold_op, proj_threshold_value)
 
-  # prepare forsys fields not otherwise saved in json
-  weight_values <- forsys::weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
-  project_filter <- forsys::parse_thresholds(proj_threshold_field, proj_threshold_op, proj_threshold_value)
-
-  forsys::run(stand_id)
-  # scenario_name = input$scenario_name
-  # scenario_stand_filename = r_data$data_path
-  # scenario_priorities = input$priorities_fields
-  # scenario_weighting_values = weight_values
-  # scenario_output_fields = input$outputs_select
-  # scenario_output_grouping_fields = input$output_grouping_fields
-  # stand_id_field = input$stand_id_field
-  stand_pcp_spm = input$priorities_fields
-  stand_filter = stand_filter
-  # proj_id = input$planning_unit_id_field
-  proj_thresholds = project_filter
-  # proj_fixed_target = input$proj_fixed_target
-  # proj_target_field = input$proj_target_field
-  # proj_target_value = input$proj_target_value
-  # overwrite_output = input$overwrite_output_chk
-  run_with_shiny = TRUE
-
-}
+#   forsys::run(stand_id)
+#   # scenario_name = input$scenario_name
+#   # scenario_stand_filename = r_data$data_path
+#   # scenario_priorities = input$priorities_fields
+#   # scenario_weighting_values = weight_values
+#   # scenario_output_fields = input$outputs_select
+#   # scenario_output_grouping_fields = input$output_grouping_fields
+#   # stand_id_field = input$stand_id_field
+#   stand_pcp_spm = input$priorities_fields
+#   stand_filter = stand_filter
+#   # proj_id = input$planning_unit_id_field
+#   proj_thresholds = project_filter
+#   # proj_fixed_target = input$proj_fixed_target
+#   # proj_target_field = input$proj_target_field
+#   # proj_target_value = input$proj_target_value
+#   # overwrite_output = input$overwrite_output_chk
+#   run_with_shiny = TRUE
+# }

@@ -8,8 +8,8 @@ safe_colorblind_palette <- c("#88CCEE", "#CC6677", "#DDCC77",
 #' ALL column names back to the caller
 #'
 #' @param results_data The results data frame
-#' @return List of priorities identified in results file
 #'
+#' @return List of priorities identified in results file
 #'
 #' @importFrom dplyr %>%
 #'
@@ -18,13 +18,20 @@ results_columns <- function(results_data) {
   cols <- results_data %>% colnames()
 }
 
+#' Toggle function for switching between light and dark modes
+#'
+#' @param trigger TODO
+#'
+#' @return TODO
+#'
 #' @export
-theme_toggle<- function(trigger) {
+theme_toggle <- function(trigger) {
   if (trigger == "Dark") {
     theme_palette <<- '#F2F2F2'
   } else {
     theme_palette <<- '#1A1A1A'
   }
+  return (theme_palette)
 }
 
 #' For safety and sanity, take a string and rip off common output prefixes and
@@ -151,6 +158,7 @@ priority_etrt_pcp_name <- function(priority) {
 #' @return TODO
 #'
 #' @importFrom dplyr %>%
+#' @importFrom dplyr across
 #'
 #' @export
 attainment_data_filter <- function(results_data, priority, constraint_field, secondary_effects=c()) {
@@ -189,6 +197,7 @@ attainment_data_filter <- function(results_data, priority, constraint_field, sec
 #' @param results_data The results data frame
 #' @return List of attainment columns
 #'
+#' @importFrom rlang .data
 #' @importFrom dplyr %>%
 #'
 attainment_data_format <- function(results_data) {
@@ -222,7 +231,15 @@ list_attainment_targets <- function(results_data) {
 #' automatically add ETrt_*_PCP to the names
 #' @return TODO
 #'
+#' @importFrom rlang .data
 #' @importFrom dplyr %>%
+#' @importFrom ggplot2 aes
+#' @importFrom ggplot2 geom_line
+#' @importFrom ggplot2 labs
+#' @importFrom ggplot2 element_text
+#' @importFrom ggplot2 element_rect
+#' @importFrom ggplot2 element_line
+#' @importFrom ggplot2 rel
 #'
 #' @export
 attainment_chart_by_target_treated <- function(results_data, priority, constraint_field, secondary_effects=c()) {
@@ -260,7 +277,12 @@ attainment_chart_by_target_treated <- function(results_data, priority, constrain
 #' @param secondary_effects (optional) Any other NAMES to select. It will automatically add ETrt_*_PCP to the names
 #' @return TODO
 #'
+#' @importFrom rlang .data
 #' @importFrom dplyr %>%
+#' @importFrom ggplot2 element_text
+#' @importFrom ggplot2 element_rect
+#' @importFrom ggplot2 element_line
+#' @importFrom ggplot2 rel
 #'
 #' @export
 cumulative_attainment_chart <- function(results_data, priority, constraint_field, secondary_effects=c()) {
@@ -352,8 +374,7 @@ tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field, 
 #' weight, and will add ETrt_*_PCP to access the value field
 #' @param constraint_field Field used to constrain simulation. Usually some
 #' form of area.
-#' @param secondary_effects (optional) Any other NAMES to select. It will
-#' automatically add ETrt_*_PCP to the names
+#' @param group_field TODO
 #' @return TODO
 #'
 #' @importFrom dplyr %>%
@@ -368,8 +389,10 @@ stacked_barchart <- function(results_data, priority, constraint_field, group_fie
 #'
 #' @param results_data The results data frame
 #' @param proj_field The planning area or project ID
-#' @param priority The NAME of the main priority. This will be the filter for
+#' @param x_field The NAME of the first priority. This will be the filter for
 #' weight, and will add ETrt_*_PCP to access the value field
+#' @param y_field The NAME of the secondary priority. This will be used to 
+#' rank projects between weighting scenarios
 #' @param constraint_field Field used to constrain simulation. Usually some
 #' form of area.
 #'
@@ -418,20 +441,6 @@ project_boxplot <- function(results_data, proj_field, x_field, y_field, constrai
   return(p)
 }
 
-
-#' TODO
-#'
-#' @param field TODO
-#' @param operator TODO
-#' @param value TODO
-#' @return TODO
-#'
-#' @importFrom dplyr %>%
-#'
-#' @export
-parse_availability <- function(field, value) {
-  parsed_string <- paste(field, operator, value)
-}
 
 #' TODO
 #'
