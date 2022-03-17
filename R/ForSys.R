@@ -88,6 +88,14 @@ run <- function(
 
     ) {
 
+    # temporary fix for addressing problem where the proj_id_field == proj_id
+    if(exists(proj_id)){
+      proj_id_field = proj_id
+      rm(proj_id)
+    }
+
+
+
     # If a config file has been selected, source it to read in variables
     if (length(config_file) > 0) {
       # setwd(dirname(config_file))
@@ -127,6 +135,8 @@ run <- function(
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
     # 1. PREP STANDS ------------
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    browser()
 
     # # # Load data
     if (!is.null(shiny_data)) {
@@ -277,9 +287,11 @@ run <- function(
           dplyr::bind_rows(stands_treated)
 
         # remove stands or project areas that were treated from available stands
+        x1 = unique(stands_treated[[stand_id_field]])
+        x2 = unique(stands_treated[[proj_id]])
         stands_available <- stands_available %>%
-          dplyr::filter((.data[[stand_id_field]] %in% stands_treated[[stand_id_field]] == FALSE) &
-                          (.data[[proj_id]] %in% stands_treated[[proj_id]] == FALSE))
+          dplyr::filter(.data[[stand_id_field]] %in% x1 == FALSE) %>%
+          dplyr::filter(.data[[proj_id]] %in% x2 == FALSE)
 
         # report yearly work
         s_n = stands_treated %>% dplyr::filter(ETrt_YR == yr) %>% dplyr::pull(stand_id_field) %>% dplyr::n_distinct()
@@ -354,6 +366,8 @@ run <- function(
       # write project to file ..................
       # ........................................
 
+      browser()
+
       # summarize selected stands by grouping fields (eg project)
       projects_etrt_out <- stands_selected_out %>%
         dplyr::select(!!stand_id_field, ETrt_YR) %>%
@@ -366,7 +380,7 @@ run <- function(
                              'weightedPriority'),
                          by = stand_id_field) %>%
         create_grouped_dataset(
-          grouping_vars = c(scenario_output_grouping_fields, 'ETrt_YR'),
+          grouping_vars = c(proj_id,scenario_output_grouping_fields, 'ETrt_YR'),
           summing_vars = c(scenario_output_fields, 'weightedPriority')
           ) %>%
         dplyr::arrange(ETrt_YR, -weightedPriority) %>%
