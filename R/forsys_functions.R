@@ -41,15 +41,17 @@ load_dataset <- function(path_to_file) {
 #'
 #' @param dt A data table with all the subunits and attributes.
 #' @param grouped_by The management objective that is being prioritized.
-#' @param prioritize_by The stand value for the priority that is used to constrain the results.
-#' Typically Area or Volume.
-#' @param constrain_by This is a list of lists that includes three fields for each constraint. The
-#' first item in each list, default 'apply', is the name of a binary field in which 1 = apply the constraint
-#' and 0 = do not apply the constraint to a given stand. The second item in each list is the name
-#' of the field that is summed to reach the constraint. The third item in each list is the name of
-#' the constraining field.
-#' @return The selected stands from \code{df}, ordered by \code{prioritize_by}, and selected until the sum of \code{tally_by} is as close to
-#' \code{group_target} as possible.
+#' @param prioritize_by The stand value for the priority that is used to
+#'   constrain the results. Typically Area or Volume.
+#' @param constrain_by This is a list of lists that includes three fields for
+#'   each constraint. The first item in each list, default 'apply', is the name
+#'   of a binary field in which 1 = apply the constraint and 0 = do not apply
+#'   the constraint to a given stand. The second item in each list is the name
+#'   of the field that is summed to reach the constraint. The third item in each
+#'   list is the name of the constraining field.
+#' @return The selected stands from \code{df}, ordered by \code{prioritize_by},
+#'   and selected until the sum of \code{tally_by} is as close to
+#'   \code{group_target} as possible.
 #'
 #' @importFrom data.table :=
 #'
@@ -57,18 +59,17 @@ select_simple_greedy_algorithm <- function(dt = NULL,
                                            grouped_by = 'PA_ID',
                                            prioritize_by = 'TVMBF_SPM',
                                            constrain_by = c('apply', 'AREA_HA', 'AREA_PA10P')) {
-  # For each grouped_by:
-  # Remove subunits that don't meet threshold:
-  # Order by priority:
-  # Select stands up to treatment target
-  # The operator in the line below determines the directionality and whether the threshold is inclusive or not.
+  # For each grouped_by: Remove subunits that don't meet threshold; Order by
+  # priority; Select stands up to treatment target; The operator in the line
+  # below determines the direction and whether the threshold is inclusive or
+  # not.
   dt <- data.table(dt)
   dt[, considerForTreatment := 1]
   dt[, current_target := 0]
   dt[, cumulative_tally_by := 0]
   dt[, selected := 0]
   dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
-  #dt <- dt[, activity_code := do_treat(c(.BY, .SD), constrain_by[2]), by = "PA_ID"]
+
   # Common issue: if the dataset has na values in the priority field, this will fail.
   while(sum(dt[,considerForTreatment==1 & selected == 0], na.rm=T) != 0){
     # Order the data table by the priority.
@@ -94,8 +95,10 @@ select_simple_greedy_algorithm <- function(dt = NULL,
 }
 
 #' Produce a set of stands that can be treated under a given criteria.
-#' @param dt A data table with all stand information necessary to determine availability for a specific treatment type.
-#' @param filters A list of strings that are used to filter the stands for treatment availability.
+#' @param dt A data table with all stand information necessary to determine
+#'   availability for a specific treatment type.
+#' @param filters A list of strings that are used to filter the stands for
+#'   treatment availability.
 #' @return The final data table with stands available for treatment.
 #'
 stand_filter <- function(dt, filters) {
@@ -110,10 +113,13 @@ stand_filter <- function(dt, filters) {
   return(dt)
 }
 
-#' Create a new field in a stand table that flags all stands that include a given set of criteria
+#' Create a new field in a stand table that flags all stands that include a
+#' given set of criteria
 #'
-#' @param dt A data table with all stand information necessary to determine availability for a specific treatment type.
-#' @param filters A list of strings that are used to filter the stands for treatment availability.
+#' @param dt A data table with all stand information necessary to determine
+#'   availability for a specific treatment type.
+#' @param filters A list of strings that are used to filter the stands for
+#'   treatment availability.
 #' @param field The name of a new field
 #' @return The final data table with stands available for treatment.
 #'
@@ -130,15 +136,18 @@ stand_flag <- function(dt, filters, field) {
   return(dt)
 }
 
-#' Create a dataset by subsetting subunits that were selected in the selectSubunits function
-#' and grouping the data by a larger subunit (usually planning areas).
+#' Create a dataset by subsetting subunits that were selected in the
+#' selectSubunits function and grouping the data by a larger subunit (usually
+#' planning areas).
 #'
 #' @param dt A data table with all the subunits and attributes.
 #' @param grouping_vars The variable names by which the data will be grouped.
-#' @param summing_vars The variables in the original dataset that need to be summed over each subunit.
+#' @param summing_vars The variables in the original dataset that need to be
+#'   summed over each subunit.
 #' @param subset_var TODO
-#' @return The selected stands from \code{df}, ordered by \code{priority_SPM}, and selected until the sum of \code{priority_STND} is as close to
-#' \code{treat_target} as possible.
+#' @return The selected stands from \code{df}, ordered by \code{priority_SPM},
+#'   and selected until the sum of \code{priority_STND} is as close to
+#'   \code{treat_target} as possible.
 #'
 create_grouped_dataset <- function(dt,
                                  grouping_vars,
@@ -158,7 +167,8 @@ create_grouped_dataset <- function(dt,
 #'
 #' @param numPriorities TODO
 #' @param weights TODO
-#' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
+#' @return A datatable with the weighted values for the priorities in the
+#'   \code{priorityList}.
 #'
 weight_priorities <- function(numPriorities, weights = c("1 1 1")){
   if(numPriorities == 1)
@@ -175,18 +185,6 @@ weight_priorities <- function(numPriorities, weights = c("1 1 1")){
 }
 
 
-#' Update target area for treatment after each activity
-#'
-#' @param treated_stands TODO
-#' @param subunit TODO
-#' @param unit_area TODO
-#' @return A table with the updated subunit targets for all planning areas that had treatments
-#'
-update_target <-function(treated_stands, subunit, unit_area) {
-  treated_subunit_target <- create_grouped_dataset(treated_stands,
-                                               subunit,
-                                               unit_area)
-}
 
 printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_constraint) {
   parameters <- paste0("ForSys simulation designed and coded by Rachel Houtman, run on: ", Sys.Date(), "\n",
@@ -256,17 +254,14 @@ calculate_spm_pcp <- function(stands, fields=NULL){
   return(stands)
 }
 
-# Hack the area target - can be set in the shapefile.
-# This code may be updated for looping multiple treatment types.
-# It should do the same thing that Pedro is working on within a single run instead of wrapped.
+# Hack the area target - can be set in the shapefile. This code may be updated
+# for looping multiple treatment types. It should do the same thing that Pedro
+# is working on within a single run instead of wrapped.
 set_up_treatment_types <- function(stands, args=NULL) {
-  stands$Commercial <- stands$Commercial*stands$AREA_HA
-  stands$PreCommercial <- stands$AREA_HA - stands$Commercial
   stands$selected <- 0
-  stands$treatment_type <- ""
-  stands$treatedPAArea <- 0
+  # stands$treatedPAArea <- 0
+  stands$proj_target_treated <- 0
   stands$weightedPriority <- 0
-  stands$treat <- 0
   return(stands)
 }
 
@@ -297,81 +292,94 @@ set_up_priorities <- function(stands, w, priorities, weights) {
 #' Threshold string statement parser
 #' @param thresholds Vector of Boolean string statements to parse
 
-make_thresholds <- function(thresholds) {
+make_thresholds <- function(txt) {
   # txt <- 'RxFire: FRG %in% 1:3 & Manage == 0; RxReburn: RxFire == 1'
-  txt <- thresholds
-  if(stringr::str_detect(txt, ':')==FALSE){
-    txt <- stringr::str_replace(txt, ' ', ': ')
-    warning(glue::glue('!! Rx threshold statement "{txt}" missing a colon. Assuming string before first space is the treatment name.'))
-  }
+  # txt <- 'RxReburn RxFire == 1
+  # txt <- 'RxFire: threshold1 == 1; RxReburn: priority3 > 0.5'
+  # txt <- NULL
+  # txt <- ''
+  if(is.null(txt)) txt <- ''
+
   out <- txt %>%
     stringr::str_replace_all(' ','') %>%
-    stringr::str_split(';', simplify = T) %>%
-    stringr::str_split(':', simplify = T, n=2) %>%
+    stringr::str_split(';', simplify = T) %>% # split treatments at ;
+    stringr::str_split(':', simplify = T, n=2) %>% # split name from thesholds
     as.data.frame() %>%
     rename(type = 1, threshold = 2)
   return(out)
 }
 
-#' TODO
+set_treatment_target <- function(stands,
+                                 proj_id,
+                                 proj_fixed_target,
+                                 proj_target_field=NULL,
+                                 proj_target_value=NULL
+                                 ) {
+
+  # target based on fixed total
+  if(length(proj_fixed_target)>0){
+    if (proj_fixed_target == TRUE) {
+      stands <- stands %>%
+        set_fixed_target(
+          target_value = proj_target_value
+        )
+      # target based on percent total of field
+    } else if (proj_fixed_target == FALSE) {
+      stands <- stands %>%
+        set_variable_target(
+          group_by = proj_id,
+          target_field = proj_target_field,
+          multiplier = proj_target_value
+        )
+    }
+  }
+  return(stands)
+
+}
+
+#' Select stands for treatment based on project stand thresholds and
+#' threshold/targets
+#'
 #' @param stands TODO
-#' @param treatment_type TODO
-#' @param treatment_threshold TODO
 #' @param stand_id_field TODO
 #' @param proj_id TODO
-#' @param proj_fixed_target TODO
 #' @param proj_target_value TODO
-#' @param proj_target_field TODO
 #' @return TODO
 #'
 #'
 apply_treatment <- function(stands,
-                            treatment_type,
-                            treatment_threshold,
                             stand_id_field,
                             proj_id,
-                            proj_fixed_target,
-                            proj_target_field=NULL,
-                            proj_target_value=NULL
-                            # proj_fixed_target_value=NULL,
-                            # proj_variable_target_multiplier=NULL
+                            proj_objective = 'weightedPriority',
+                            proj_target_field,
+                            proj_target = 'master_target'
                             ) {
-  stands_updated <- stands
-  selected_stands <- NULL
 
-  # for each treatment type
-  for (t in 1:length(treatment_type)) {
+  # select stands for treatment
+  stands_treated <- stands %>%
+    select_simple_greedy_algorithm(
+      grouped_by = proj_id,
+      prioritize_by = proj_objective,
+      constrain_by = c(1, proj_target_field, proj_target))
 
-    # filter stands by threshold type criteria
-    filtered_stands <- stands %>% filter_stands(treatment_threshold[t], verbose = F)
+  # update the total area available for activities.
+  proj_objective_treated <- stands_treated %>%
+    create_grouped_dataset(
+      grouping_vars = proj_id,
+      summing_vars = c(proj_target_field, 'weightedPriority')) %>%
+    arrange(-weightedPriority)
 
-    # set project target
-    if (proj_fixed_target == TRUE) {
-      # target based on fixed total
-      filtered_stands <- filtered_stands %>%
-        set_fixed_target(target_value = proj_target_value)
-    } else if (proj_fixed_target == FALSE) {
-      # target based on percent total of field
-      filtered_stands <- filtered_stands %>%
-        set_variable_target(group_by = proj_id,
-                            target_field = proj_target_field,
-                            multiplier = proj_target_value)
-    }
+  # # mark selected stands
+  # selected <- treat_stands %>% pull(!!stand_id_field)
+  # stands$selected[stands$cell_id %in% selected] <- 1
+  #
+  # # update area treated
+  # stands <- stands %>%
+  #   left_join(proj_objective_treated) %>%
+  #   mutate(proj_target_treated = proj_target_treated + sum) %>%
+  #   dplyr::select(-sum)
 
-    # select stands for current treatment type
-    treat_stands <- select_simple_greedy_algorithm(dt = filtered_stands,
-                                                   grouped_by = proj_id,
-                                                   prioritize_by = "weightedPriority",
-                                                   constrain_by = c(1, proj_target_field, "master_target"))
-
-    # This updates the total area available for activities. Original treatment target - total area treated for each subunit (planning area).
-    area_treatedPA <- update_target(treat_stands, proj_id, proj_target_field)
-    stands_updated <- stands_updated[area_treatedPA,  treatedPAArea := treatedPAArea + i.sum, on = proj_id]
-    stands_updated <- stands_updated[treat_stands, ':='(treatment_type = treatment_type[t], selected = 1), on = stand_id_field]
-    selected_stands <- rbind(selected_stands, stands_updated[selected==1,])
-  }
-
-  return(selected_stands)
+  return(stands_treated)
 }
 
 #' TODO
