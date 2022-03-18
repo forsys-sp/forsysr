@@ -13,7 +13,7 @@
 #' in a config file and pass the name of the file to this run function.
 #'
 #' @param shiny_data If data has already been loaded, pass the object here
-#' @param num_years TODO
+#' @param num_reps TODO
 #' @param config_file Relative path to a config file that defines needed
 #' parameters
 #' @param scenario_name A name for this scenario
@@ -53,10 +53,11 @@
 #' if TRUE
 #' @param scenario_write_tags TODO
 #'
-#' @return
+#' @return Forsys results with weightedPriority, treatmentRank, and weights
 #'
-#' @importFrom dplyr %>%
 #' @importFrom rlang .data
+#' @importFrom dplyr %>%
+#'
 #' @export
 run <- function(
     shiny_data = NULL,
@@ -449,5 +450,6 @@ run <- function(
       } # END WEIGHT LOOP
 
     message('Forsys simulation is complete')
+    return(projects_selected_out)
   }
 
