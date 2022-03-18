@@ -8,7 +8,7 @@ threshold/targets}
 apply_treatment(
   stands,
   stand_id_field,
-  proj_id,
+  proj_id_field,
   proj_objective = "weightedPriority",
   proj_target_field,
   proj_target = "master_target"
@@ -19,9 +19,13 @@ apply_treatment(
 
 \item{stand_id_field}{TODO}
 
-\item{proj_id}{TODO}
+\item{proj_id_field}{TODO}
 
-\item{proj_target_value}{TODO}
+\item{proj_objective}{TODO}
+
+\item{proj_target_field}{TODO}
+
+\item{proj_target}{TODO}
 }
 \value{
 TODO

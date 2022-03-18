@@ -1,6 +1,6 @@
 Package: forsys
 Title: ForSys Scenario Planning
-Version: 0.14
+Version: 0.15
 Authors@R: 
     c(
         person(given = "Rachel",
@@ -19,20 +19,19 @@ Authors@R:
 Description: ForSys is a multi-objective spatial prioritization system that was designed to explore how specific investment strategies aimed at improving forest conditions change under a range of management constraints to achieve specific outcomes and understand tradeoffs. Forsys.app modernizes how the USFS and our partners identify, prioritize, and implement treatment activities across the landscape by using cloud-based, geospatial technology to explore and rapidly visualize various management scenarios and treatment optimization decisions.
 Depends: R (>= 4.0.0), rlang
 Imports:
-    class,
     data.table,
-    directlabels, 
-    dplyr, 
-    foreign, 
-    gtools, 
-    ggplot2, 
-    jsonlite, 
-    stringr, 
-    pacman,
+    directlabels,
+    dplyr,
+    foreign,
+    gtools,
+    ggplot2,
+    jsonlite,
+    stringr,
     purrr,
-    roxygen2,
     tidyr,
-    utils
+    utils,
+    glue,
+    pacman
 Suggests:
     doParallel,
     rgdal, 

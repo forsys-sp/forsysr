@@ -9,9 +9,11 @@ set_variable_target(stands, group_by, target_field, multiplier)
 \arguments{
 \item{stands}{TODO}
 
-\item{proj_target_field}{TODO}
+\item{group_by}{TODO}
 
-\item{proj_variable_target_multiplier}{TODO}
+\item{target_field}{TODO}
+
+\item{multiplier}{TODO}
 }
 \value{
 TODO

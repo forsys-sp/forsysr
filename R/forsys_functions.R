@@ -7,7 +7,7 @@ load_R_config <- function(config_file){
 #' Load stored in JSON config into the current enviroment
 #'
 #' @param json_filename character string of forsys json config
-
+#'
 load_json_config <- function(json_filename){
   json_data = readLines(json_filename) %>%
     jsonlite::fromJSON()
@@ -19,9 +19,12 @@ load_json_config <- function(json_filename){
 #' Load the input dataset. Supports both CSV and DBF.
 #'
 #' @param path_to_file Path to an input dataset
-#' @return Loaded data.table from the input dataset
-#' @export
 #'
+#' @return Loaded data.table from the input dataset
+#'
+#' @importFrom data.table data.table
+#'
+#' @export
 load_dataset <- function(path_to_file) {
   file_type <- stringr::str_sub(path_to_file, start= -3)
   message("Loading Dataset")
@@ -210,8 +213,11 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
 #' @param filter_txt Boolean statement as character string
 #' @param verbose Boolean statement to report filtered results
 #'
+#' @importFrom rlang .data
+#'
 filter_stands <- function(stands, filter_txt, verbose = TRUE){
   tryCatch({
+    out <- NULL # helps devtools::check()
     eval_txt <- paste0("out <- stands[", filter_txt ,"]")
     eval(parse(text=eval_txt))
     n0 <- nrow(stands)
@@ -290,8 +296,10 @@ set_up_priorities <- function(stands, w, priorities, weights) {
 }
 
 #' Threshold string statement parser
-#' @param thresholds Vector of Boolean string statements to parse
-
+#' @param txt Vector of Boolean string statements to parse
+#'
+#' @importFrom dplyr rename
+#'
 make_thresholds <- function(txt) {
   # txt <- 'RxFire: FRG %in% 1:3 & Manage == 0; RxReburn: RxFire == 1'
   # txt <- 'RxReburn RxFire == 1
@@ -309,8 +317,16 @@ make_thresholds <- function(txt) {
   return(out)
 }
 
+#' Threshold string statement parser
+#'
+#' @param stands TODO
+#' @param proj_id_field TODO
+#' @param proj_fixed_target TODO
+#' @param proj_target_field TODO
+#' @param proj_target_value TODO
+#'
 set_treatment_target <- function(stands,
-                                 proj_id,
+                                 proj_id_field,
                                  proj_fixed_target,
                                  proj_target_field=NULL,
                                  proj_target_value=NULL
@@ -327,7 +343,7 @@ set_treatment_target <- function(stands,
     } else if (proj_fixed_target == FALSE) {
       stands <- stands %>%
         set_variable_target(
-          group_by = proj_id,
+          group_by = proj_id_field,
           target_field = proj_target_field,
           multiplier = proj_target_value
         )
@@ -342,14 +358,18 @@ set_treatment_target <- function(stands,
 #'
 #' @param stands TODO
 #' @param stand_id_field TODO
-#' @param proj_id TODO
-#' @param proj_target_value TODO
+#' @param proj_id_field TODO
+#' @param proj_objective TODO
+#' @param proj_target_field TODO
+#' @param proj_target TODO
+#'
 #' @return TODO
 #'
+#' @importFrom rlang .data
 #'
 apply_treatment <- function(stands,
                             stand_id_field,
-                            proj_id,
+                            proj_id_field,
                             proj_objective = 'weightedPriority',
                             proj_target_field,
                             proj_target = 'master_target'
@@ -358,16 +378,16 @@ apply_treatment <- function(stands,
   # select stands for treatment
   stands_treated <- stands %>%
     select_simple_greedy_algorithm(
-      grouped_by = proj_id,
+      grouped_by = proj_id_field,
       prioritize_by = proj_objective,
       constrain_by = c(1, proj_target_field, proj_target))
 
   # update the total area available for activities.
   proj_objective_treated <- stands_treated %>%
     create_grouped_dataset(
-      grouping_vars = proj_id,
+      grouping_vars = proj_id_field,
       summing_vars = c(proj_target_field, 'weightedPriority')) %>%
-    arrange(-weightedPriority)
+    arrange(-.data$weightedPriority)
 
   # # mark selected stands
   # selected <- treat_stands %>% pull(!!stand_id_field)
@@ -384,7 +404,7 @@ apply_treatment <- function(stands,
 
 #' TODO
 #' @param stands TODO
-#' @param fixed_area_target TODO
+#' @param target_value TODO
 #' @return TODO
 #'
 #' @importFrom data.table :=
@@ -396,8 +416,9 @@ set_fixed_target <- function(stands, target_value) {
 
 #' TODO
 #' @param stands TODO
-#' @param proj_target_field TODO
-#' @param proj_variable_target_multiplier TODO
+#' @param group_by TODO
+#' @param target_field TODO
+#' @param multiplier TODO
 #' @return TODO
 #'
 #' @importFrom data.table :=
@@ -441,7 +462,7 @@ set_variable_target <- function(stands, group_by, target_field, multiplier){
 #' @param dir TODO
 #' @param name TODO
 #' @param write_fields TODO
-#' @return
+#' @return Undefined
 #'
 #' @importFrom dplyr %>%
 #'
@@ -457,7 +478,7 @@ write_stand_outputs_to_file <- function(selected_stands, dir, name, write_fields
 #' @param unique_weights TODO
 #' @param group_by TODO
 #' @param output_fields TODO
-#' @return
+#' @return TODO
 #'
 #' @importFrom dplyr %>%
 #'
