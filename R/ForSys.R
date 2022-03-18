@@ -12,7 +12,7 @@
 #' Run the ForSys treatment planner. Either provide parameters, or define parameters
 #' in a config file and pass the name of the file to this run function.
 #'
-#' @param shiny_data If data has already been loaded, pass the object here
+#' @param stand_data If data has already been loaded, pass the object here
 #' @param num_reps TODO
 #' @param config_file Relative path to a config file that defines needed
 #' parameters
@@ -60,7 +60,7 @@
 #'
 #' @export
 run <- function(
-    shiny_data = NULL,
+    stand_data = NULL,
     num_reps = 1,
     config_file = NULL,
     scenario_name = "",
@@ -130,9 +130,9 @@ run <- function(
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # # # Load data
-    if (!is.null(shiny_data)) {
+    if (!is.null(stand_data)) {
       message("Forsys Shiny data detected.")
-      stands <- shiny_data
+      stands <- stand_data
     } else {
       message("No Forsys Shiny data detected.")
       stands <- load_dataset(scenario_stand_filename)
