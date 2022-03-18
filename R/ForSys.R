@@ -13,11 +13,7 @@
 #' in a config file and pass the name of the file to this run function.
 #'
 #' @param stand_data If data has already been loaded, pass the object here
-<<<<<<< HEAD
-#' @param num_years TODO
-=======
 #' @param num_reps TODO
->>>>>>> multi_treat_removal
 #' @param config_file Relative path to a config file that defines needed
 #' parameters
 #' @param scenario_name A name for this scenario
@@ -75,12 +71,7 @@ run <- function(
     scenario_priorities = NULL,
     proj_id_field = "",
     stand_threshold = NULL,
-<<<<<<< HEAD
-    #TODO proj_stand_threshold = NULL; replacement for stand_threshold
-    proj_treatment_name = NULL,
-=======
     proj_treatment_name = "",
->>>>>>> multi_treat_removal
     proj_fixed_target = FALSE,
     proj_target_field = "",
     proj_target_value = NULL,
@@ -381,7 +372,7 @@ run <- function(
                              'weightedPriority'),
                          by = stand_id_field) %>%
         create_grouped_dataset(
-          grouping_vars = c(scenario_output_grouping_fields, 'ETrt_YR'),
+          grouping_vars = c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR'),
           summing_vars = c(scenario_output_fields, 'weightedPriority')
           ) %>%
         dplyr::arrange(ETrt_YR, -weightedPriority) %>%
@@ -397,11 +388,7 @@ run <- function(
 
       # combine etrt w/ esum
       projects_etrt_esum_out <- projects_etrt_out %>%
-<<<<<<< HEAD
         dplyr::inner_join(projects_esum_out, by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
-=======
-        dplyr::inner_join(projects_esum_out, by=scenario_output_grouping_fields) %>%
->>>>>>> multi_treat_removal
         base::replace(is.na(.), 0)
 
       # rank projects
@@ -425,10 +412,7 @@ run <- function(
 
       # tag project output with treatment rank, scenario_write_tags, priority weights
       projects_out <- projects_etrt_esum_out %>%
-<<<<<<< HEAD
-=======
         dplyr::select(-scenario_output_grouping_fields) %>%
->>>>>>> multi_treat_removal
         dplyr::group_by(proj_id_field := get(proj_id_field), ETrt_YR) %>%
         summarize_if(is.numeric, sum) %>%
         dplyr::left_join(projects_rank, by = proj_id_field) %>%
@@ -451,6 +435,4 @@ run <- function(
       } # END WEIGHT LOOP
 
     message('Forsys simulation is complete')
-    return(projects_selected_out)
   }
-
