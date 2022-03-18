@@ -28,8 +28,10 @@ results_columns <- function(results_data) {
 theme_toggle <- function(trigger) {
   if (trigger == "Dark") {
     theme_palette <<- '#F2F2F2'
+    grid_color <<- '#C0C0C0'
   } else {
     theme_palette <<- '#1A1A1A'
+    grid_color <<- '#808080'
   }
   return (theme_palette)
 }
@@ -255,15 +257,18 @@ attainment_chart_by_target_treated <- function(results_data, priority, constrain
       + ggplot2::scale_color_discrete() %>%
       + ggplot2::scale_x_continuous(labels = function(x) {format(x, scientific=FALSE)}) %>%
       + ggplot2::theme(title = element_text(color = theme_palette)) %>%
-      + ggplot2::theme(legend.background = element_rect(fill = 'transparent')) %>%
+      + ggplot2::theme(legend.background = element_rect(fill = 'transparent', color = NA)) %>%
       + ggplot2::theme(plot.background = element_rect(fill = 'transparent', color = NA)) %>%
-      + ggplot2::theme(panel.background = element_rect(fill = 'transparent')) %>%
-      + ggplot2::theme(panel.grid.major = element_line(color = theme_palette)) %>%
+      + ggplot2::theme(panel.background = element_rect(fill = 'transparent', color = NA)) %>%
+      + ggplot2::theme(panel.grid.major = element_line(color = grid_color, 0.5)) %>%
+      + ggplot2::theme(panel.grid.minor = element_line(color = grid_color, 0.5)) %>%
       + ggplot2::theme(axis.text.x = element_text(size = rel(1))) %>%
+      + ggplot2::theme(axis.text.y = element_text(size = rel(1))) %>%
       + ggplot2::theme(axis.title.x = element_text(size = rel(1.4))) %>%
       + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
       + ggplot2::theme(legend.title = element_text(size = rel(1.2))) %>%
       + ggplot2::theme(legend.text = element_text(size = rel(1.2), color = theme_palette)) %>%
+      + ggplot2::theme(legend.key = element_rect(fill = NA, color = NA)) %>%
       + ggplot2::theme(plot.title = element_text(size = rel(2)))
 
   return(p) 
@@ -297,13 +302,18 @@ cumulative_attainment_chart <- function(results_data, priority, constraint_field
       + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
       + ggplot2::scale_color_discrete() %>%
       + ggplot2::scale_x_continuous(labels = function(x) {format(x, scientific=FALSE)}) %>%
+      + ggplot2::theme(legend.background = element_rect(fill = 'transparent', color = NA)) %>%
+      + ggplot2::theme(plot.background = element_rect(fill = 'transparent', color = NA)) %>%
+      + ggplot2::theme(panel.background = element_rect(fill = 'transparent', color = NA)) %>%
       + ggplot2::theme(title = element_text(color = theme_palette)) %>%
       + ggplot2::theme(axis.text.x = element_text(size = rel(1))) %>%
+      + ggplot2::theme(axis.text.y = element_text(size = rel(1))) %>%
       + ggplot2::theme(axis.title.x = element_text(size = rel(1.4))) %>%
       + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
-      + ggplot2::theme(legend.title = element_text(size = rel(1.2))) %>%
+      + ggplot2::theme(legend.title = element_text(size = rel(1.4))) %>%
       + ggplot2::theme(legend.text = element_text(size = rel(1.2), color = theme_palette)) %>%
-      + ggplot2::theme(panel.grid.major = element_line(color = theme_palette)) %>%
+      + ggplot2::theme(panel.grid.major = element_line(color = grid_color)) %>%
+      + ggplot2::theme(panel.grid.minor = element_line(color = grid_color)) %>%
       + ggplot2::theme(plot.title = element_text(size = rel(2)))
 
   return(p)
@@ -355,13 +365,18 @@ tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field, 
         + ggplot2::labs(title="Tradeoff Analysis", x = x_name, y = y_name, color = proj_field) %>%
         + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
         + ggplot2::scale_color_discrete() %>%
+        + ggplot2::theme(legend.background = element_rect(fill = 'transparent', color = NA)) %>%
+        + ggplot2::theme(plot.background = element_rect(fill = 'transparent', color = NA)) %>%
+        + ggplot2::theme(panel.background = element_rect(fill = 'transparent', color = NA)) %>%
         + ggplot2::theme(title = element_text(color = theme_palette)) %>%
-        + ggplot2::theme(axis.text.x = element_text(size = rel(1))) %>%
-        + ggplot2::theme(axis.title.x = element_text(size = rel(1.4))) %>%
-        + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
+        + ggplot2::theme(axis.text.x = element_text(size = rel(1), color = theme_palette)) %>%
+        + ggplot2::theme(axis.text.y = element_text(size = rel(1),color = theme_palette)) %>%
+        + ggplot2::theme(axis.title.x = element_text(size = rel(1.4), color = theme_palette)) %>%
+        + ggplot2::theme(axis.title.y = element_text(size = rel(1.4), color = theme_palette)) %>%
         + ggplot2::theme(legend.title = element_text(size = rel(1.2))) %>%
         + ggplot2::theme(legend.text = element_text(size = rel(1.2), color = theme_palette)) %>%
-         + ggplot2::theme(panel.grid.major = element_line(color = theme_palette)) %>%
+        + ggplot2::theme(panel.grid.major = element_line(color = grid_color)) %>%
+        + ggplot2::theme(panel.grid.minor = element_line(color = grid_color)) %>%
         + ggplot2::theme(plot.title = element_text(size = rel(2)))
 
   return(p)
@@ -431,12 +446,18 @@ project_boxplot <- function(results_data, proj_field, x_field, y_field, constrai
         + ggplot2::labs(title="Treatment Rank Distribution", x = proj_field, y = "Treatment Rank", color = proj_field) %>%
         + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
         + ggplot2::scale_color_discrete() %>%
-        + ggplot2::theme(axis.text.x = element_text(size = rel(1))) %>%
-        + ggplot2::theme(axis.title.x = element_text(size = rel(1.4))) %>%
-        + ggplot2::theme(axis.title.y = element_text(size = rel(1.4))) %>%
-        + ggplot2::theme(legend.title = element_text(size = rel(1.2))) %>%
-         + ggplot2::theme(panel.grid.major = element_line(color = theme_palette)) %>%
-        + ggplot2::theme(plot.title = element_text(size = rel(2)))
+        + ggplot2::theme(legend.background = element_rect(fill = 'transparent', color = NA)) %>%
+        + ggplot2::theme(plot.background = element_rect(fill = 'transparent', color = NA)) %>%
+        + ggplot2::theme(panel.background = element_rect(fill = 'transparent', color = NA)) %>%
+        + ggplot2::theme(axis.text.x = element_text(size = rel(1), color = theme_palette)) %>%
+        + ggplot2::theme(axis.text.y = element_text(size = rel(1),color = theme_palette)) %>%
+        + ggplot2::theme(axis.title.x = element_text(size = rel(1.4), color = theme_palette)) %>%
+        + ggplot2::theme(axis.title.y = element_text(size = rel(1.4), color = theme_palette)) %>%
+        + ggplot2::theme(legend.title = element_text(size = rel(2), color = theme_palette)) %>%
+        + ggplot2::theme(legend.text = element_text(size = rel(1.2), color = theme_palette)) %>%
+        + ggplot2::theme(panel.grid.major = element_line(color = grid_color)) %>%
+        + ggplot2::theme(panel.grid.minor = element_line(color = grid_color)) %>%
+        + ggplot2::theme(plot.title = element_text(size = rel(2), color = theme_palette))
 
   return(p)
 }
