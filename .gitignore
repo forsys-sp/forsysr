@@ -18,7 +18,8 @@
 /*.Rcheck/
 
 # RStudio files
-.Rproj.user/
+*.Rproj.user/
+*.Rproj*
 
 # produced vignettes
 vignettes/*.html
@@ -45,5 +46,3 @@ vignettes/*.pdf
 
 # Mac OSX
 .DS_Store
-
-*sublime*
