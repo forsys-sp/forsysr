@@ -60,6 +60,7 @@
 #' @export
 run <- function(
     shiny_data = NULL,
+    #TODO stand_data = NULL: use instead of "shiny_data"
     num_reps = 1,
     config_file = NULL,
     scenario_name = "",
@@ -69,6 +70,7 @@ run <- function(
     global_threshold = NULL,
     scenario_priorities = NULL,
     proj_id = "",
+    #TODO proj_id_field = ""; use instead of "proj_id"
     stand_threshold = NULL,
     proj_fixed_target = FALSE,
     proj_target_field = "",
@@ -85,14 +87,14 @@ run <- function(
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
     scenario_write_tags = NULL
-
+    #TODO add "return_stands = FALSE" to return output stands and allow run to be strung together...
     ) {
 
-    # temporary fix for addressing problem where the proj_id_field == proj_id
-    if(exists(proj_id)){
-      proj_id_field = proj_id
-      rm(proj_id)
-    }
+    #TODO: completely replace "proj_id" with "proj_id_field"
+    if(exists(proj_id)){proj_id_field = proj_id; rm(proj_id)}
+
+    #TODO: replace "shiny_data" with "stand_data"
+    if(exists(shiny_data)){stand_data = shiny_data}
 
     # If a config file has been selected, source it to read in variables
     if (length(config_file) > 0) {
