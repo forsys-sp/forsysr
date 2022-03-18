@@ -17,7 +17,7 @@
 #' lands are included in the calculation.
 #' @param scenario_priorities Priorities are named here. If only one priority
 #' exists, only a weight of one will be used.
-#' @param proj_id The field in the scenario_stand_filename that indicates which
+#' @param proj_id_field The field in the scenario_stand_filename that indicates which
 #' project or planning area a stand belongs to
 #' @param use_stand_threshold TODO
 #' @param stand_threshold TODO
@@ -54,7 +54,7 @@ write_save_file <- function(
     use_global_threshold = FALSE,
     global_threshold = NULL,
     scenario_priorities = NULL,
-    proj_id = "",
+    proj_id_field = "",
     use_stand_threshold = FALSE,
     stand_threshold = NULL,
     proj_fixed_target = FALSE,
@@ -85,7 +85,7 @@ write_save_file <- function(
     "use_global_threshold",
     "global_threshold",
     "scenario_priorities",
-    "proj_id",
+    "proj_id_field",
     "use_stand_threshold",
     "stand_threshold",
     "proj_fixed_target",
@@ -118,7 +118,7 @@ write_save_file <- function(
   vector_data$use_global_threshold <- use_global_threshold
   vector_data$global_threshold <- global_threshold
   vector_data$scenario_priorities <- scenario_priorities
-  vector_data$proj_id <- proj_id
+  vector_data$proj_id_field <- proj_id_field
   vector_data$use_stand_threshold <- use_stand_threshold
   vector_data$stand_threshold <- stand_threshold
   vector_data$proj_fixed_target <- proj_fixed_target
@@ -215,7 +215,7 @@ write_save_file_helper <- function(input, r_data) {
     use_global_threshold = input$use_global_threshold,
     global_threshold = global_threshold,
     scenario_priorities = input$priorities_fields,
-    proj_id = input$planning_unit_id_field,
+    proj_id_field = input$planning_unit_id_field,
     use_stand_threshold = input$use_stand_threshold,
     stand_threshold = stand_threshold,
     proj_fixed_target = input$proj_fixed_target,
@@ -294,7 +294,7 @@ load_json_config <- function(json_filename){
 #   # stand_id_field = input$stand_id_field
 #   stand_pcp_spm = input$priorities_fields
 #   stand_filter = stand_filter
-#   # proj_id = input$planning_unit_id_field
+#   # proj_id_field = input$planning_unit_id_field
 #   proj_thresholds = project_filter
 #   # proj_fixed_target = input$proj_fixed_target
 #   # proj_target_field = input$proj_target_field

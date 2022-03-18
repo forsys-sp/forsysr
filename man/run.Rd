@@ -6,7 +6,7 @@
 in a config file and pass the name of the file to this run function.}
 \usage{
 run(
-  shiny_data = NULL,
+  stand_data = NULL,
   num_reps = 1,
   config_file = NULL,
   scenario_name = "",
@@ -15,8 +15,9 @@ run(
   stand_pcp_spm = NULL,
   global_threshold = NULL,
   scenario_priorities = NULL,
-  proj_id = "",
+  proj_id_field = "",
   stand_threshold = NULL,
+  proj_treatment_name = "",
   proj_fixed_target = FALSE,
   proj_target_field = "",
   proj_target_value = NULL,
@@ -35,7 +36,7 @@ run(
 )
 }
 \arguments{
-\item{shiny_data}{If data has already been loaded, pass the object here}
+\item{stand_data}{If data has already been loaded, pass the object here}
 
 \item{num_reps}{TODO}
 
@@ -60,7 +61,7 @@ lands are included in the calculation.}
 \item{scenario_priorities}{Priorities are named here. If only one priority
 exists, only a weight of one will be used.}
 
-\item{proj_id}{The field in the scenario_stand_filename that indicates which
+\item{proj_id_field}{The field in the scenario_stand_filename that indicates which
 project or planning area a stand belongs to}
 
 \item{stand_threshold}{TODO}
