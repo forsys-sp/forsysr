@@ -19,6 +19,9 @@ rank projects between weighting scenarios}
 
 \item{constraint_field}{Field used to constrain simulation. Usually some
 form of area.}
+
+\item{priority}{The NAME of the main priority. This will be the filter for
+weight, and will add ETrt_*_PCP to access the value field}
 }
 \value{
 TODO
