@@ -72,6 +72,8 @@ run <- function(
     proj_id = "",
     #TODO proj_id_field = ""; use instead of "proj_id"
     stand_threshold = NULL,
+    #TODO proj_stand_threshold = NULL; replacement for stand_threshold
+    proj_treatment_name = "",
     proj_fixed_target = FALSE,
     proj_target_field = "",
     proj_target_value = NULL,
@@ -91,10 +93,13 @@ run <- function(
     ) {
 
     #TODO: completely replace "proj_id" with "proj_id_field"
-    if(exists(proj_id)){proj_id_field = proj_id; rm(proj_id)}
+    if(exists(proj_id)){
+      proj_id_field = proj_id
+      rm(proj_id)
+    }
 
     #TODO: replace "shiny_data" with "stand_data"
-    if(exists(shiny_data)){stand_data = shiny_data}
+    stand_data = shiny_data
 
     # If a config file has been selected, source it to read in variables
     if (length(config_file) > 0) {
@@ -139,7 +144,7 @@ run <- function(
     # # # Load data
     if (!is.null(shiny_data)) {
       message("Forsys Shiny data detected.")
-      stands <- shiny_data
+      stands <- stand_data
     } else {
       message("No Forsys Shiny data detected.")
       stands <- load_dataset(scenario_stand_filename)
@@ -192,10 +197,12 @@ run <- function(
 
         if (fire_planning_years > 1) message(paste('\nYear', yr, '\n---------------'))
 
-        # specify thresholds
-        threshold_dat <- make_thresholds(stand_threshold)
+        # TODO: delete make_thresholds and commented texts below once correctly specified in shiny
+        # threshold_dat <- make_thresholds(stand_threshold)
+        # stand_threshold = 'threshold1 == 1'
         # (threshold_dat <- make_thresholds('trt 1: threshold1 == 1; trt 2: priority3 > 0.5'))
         # (threshold_dat <- make_thresholds('trt 1: priority3 > 0.5'))
+        # threshold_dat <- make_thresholds(stand_threshold)
 
         stands_selected <- stands_available
 
@@ -210,7 +217,8 @@ run <- function(
             proj_target_value = proj_target_value) %>%
           # apply treatment thresholds
           filter_stands(
-            filter_txt = threshold_dat$threshold,
+            # filter_txt = threshold_dat$threshold,
+            filter_txt = stand_threshold,
             verbose = T) %>%
           # select stands
           apply_treatment(
@@ -221,7 +229,7 @@ run <- function(
             proj_target = 'master_target'
           ) %>%
           # record treatment name
-          dplyr::mutate(treatment_type = !!threshold_dat$type)
+          dplyr::mutate(treatment_type = !!proj_treatment_name)
 
         # }
 
