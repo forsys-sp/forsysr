@@ -12,7 +12,7 @@
 #' Run the ForSys treatment planner. Either provide parameters, or define parameters
 #' in a config file and pass the name of the file to this run function.
 #'
-#' @param shiny_data If data has already been loaded, pass the object here
+#' @param stand_data If data has already been loaded, pass the object here
 #' @param num_reps TODO
 #' @param config_file Relative path to a config file that defines needed
 #' parameters
@@ -28,7 +28,7 @@
 #' lands are included in the calculation.
 #' @param scenario_priorities Priorities are named here. If only one priority
 #' exists, only a weight of one will be used.
-#' @param proj_id The field in the scenario_stand_filename that indicates which
+#' @param proj_id_field The field in the scenario_stand_filename that indicates which
 #' project or planning area a stand belongs to
 #' @param stand_threshold TODO
 #' @param proj_fixed_target TODO
@@ -60,8 +60,7 @@
 #'
 #' @export
 run <- function(
-    shiny_data = NULL,
-    #TODO stand_data = NULL: use instead of "shiny_data"
+    stand_data = NULL,
     num_reps = 1,
     config_file = NULL,
     scenario_name = "",
@@ -70,10 +69,8 @@ run <- function(
     stand_pcp_spm = NULL,
     global_threshold = NULL,
     scenario_priorities = NULL,
-    proj_id = "",
-    #TODO proj_id_field = ""; use instead of "proj_id"
+    proj_id_field = "",
     stand_threshold = NULL,
-    #TODO proj_stand_threshold = NULL; replacement for stand_threshold
     proj_treatment_name = "",
     proj_fixed_target = FALSE,
     proj_target_field = "",
@@ -90,17 +87,7 @@ run <- function(
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
     scenario_write_tags = NULL
-    #TODO add "return_stands = FALSE" to return output stands and allow run to be strung together...
     ) {
-
-    #TODO: completely replace "proj_id" with "proj_id_field"
-    if(exists(proj_id)){
-      proj_id_field = proj_id
-      rm(proj_id)
-    }
-
-    #TODO: replace "shiny_data" with "stand_data"
-    stand_data = shiny_data
 
     # If a config file has been selected, source it to read in variables
     if (length(config_file) > 0) {
@@ -143,7 +130,7 @@ run <- function(
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # # # Load data
-    if (!is.null(shiny_data)) {
+    if (!is.null(stand_data)) {
       message("Forsys Shiny data detected.")
       stands <- stand_data
     } else {
@@ -212,7 +199,7 @@ run <- function(
         # set treatment target
         stands_selected <- stands_selected %>%
           set_treatment_target(
-            proj_id = proj_id_field,
+            proj_id_field = proj_id_field,
             proj_fixed_target = proj_fixed_target,
             proj_target_field = proj_target_field,
             proj_target_value = proj_target_value) %>%
@@ -224,7 +211,7 @@ run <- function(
           # select stands
           apply_treatment(
             stand_id_field = stand_id_field,
-            proj_id = proj_id_field,
+            proj_id_field = proj_id_field,
             proj_objective = 'weightedPriority',
             proj_target_field = proj_target_field,
             proj_target = 'master_target'
@@ -373,8 +360,6 @@ run <- function(
       # write project to file ..................
       # ........................................
 
-      scenario_output_grouping_fields <- c('ownership')
-
       # summarize selected stands by grouping fields (eg project)
       projects_etrt_out <- stands_selected_out %>%
         dplyr::select(!!stand_id_field, ETrt_YR) %>%
@@ -387,7 +372,7 @@ run <- function(
                              'weightedPriority'),
                          by = stand_id_field) %>%
         create_grouped_dataset(
-          grouping_vars = c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR'),
+          grouping_vars = c(scenario_output_grouping_fields, 'ETrt_YR'),
           summing_vars = c(scenario_output_fields, 'weightedPriority')
           ) %>%
         dplyr::arrange(ETrt_YR, -weightedPriority) %>%
@@ -403,7 +388,7 @@ run <- function(
 
       # combine etrt w/ esum
       projects_etrt_esum_out <- projects_etrt_out %>%
-        dplyr::inner_join(projects_esum_out, by=c(proj_id_field, scenario_output_grouping_fields)) %>%
+        dplyr::inner_join(projects_esum_out, by=scenario_output_grouping_fields) %>%
         base::replace(is.na(.), 0)
 
       # rank projects
@@ -428,7 +413,7 @@ run <- function(
       # tag project output with treatment rank, scenario_write_tags, priority weights
       projects_out <- projects_etrt_esum_out %>%
         dplyr::select(-scenario_output_grouping_fields) %>%
-        dplyr::group_by(proj_id := get(proj_id_field), ETrt_YR) %>%
+        dplyr::group_by(proj_id_field := get(proj_id_field), ETrt_YR) %>%
         summarize_if(is.numeric, sum) %>%
         dplyr::left_join(projects_rank, by = proj_id_field) %>%
         dplyr::arrange(treatment_rank) %>%

@@ -15,7 +15,7 @@ write_save_file(
   use_global_threshold = FALSE,
   global_threshold = NULL,
   scenario_priorities = NULL,
-  proj_id = "",
+  proj_id_field = "",
   use_stand_threshold = FALSE,
   stand_threshold = NULL,
   proj_fixed_target = FALSE,
@@ -63,7 +63,7 @@ lands are included in the calculation.}
 \item{scenario_priorities}{Priorities are named here. If only one priority
 exists, only a weight of one will be used.}
 
-\item{proj_id}{The field in the scenario_stand_filename that indicates which
+\item{proj_id_field}{The field in the scenario_stand_filename that indicates which
 project or planning area a stand belongs to}
 
 \item{use_stand_threshold}{TODO}

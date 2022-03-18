@@ -317,8 +317,16 @@ make_thresholds <- function(txt) {
   return(out)
 }
 
+#' Threshold string statement parser
+#'
+#' @param stands TODO
+#' @param proj_id_field TODO
+#' @param proj_fixed_target TODO
+#' @param proj_target_field TODO
+#' @param proj_target_value TODO
+#'
 set_treatment_target <- function(stands,
-                                 proj_id,
+                                 proj_id_field,
                                  proj_fixed_target,
                                  proj_target_field=NULL,
                                  proj_target_value=NULL
@@ -335,7 +343,7 @@ set_treatment_target <- function(stands,
     } else if (proj_fixed_target == FALSE) {
       stands <- stands %>%
         set_variable_target(
-          group_by = proj_id,
+          group_by = proj_id_field,
           target_field = proj_target_field,
           multiplier = proj_target_value
         )
@@ -350,7 +358,7 @@ set_treatment_target <- function(stands,
 #'
 #' @param stands TODO
 #' @param stand_id_field TODO
-#' @param proj_id TODO
+#' @param proj_id_field TODO
 #' @param proj_objective TODO
 #' @param proj_target_field TODO
 #' @param proj_target TODO
@@ -361,7 +369,7 @@ set_treatment_target <- function(stands,
 #'
 apply_treatment <- function(stands,
                             stand_id_field,
-                            proj_id,
+                            proj_id_field,
                             proj_objective = 'weightedPriority',
                             proj_target_field,
                             proj_target = 'master_target'
@@ -370,14 +378,14 @@ apply_treatment <- function(stands,
   # select stands for treatment
   stands_treated <- stands %>%
     select_simple_greedy_algorithm(
-      grouped_by = proj_id,
+      grouped_by = proj_id_field,
       prioritize_by = proj_objective,
       constrain_by = c(1, proj_target_field, proj_target))
 
   # update the total area available for activities.
   proj_objective_treated <- stands_treated %>%
     create_grouped_dataset(
-      grouping_vars = proj_id,
+      grouping_vars = proj_id_field,
       summing_vars = c(proj_target_field, 'weightedPriority')) %>%
     arrange(-.data$weightedPriority)
 
