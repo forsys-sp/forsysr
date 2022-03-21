@@ -392,7 +392,7 @@ run <- function(
         base::replace(is.na(.), 0)
 
       # rank projects
-      projects_rank <- projects_etrt_out %>%
+      projects_rank <- projects_etrt_out %>% 
         dplyr::group_by(!!proj_id_field := get(proj_id_field)) %>%
         dplyr::summarize_at('weightedPriority', sum) %>%
         dplyr::arrange(-weightedPriority) %>%
@@ -412,7 +412,7 @@ run <- function(
 
       # tag project output with treatment rank, scenario_write_tags, priority weights
       projects_out <- projects_etrt_esum_out %>%
-        dplyr::select(-scenario_output_grouping_fields) %>%
+        # dplyr::select(-scenario_output_grouping_fields) %>%
         dplyr::group_by(proj_id_field := get(proj_id_field), ETrt_YR) %>%
         summarize_if(is.numeric, sum) %>%
         dplyr::left_join(projects_rank, by = proj_id_field) %>%
