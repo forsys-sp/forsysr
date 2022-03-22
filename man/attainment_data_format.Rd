@@ -2,8 +2,7 @@
 % Please edit documentation in R/forsys_results_functions.R
 \name{attainment_data_format}
 \alias{attainment_data_format}
-\title{Get a list of 'y' columns, calculated in attainment_data_filter, which show
-cumulative attainment in terms of PCP}
+\title{TODO}
 \usage{
 attainment_data_format(results_data)
 }
@@ -11,9 +10,8 @@ attainment_data_format(results_data)
 \item{results_data}{The results data frame}
 }
 \value{
-List of attainment columns
+TODO
 }
 \description{
-Get a list of 'y' columns, calculated in attainment_data_filter, which show
-cumulative attainment in terms of PCP
+TODO
 }

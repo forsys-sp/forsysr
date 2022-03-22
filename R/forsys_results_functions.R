@@ -191,13 +191,13 @@ attainment_data_filter <- function(results_data, priority, constraint_field, sec
         dplyr::mutate(x = cumsum(.data[[constraint_pcp_field]])) %>%
         dplyr::mutate("y_{priority_pcp_field}" := cumsum(.data[[priority_pcp_field]])) %>%
         dplyr::mutate(across(secondary_fields, cumsum, .names = "y_{.col}"))
+
 }
 
-#' Get a list of 'y' columns, calculated in attainment_data_filter, which show
-#' cumulative attainment in terms of PCP
+#' TODO
 #'
 #' @param results_data The results data frame
-#' @return List of attainment columns
+#' @return TODO
 #'
 #' @importFrom rlang .data
 #' @importFrom dplyr %>%
@@ -271,15 +271,17 @@ attainment_chart_by_target_treated <- function(results_data, priority, constrain
       + ggplot2::theme(legend.key = element_rect(fill = NA, color = NA)) %>%
       + ggplot2::theme(plot.title = element_text(size = rel(2)))
 
-  return(p) 
+  return(p)
 }
 
 #' TODO
 #'
 #' @param results_data The results data frame
-#' @param priority The NAME of the main priority. This will be the filter for weight, and will add ETrt_*_PCP to access the value field
+#' @param priority The NAME of the main priority. This will be the filter for weight, and will
+#' add ETrt_*_PCP to access the value field
 #' @param constraint_field Field used to constrain simulation. Usually some form of area.
-#' @param secondary_effects (optional) Any other NAMES to select. It will automatically add ETrt_*_PCP to the names
+#' @param secondary_effects (optional) Any other NAMES to select. It will automatically add
+#' ETrt_*_PCP to the names
 #' @return TODO
 #'
 #' @importFrom rlang .data
@@ -324,24 +326,24 @@ cumulative_attainment_chart <- function(results_data, priority, constraint_field
 #'
 #' @param results_data TODO
 #' @param proj_field The planning area or project ID
-#' @param x_field TODO
-#' @param y_field TODO
-#' @param constraint_field TODO
+#' @param x_field The first priority to look at. Should be the priority name, e.g. "TVMIN", 
+#' which will be parsed to "ETrt_TVMIN_PCP"
+#' @param y_field The second priotity to look at
 #' @return TODO
 #'
 #' @importFrom dplyr %>%
 #'
 #' @export
-tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field, constraint_field) {
+tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field) {
 
+  # Save the names for labels
   x_name <- x_field
   y_name <- y_field
 
   x_field <- priority_etrt_pcp_name(x_field)
   y_field <- priority_etrt_pcp_name(y_field)
-  constraint_field <- priority_etrt_pcp_name(constraint_field)
 
-  results_data['rank'] <- results_data[x_field] * results_data[y_field]
+  results_data['rank'] <- results_data[x_field] + results_data[y_field]
 
   # First, find the top PA_IDs in terms of target performance
   # Right now it's set to top 10, maybe make this dynamic?
@@ -384,20 +386,60 @@ tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field, 
 
 #' TODO
 #'
-#' @param results_data The results data frame
+#' @param subset_data The subset data results data frame
 #' @param priority The NAME of the main priority. This will be the filter for
 #' weight, and will add ETrt_*_PCP to access the value field
+#' @param proj_field TODO
 #' @param constraint_field Field used to constrain simulation. Usually some
 #' form of area.
 #' @param group_field TODO
 #' @return TODO
 #'
 #' @importFrom dplyr %>%
+#' @importFrom rlang .data
 #'
 #' @export
-stacked_barchart <- function(results_data, priority, constraint_field, group_field) {
-  g <- attainment_data_filter(results_data, priority, constraint_field)
-  g_long <- attainment_data_format(g)
+stacked_barchart <- function(subset_data, priority, proj_field, constraint_field, group_field) {
+  priority_pcp_field <- priority_etrt_pcp_name(priority)
+  priority_weight_field <- priority_column_name(subset_data, priority)
+
+  # List all "Pr" fields in the results table
+  weight_columns <- list_results_pr_columns(subset_data)
+
+  # Check the length of weight_columns. A single priority run will have only one, otherwise we need to negate
+  # the main priority and select only the run where the other priorities had 0 weight
+  if (length(weight_columns) > 1) {
+    other_priority <- weight_columns[stringr::str_which(weight_columns, priority_weight_field, negate=TRUE)]
+    subset_data <- subset_data %>% dplyr::filter(.data[[other_priority]] == 0)
+  }
+
+  g <- subset_data %>%
+        dplyr::select(c(proj_field, group_field, priority_pcp_field, 'treatment_rank')) %>%
+        dplyr::filter(.data[["treatment_rank"]] <= 10) %>%
+        dplyr::group_by_at(c(proj_field, group_field)) %>%
+        dplyr::summarize(s = sum(.data[[priority_pcp_field]]))
+
+  p <- g %>%
+        ggplot2::ggplot() %>%
+        + ggplot2::aes(x = factor(get(proj_field)), y = s, fill = factor(get(group_field))) %>%
+        + ggplot2::geom_bar(position = "stack", stat = "identity") %>%
+        + ggplot2::labs(title=paste("Attainment By", group_field), subtitle = "Top Projects", x = proj_field, y = "Cumulative Attainment", fill = group_field) %>%
+        + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
+        + ggplot2::scale_color_discrete(name = group_field) %>%
+        + ggplot2::theme(legend.background = element_rect(fill = 'transparent', color = NA)) %>%
+        + ggplot2::theme(plot.background = element_rect(fill = 'transparent', color = NA)) %>%
+        + ggplot2::theme(panel.background = element_rect(fill = 'transparent', color = NA)) %>%
+        + ggplot2::theme(axis.text.x = element_text(size = rel(1), color = theme_palette)) %>%
+        + ggplot2::theme(axis.text.y = element_text(size = rel(1),color = theme_palette)) %>%
+        + ggplot2::theme(axis.title.x = element_text(size = rel(1.4), color = theme_palette)) %>%
+        + ggplot2::theme(axis.title.y = element_text(size = rel(1.4), color = theme_palette)) %>%
+        + ggplot2::theme(legend.title = element_text(size = rel(2), color = theme_palette)) %>%
+        + ggplot2::theme(legend.text = element_text(size = rel(1.2), color = theme_palette)) %>%
+        + ggplot2::theme(panel.grid.major = element_line(color = grid_color)) %>%
+        + ggplot2::theme(panel.grid.minor = element_line(color = grid_color)) %>%
+        + ggplot2::theme(plot.title = element_text(size = rel(2), color = theme_palette))
+  
+  return(p)
 }
 
 #' TODO
@@ -424,23 +466,23 @@ project_boxplot <- function(results_data, proj_field, x_field, y_field, constrai
   y_field <- priority_etrt_pcp_name(y_field)
   constraint_field <- priority_etrt_pcp_name(constraint_field)
 
-  results_data['rank'] <- results_data[x_field] * results_data[y_field]
+  results_data['rank'] <- results_data[x_field] + results_data[y_field]
 
   # First, find the top PA_IDs in terms of target performance
   # Right now it's set to top 10, maybe make this dynamic?
   dat <- results_data %>%
+      dplyr::filter(.data[["treatment_rank"]] > 0) %>% # Check that treatment_rank is not NA first
       dplyr::group_by_at(proj_field) %>%
       dplyr::summarize(sum = sum(get('rank'))) %>%
       dplyr::slice_max(n = 10, order_by = sum)
 
-  # print(dat)
 
   # Now, for those top 10, chart the x vs y of them
   top_proj_ids <- results_data[results_data[[proj_field]] %in% dat[[proj_field]], ]
 
   p <- top_proj_ids %>%
         ggplot2::ggplot() %>%
-        + ggplot2::aes(x = proj_field, y = treatment_rank, color = factor(get(proj_field))) %>%
+        + ggplot2::aes(x = get("proj_field"), y = get("treatment_rank"), color = factor(get(proj_field))) %>%
         + ggplot2::geom_boxplot() %>%
         + ggplot2::scale_y_log10() %>%
         + ggplot2::labs(title="Treatment Rank Distribution", x = proj_field, y = "Treatment Rank", color = proj_field) %>%
@@ -475,4 +517,5 @@ project_boxplot <- function(results_data, proj_field, x_field, y_field, constrai
 #' @export
 parse_thresholds <- function(field, operator, value) {
   parsed_string <- paste("treatment_name", field, operator, value)
+  return(parsed_string)
 }
