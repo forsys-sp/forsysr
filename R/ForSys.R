@@ -426,7 +426,7 @@ run <- function(
         subset_fn = paste0(relative_output_path, "/subset_", scenario_name,  '_', scenario_write_tags_txt, ".csv")
       } else {
         project_fn = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
-        subset_fn = paste0(relative_output_path, "/subset_", scenario_name,  '_', scenario_write_tags_txt, ".csv")
+        subset_fn = paste0(relative_output_path, "/subset_", scenario_name, ".csv")
       }
 
       data.table::fwrite(projects_out, file = project_fn, sep = ",", row.names = FALSE, append = TRUE)

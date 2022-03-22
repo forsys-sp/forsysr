@@ -4,13 +4,21 @@
 \alias{stacked_barchart}
 \title{TODO}
 \usage{
-stacked_barchart(results_data, priority, constraint_field, group_field)
+stacked_barchart(
+  subset_data,
+  priority,
+  proj_field,
+  constraint_field,
+  group_field
+)
 }
 \arguments{
-\item{results_data}{The results data frame}
+\item{subset_data}{The subset data results data frame}
 
 \item{priority}{The NAME of the main priority. This will be the filter for
 weight, and will add ETrt_*_PCP to access the value field}
+
+\item{proj_field}{TODO}
 
 \item{constraint_field}{Field used to constrain simulation. Usually some
 form of area.}

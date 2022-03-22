@@ -4,24 +4,17 @@
 \alias{tradeoff_analysis_chart}
 \title{TODO}
 \usage{
-tradeoff_analysis_chart(
-  results_data,
-  proj_field,
-  x_field,
-  y_field,
-  constraint_field
-)
+tradeoff_analysis_chart(results_data, proj_field, x_field, y_field)
 }
 \arguments{
 \item{results_data}{TODO}
 
 \item{proj_field}{The planning area or project ID}
 
-\item{x_field}{TODO}
+\item{x_field}{The first priority to look at. Should be the priority name, e.g. "TVMIN",
+which will be parsed to "ETrt_TVMIN_PCP"}
 
-\item{y_field}{TODO}
-
-\item{constraint_field}{TODO}
+\item{y_field}{The second priotity to look at}
 }
 \value{
 TODO
