@@ -343,7 +343,7 @@ tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field) 
   x_field <- priority_etrt_pcp_name(x_field)
   y_field <- priority_etrt_pcp_name(y_field)
 
-  results_data['rank'] <- results_data[x_field] * results_data[y_field]
+  results_data['rank'] <- results_data[x_field] + results_data[y_field]
 
   # First, find the top PA_IDs in terms of target performance
   # Right now it's set to top 10, maybe make this dynamic?
