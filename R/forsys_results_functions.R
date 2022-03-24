@@ -450,6 +450,20 @@ stacked_barchart <- function(subset_data, priority, proj_field, constraint_field
   return(p)
 }
 
+#' Custom scale for the boxplot, this implements an inverted logrithmic scale
+#' 
+#' @param base The logrithmic base to use
+#' @return 
+reverselog_trans <- function(base = exp(1)) {
+    trans <- function(x) -log(x, base)
+    inv <- function(x) base^(-x)
+    scales::trans_new(paste0("reverselog-", format(base)),
+                      trans,
+                      inv,
+                      log_breaks(base = base),
+                      domain = c(1e-100, Inf))
+}
+
 #' TODO
 #'
 #' @param results_data The results data frame
@@ -492,7 +506,7 @@ project_boxplot <- function(results_data, proj_field, x_field, y_field, constrai
         ggplot2::ggplot() %>%
         + ggplot2::aes(x = get("proj_field"), y = get("treatment_rank"), color = factor(get(proj_field))) %>%
         + ggplot2::geom_boxplot() %>%
-        + ggplot2::scale_y_log10() %>%
+        + ggplot2::scale_y_continuous(trans=reverselog_trans(10)) %>%
         + ggplot2::labs(title="Treatment Rank Distribution", x = proj_field, y = "Treatment Rank", color = proj_field) %>%
         + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
         + ggplot2::scale_color_discrete() %>%
