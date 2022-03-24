@@ -159,6 +159,7 @@ priority_etrt_pcp_name <- function(priority) {
 #' automatically add ETrt_*_PCP to the names
 #' @return TODO
 #'
+#' @importFrom rlang .data
 #' @importFrom dplyr %>%
 #' @importFrom dplyr across
 #'
@@ -196,16 +197,19 @@ attainment_data_filter <- function(results_data, priority, constraint_field, sec
 
 #' TODO
 #'
-#' @param results_data The results data frame
+#' @param attainment_data The prepared data from from attainment_data_filter
 #' @return TODO
 #'
 #' @importFrom rlang .data
 #' @importFrom dplyr %>%
 #'
-attainment_data_format <- function(results_data) {
-  foi <- c("treatment_rank", "x", list_attainment_targets(results_data))
-  data <- results_data[, foi]
-  data_long <- data %>% tidyr::gather(pcp, value, -c(treatment_rank, x))
+attainment_data_format <- function(attainment_data) {
+  foi <- c("treatment_rank", "x", list_attainment_targets(attainment_data))
+  data <- attainment_data[, foi]
+  data_long <- data %>%
+                tidyr::gather(pcp, value, -c(treatment_rank, x)) %>%
+                dplyr::mutate(pcp = stringr::str_replace(pcp, "y_ETrt_", "")) %>%
+                dplyr::mutate(pcp = stringr::str_replace(pcp, "_PCP", ""))
 }
 
 #' Get a list of 'y' columns, calculated in attainment_data_filter, which show
