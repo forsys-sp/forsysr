@@ -4,10 +4,10 @@
 \alias{attainment_data_format}
 \title{TODO}
 \usage{
-attainment_data_format(results_data)
+attainment_data_format(attainment_data)
 }
 \arguments{
-\item{results_data}{The results data frame}
+\item{attainment_data}{The prepared data from from attainment_data_filter}
 }
 \value{
 TODO
