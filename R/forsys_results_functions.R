@@ -260,7 +260,7 @@ attainment_chart_by_target_treated <- function(results_data, priority, constrain
       ggplot2::ggplot() %>%
       + ggplot2::aes(x = x, y = value, color = pcp) %>%
       + ggplot2::geom_line(size = 2) %>%
-      + ggplot2::labs(title="Attainment By Priority", x = "Cumulative Area Treated", y = "Cumulative Outcome") %>%
+      + ggplot2::labs(title="Attainment By Priority", x = "Cumulative Area Treated", y = "Cumulative Outcome", colour = "") %>%
       + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
       + ggplot2::scale_color_discrete() %>%
       + ggplot2::scale_x_continuous(labels = function(x) {format(x, scientific=FALSE)}) %>%
@@ -308,7 +308,7 @@ cumulative_attainment_chart <- function(results_data, priority, constraint_field
       ggplot2::ggplot() %>%
       + ggplot2::aes(x = x, y = value, fill = pcp) %>%
       + ggplot2::geom_area(size = 2, alpha = 0.7) %>%
-      + ggplot2::labs(title="Cumulative Attainment By Priority", x = "Cumulative Area Treated", y = "Cumulative Outcome") %>%
+      + ggplot2::labs(title="Cumulative Attainment By Priority", x = "Cumulative Area Treated", y = "Cumulative Outcome", fill = "") %>%
       + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
       + ggplot2::scale_color_discrete() %>%
       + ggplot2::scale_x_continuous(labels = function(x) {format(x, scientific=FALSE)}) %>%
@@ -431,7 +431,7 @@ stacked_barchart <- function(subset_data, priority, proj_field, constraint_field
         ggplot2::ggplot() %>%
         + ggplot2::aes(x = factor(get(proj_field)), y = s, fill = factor(get(group_field))) %>%
         + ggplot2::geom_bar(position = "stack", stat = "identity") %>%
-        + ggplot2::labs(title=paste("Attainment By", group_field), subtitle = "Top Projects", x = proj_field, y = "Cumulative Attainment", fill = group_field) %>%
+        + ggplot2::labs(title=paste("Attainment By", group_field), subtitle = "Top Projects", x = proj_field, y = "Cumulative Outcome", fill = group_field) %>%
         + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
         + ggplot2::scale_color_discrete(name = group_field) %>%
         + ggplot2::theme(legend.background = element_rect(fill = 'transparent', color = NA)) %>%
