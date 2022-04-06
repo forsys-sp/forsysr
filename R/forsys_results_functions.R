@@ -260,7 +260,7 @@ attainment_chart_by_target_treated <- function(results_data, priority, constrain
       ggplot2::ggplot() %>%
       + ggplot2::aes(x = x, y = value, color = pcp) %>%
       + ggplot2::geom_line(size = 2) %>%
-      + ggplot2::labs(title="Attainment By Priority", x = "Cumulative Area Treated", y = "Cumulative Outcome", colour = "") %>%
+      + ggplot2::labs(title="Attainment By Priority", subtitle = "Description", x = "Cumulative Area Treated", y = "Cumulative Outcome", colour = "") %>%
       + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
       + ggplot2::scale_color_discrete() %>%
       + ggplot2::scale_x_continuous(labels = function(x) {format(x, scientific=FALSE)}) %>%
@@ -277,7 +277,9 @@ attainment_chart_by_target_treated <- function(results_data, priority, constrain
       + ggplot2::theme(legend.title = element_text(size = 13)) %>%
       + ggplot2::theme(legend.text = element_text(size = 11, color = theme_palette)) %>%
       + ggplot2::theme(legend.key = element_rect(fill = NA, size = 11,  color = NA)) %>%
-      + ggplot2::theme(plot.title = element_text(size = 17))
+      + ggplot2::theme(plot.title = element_text(size = 17)) %>%
+      + ggplot2::theme(plot.subtitle = element_text(size = 13))
+
 
   return(p)
 }
@@ -308,7 +310,7 @@ cumulative_attainment_chart <- function(results_data, priority, constraint_field
       ggplot2::ggplot() %>%
       + ggplot2::aes(x = x, y = value, fill = pcp) %>%
       + ggplot2::geom_area(size = 2, alpha = 0.7) %>%
-      + ggplot2::labs(title="Cumulative Attainment By Priority", x = "Cumulative Area Treated", y = "Cumulative Outcome", fill = "") %>%
+      + ggplot2::labs(title="Cumulative Attainment By Priority", subtitle = "Description", x = "Cumulative Area Treated", y = "Cumulative Outcome", fill = "") %>%
       + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
       + ggplot2::scale_color_discrete() %>%
       + ggplot2::scale_x_continuous(labels = function(x) {format(x, scientific=FALSE)}) %>%
@@ -324,7 +326,8 @@ cumulative_attainment_chart <- function(results_data, priority, constraint_field
       + ggplot2::theme(legend.text = element_text(size = p_text, color = theme_palette)) %>%
       + ggplot2::theme(panel.grid.major = element_line(color = grid_color)) %>%
       + ggplot2::theme(panel.grid.minor = element_line(color = grid_color)) %>%
-      + ggplot2::theme(plot.title = element_text(size = main_title))
+      + ggplot2::theme(plot.title = element_text(size = main_title, color = theme_palette)) %>%
+      + ggplot2::theme(plot.subtitle = element_text(size = p_titles, color = theme_palette))
 
   return(p)
 }
@@ -372,7 +375,7 @@ tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field) 
         + ggplot2::geom_line() %>%
         + directlabels::geom_dl(ggplot2::aes(label = factor(get(proj_field))), method = list(directlabels::dl.combine("first.points", "last.points")), cex = 0.8) %>%
         # ggplot2::scale_x_continuous(expand=c(0, .1)) +
-        + ggplot2::labs(title="Tradeoff Analysis", x = x_name, y = y_name, color = proj_field) %>%
+        + ggplot2::labs(title="Tradeoff Analysis", subtitle = "Description", x = x_name, y = y_name, color = proj_field) %>%
         + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
         + ggplot2::scale_color_discrete() %>%
         + ggplot2::theme(legend.background = element_rect(fill = 'transparent', color = NA)) %>%
@@ -387,7 +390,8 @@ tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field) 
         + ggplot2::theme(legend.text = element_text(size = p_text, color = theme_palette)) %>%
         + ggplot2::theme(panel.grid.major = element_line(color = grid_color)) %>%
         + ggplot2::theme(panel.grid.minor = element_line(color = grid_color)) %>%
-        + ggplot2::theme(plot.title = element_text(size = main_title))
+        + ggplot2::theme(plot.title = element_text(size = main_title, color = theme_palette)) %>%
+        + ggplot2::theme(plot.subtitle = element_text(size = p_titles, color = theme_palette))
 
   return(p)
 }
@@ -445,7 +449,8 @@ stacked_barchart <- function(subset_data, priority, proj_field, constraint_field
         + ggplot2::theme(legend.text = element_text(size = p_text, color = theme_palette)) %>%
         + ggplot2::theme(panel.grid.major = element_line(color = grid_color)) %>%
         + ggplot2::theme(panel.grid.minor = element_line(color = grid_color)) %>%
-        + ggplot2::theme(plot.title = element_text(size = main_title, color = theme_palette))
+        + ggplot2::theme(plot.title = element_text(size = main_title, color = theme_palette)) %>%
+        + ggplot2::theme(plot.subtitle = element_text(size = p_titles, color = theme_palette))
   
   return(p)
 }
@@ -507,7 +512,7 @@ project_boxplot <- function(results_data, proj_field, x_field, y_field, constrai
         + ggplot2::aes(x = get("proj_field"), y = get("treatment_rank"), color = factor(get(proj_field))) %>%
         + ggplot2::geom_boxplot() %>%
         + ggplot2::scale_y_continuous(trans=reverselog_trans(10)) %>%
-        + ggplot2::labs(title="Treatment Rank Distribution", x = proj_field, y = "Treatment Rank", color = proj_field) %>%
+        + ggplot2::labs(title="Treatment Rank Distribution", subtitle = "Description", x = proj_field, y = "Treatment Rank", color = proj_field) %>%
         + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
         + ggplot2::scale_color_discrete() %>%
         + ggplot2::theme(legend.background = element_rect(fill = 'transparent', color = NA)) %>%
@@ -522,7 +527,8 @@ project_boxplot <- function(results_data, proj_field, x_field, y_field, constrai
         + ggplot2::theme(panel.grid.major.x = element_line(color = NA)) %>%
         + ggplot2::theme(panel.grid.major = element_line(color = grid_color)) %>%
         + ggplot2::theme(panel.grid.minor = element_line(color = grid_color)) %>%
-        + ggplot2::theme(plot.title = element_text(size = main_title, color = theme_palette))
+        + ggplot2::theme(plot.title = element_text(size = main_title, color = theme_palette)) %>%
+        + ggplot2::theme(plot.subtitle = element_text(size = p_titles, color = theme_palette))
 
   return(p)
 }
