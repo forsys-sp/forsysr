@@ -525,7 +525,6 @@ project_boxplot <- function(results_data, proj_field, x_field, y_field, constrai
         + ggplot2::theme(panel.grid.major = element_line(color = grid_color)) %>%
         + ggplot2::theme(panel.grid.minor = element_line(color = grid_color)) %>%
         + ggplot2::theme(plot.title = element_text(size = main_title, color = theme_palette))
-        plot.caption = element_text()
 
   return(p)
 }
