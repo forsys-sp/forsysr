@@ -507,7 +507,7 @@ project_boxplot <- function(results_data, proj_field, x_field, y_field, constrai
         + ggplot2::aes(x = get("proj_field"), y = get("treatment_rank"), color = factor(get(proj_field))) %>%
         + ggplot2::geom_boxplot() %>%
         + ggplot2::scale_y_continuous(trans=reverselog_trans(10), expand = c(0, .2)) %>%
-        + ggplot2::labs(title="Treatment Rank Distribution", x = proj_field, y = "Treatment Rank", names = get("proj_field"), horizontal = TRUE, color = proj_field) %>%
+        + ggplot2::labs(title="Treatment Rank Distribution", x = proj_field, y = "Treatment Rank", names = get("proj_field"), caption = "Y axis is scaled using an inverse log10 transform.", horizontal = TRUE, color = proj_field) %>%
         + directlabels::geom_dl(ggplot2::aes(label = factor(get(proj_field))), method = list("bottom.points", cex = 1.5, vjust = 1.5), position = position_dodge(width = .75)) %>%
         + ggplot2::theme_set(ggplot2::theme_minimal()) %>%
         + ggplot2::scale_color_discrete() %>%
@@ -520,6 +520,7 @@ project_boxplot <- function(results_data, proj_field, x_field, y_field, constrai
         + ggplot2::theme(axis.title.y = element_text(size = p_titles, color = theme_palette)) %>%
         + ggplot2::theme(legend.title = element_text(size = p_titles, color = theme_palette)) %>%
         + ggplot2::theme(legend.text = element_text(size = p_text, color = theme_palette)) %>%
+        + ggplot2::theme(plot.caption = element_text(size = p_text, color = theme_palette, hjust = 0, face = "italic", lineheight = 4)) %>%
         + ggplot2::theme(panel.grid.major.x = element_line(color = NA)) %>%
         + ggplot2::theme(panel.grid.major = element_line(color = grid_color)) %>%
         + ggplot2::theme(panel.grid.minor = element_line(color = grid_color)) %>%
