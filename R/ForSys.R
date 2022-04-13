@@ -192,34 +192,80 @@ run <- function(
         # (threshold_dat <- make_thresholds('trt 1: priority3 > 0.5'))
         # threshold_dat <- make_thresholds(stand_threshold)
 
-        stands_selected <- stands_available
+        if(run_with_patchmax){
+          # TODO switch for using PatchMax to build projects. 1) build projects
+          # until annual target is reached (NOTE: while statement needed). 2)
+          # compile project statistics based on selected stands (basically sum
+          # weightingValue and scenario output fields), 3) repeat in subsequent
+          # year. Of these, only 1 is unique to patchMax, which would be run
+          # instead of apply_treatment. The function simulate_projects has
+          # parameters for thresholds and constraints. The function assumes that
+          # the threshold must be exceeded, but allows for min and/or max values
+          # for the constraint. The function requires the project size to be
+          # declared as well, which is used as a maximal constraint.
 
         # for(t in 1:length(threshold_dat$type)){
 
-        # set treatment target
-        stands_selected <- stands_selected %>%
-          set_treatment_target(
-            proj_id_field = proj_id_field,
-            proj_fixed_target = proj_fixed_target,
-            proj_target_field = proj_target_field,
-            proj_target_value = proj_target_value) %>%
-          # apply treatment thresholds
-          filter_stands(
-            # filter_txt = threshold_dat$threshold,
-            filter_txt = stand_threshold,
-            verbose = T) %>%
-          # select stands
-          apply_treatment(
-            stand_id_field = stand_id_field,
-            proj_id_field = proj_id_field,
-            proj_objective = 'weightedPriority',
-            proj_target_field = proj_target_field,
-            proj_target = 'master_target'
-          ) %>%
-          # record treatment name
-          dplyr::mutate(treatment_type = !!proj_treatment_name)
+          patchmax_prep_threshold <- function(threshold_dat){
+            x <- threshold_dat$threshold %>%
+              stringr::str_split('>=|<=|>|<|==', simplify = T)
+            out <- list(
+              St_threshold = x[1],
+              St_threshold_value = as.numeric(x[2])
+              )
+            return(out)
+          }
 
-        # }
+          # create patchmax arguments using helper functions
+          patchmax_args <- c(
+            patchmax_prep_constraint(proj_target_field, proj_target_value),
+            patchmax_prep_threshold(threshold_dat)
+          )
+
+          # TODO needs to be pulled from forsys shiny
+          stand_area_field <- 'AREA_HA'
+
+          # TODO helper function to build adj network if not present
+          shp <- st_read('data/STF_forsystest/STF_hexnet_test.shp') %>% st_make_valid()
+          adj_object <- Patchmax::calculate_adj(shp, St_id = shp$CELL_ID)
+
+
+          # stands_selected <- Patchmax::simulate_projects(
+          stands_selected <- simulate_projects(
+            St_id = stands_available %>% pull(!!stand_id_field),
+            St_area = stands_available %>% pull(!!stand_area_field),
+            St_objective = stands_available %>% pull(weightedPriority),
+            St_adj = adj_object, #                NEW (REQ)
+            P_size = Inf, #                       NEW (REQ)
+            P_size_slack  = NULL, #               NEW (REQ)
+            P_number = 1, #                       NEW (REQ)
+            St_threshold = patchmax_args$St_threshold,
+            St_threshold_value = patchmax_args$St_threshold_value,
+            P_constraint = patchmax_args$P_constraint,
+            P_constraint_min_value = 0, #         (OPT) target
+            P_constraint_max_value = patchmax_args$P_constraint_max,
+            Candidate_min_size = NULL, #          NEW (OPT)
+            Sample_n = 1000, #                    NEW (OPT)
+            Sample_seed = NULL #                  NEW (OPT)
+          )
+        } else {
+
+          # select stands from project areas until target reached while filtering by threshold
+          stands_selected <- stands_available %>%
+            apply_treatment(
+              treatment_type = threshold_dat$type,
+              treatment_threshold = threshold_dat$threshold,
+              stand_id_field = stand_id_field,
+              proj_id = proj_id,
+              proj_fixed_target = proj_fixed_target,
+              proj_target_field = proj_target_field,
+              proj_target_value = proj_target_value
+            )
+
+        }
+
+
+
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!
         # 3. RANK PROJECTS ----------
