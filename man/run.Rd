@@ -2,20 +2,18 @@
 % Please edit documentation in R/ForSys.R
 \name{run}
 \alias{run}
-\title{Run the ForSys treatment planner. Either provide parameters, or define parameters
-in a config file and pass the name of the file to this run function.}
+\title{ForSysR}
 \usage{
 run(
-  stand_data = NULL,
-  num_reps = 1,
   config_file = NULL,
   scenario_name = "",
+  stand_data = NULL,
   scenario_stand_filename = "",
   stand_id_field = "",
-  stand_pcp_spm = NULL,
-  global_threshold = NULL,
-  scenario_priorities = NULL,
   proj_id_field = "",
+  stand_pcp_spm = NULL,
+  scenario_priorities = NULL,
+  global_threshold = NULL,
   stand_threshold = NULL,
   proj_treatment_name = "",
   proj_fixed_target = FALSE,
@@ -24,88 +22,106 @@ run(
   scenario_weighting_values = NULL,
   scenario_output_fields = NULL,
   scenario_output_grouping_fields = NULL,
-  overwrite_output = TRUE,
   run_with_shiny = FALSE,
+  run_with_patchmax = FALSE,
+  run_with_fire = FALSE,
   fire_intersect_table = NULL,
   fire_planning_years = 1,
   fire_annual_target_field = NULL,
   fire_annual_target = NA,
   fire_dynamic_forsys = FALSE,
   fire_random_projects = FALSE,
-  scenario_write_tags = NULL
+  patchmax_stnd_adj = NULL,
+  patchmax_proj_number = 1,
+  patchmax_proj_size = Inf,
+  patchmax_proj_size_slack = NULL,
+  patchmax_candidate_min_size = NULL,
+  patchmax_sample_n = NULL,
+  patchmax_sample_seed = NULL,
+  scenario_write_tags = NULL,
+  overwrite_output = TRUE
 )
 }
 \arguments{
-\item{stand_data}{If data has already been loaded, pass the object here}
-
-\item{num_reps}{TODO}
-
-\item{config_file}{Relative path to a config file that defines needed
-parameters}
+\item{config_file}{Relative path to a config file that defines needed parameters}
 
 \item{scenario_name}{A name for this scenario}
 
+\item{stand_data}{If data has already been loaded, pass the object here}
+
 \item{scenario_stand_filename}{Path to the input dataset}
 
-\item{stand_id_field}{The field in the scenario_stand_filename which is a
-unique ID for each stand}
+\item{stand_id_field}{The field in the scenario_stand_filename which is a unique ID for each stand}
 
-\item{stand_pcp_spm}{PCP and SPM values will be calculated for these
-variables. This should include the priorities and any value outputs.}
+\item{proj_id_field}{string of field in the scenario_stand_filename that indicates which project or planning area a stand belongs to.}
+
+\item{stand_pcp_spm}{PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.}
+
+\item{scenario_priorities}{Priorities are named here. If only one priority exists, only a weight of one will be used.}
 
 \item{global_threshold}{The land base is the area that is used to calculate
 the PCP and SPM values. It is currently a single, binary variable that must
 be computed prior to running the ForSysR script. A blank field means all
 lands are included in the calculation.}
 
-\item{scenario_priorities}{Priorities are named here. If only one priority
-exists, only a weight of one will be used.}
+\item{stand_threshold}{string Boolean statement used as threshold for whether stands are counted as part of a project}
 
-\item{proj_id_field}{The field in the scenario_stand_filename that indicates which
-project or planning area a stand belongs to}
+\item{proj_treatment_name}{TODO}
 
-\item{stand_threshold}{TODO}
+\item{proj_fixed_target}{logical describing if target is fixed or relative}
 
-\item{proj_fixed_target}{TODO}
+\item{proj_target_field}{string of stand field used as target constraint}
 
-\item{proj_target_field}{TODO}
+\item{proj_target_value}{numeric value describing the target constraint either an fixed value if proj_fixed_target is TRUE or a proportion of the project sum for the proj_target_field specified.}
 
-\item{proj_target_value}{TODO}
-
-\item{scenario_weighting_values}{Defines the weights and integer steps
-between weights. The values are for min, max, and step.}
+\item{scenario_weighting_values}{Defines the weights and integer steps between weights. The values are for min, max, and step.}
 
 \item{scenario_output_fields}{This should include the desired fields for the
 planning area treatment files. Planning area id, priority weights and
 treatment rank are added automatically.}
 
-\item{scenario_output_grouping_fields}{Include the smaller and larger groups
-here for grouping of treated stands.}
+\item{scenario_output_grouping_fields}{Include the smaller and larger groups here for grouping of treated stands.}
 
-\item{overwrite_output}{Overwrite any existing output of the same name?}
+\item{run_with_shiny}{logical whether run was called from within shiny.}
 
-\item{run_with_shiny}{Sets some output business for better shiny interaction}
+\item{run_with_patchmax}{logical whether PatchMax should be used for building projects}
 
-\item{fire_intersect_table}{TOTO}
+\item{run_with_fire}{logical whether to forsys alongside fire}
 
-\item{fire_planning_years}{= TODO}
+\item{fire_intersect_table}{data frame listing stands affected by fire by year}
+
+\item{fire_planning_years}{number of years to run forsys}
 
 \item{fire_annual_target_field}{TODO}
 
 \item{fire_annual_target}{TODO}
 
-\item{fire_dynamic_forsys}{logical. Prevent burnt stands from being selected
-if TRUE}
+\item{fire_dynamic_forsys}{logical. Prevent burnt stands from being selected if TRUE}
 
-\item{fire_random_projects}{logical. Randomly shuffle project prioritization
-if TRUE}
+\item{fire_random_projects}{logical. Randomly shuffle project prioritization if TRUE}
+
+\item{patchmax_stnd_adj}{igraph object describe patch adjacency}
+
+\item{patchmax_proj_number}{TODO}
+
+\item{patchmax_proj_size}{Integer. Number of patchmax stands to estimate}
+
+\item{patchmax_proj_size_slack}{TODO}
+
+\item{patchmax_candidate_min_size}{TODO}
+
+\item{patchmax_sample_n}{TODO}
+
+\item{patchmax_sample_seed}{TODO}
 
 \item{scenario_write_tags}{TODO}
+
+\item{overwrite_output}{logical whether to overwrite any existing output of the same name}
 }
 \value{
 Forsys results with weightedPriority, treatmentRank, and weights
 }
 \description{
-Run the ForSys treatment planner. Either provide parameters, or define parameters
+Primary function for running the ForSys treatment planner. Either provide parameters, or define parameters
 in a config file and pass the name of the file to this run function.
 }
