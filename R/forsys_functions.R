@@ -372,7 +372,8 @@ apply_treatment <- function(stands,
                             proj_id_field,
                             proj_objective = 'weightedPriority',
                             proj_target_field,
-                            proj_target = 'master_target'
+                            proj_target = 'master_target',
+                            treatment_name = NULL
                             ) {
 
   # select stands for treatment
@@ -380,7 +381,8 @@ apply_treatment <- function(stands,
     select_simple_greedy_algorithm(
       grouped_by = proj_id_field,
       prioritize_by = proj_objective,
-      constrain_by = c(1, proj_target_field, proj_target))
+      constrain_by = c(1, proj_target_field, proj_target)) %>%
+    dplyr::mutate(treatment_name = !!proj_treatment_name)
 
   # update the total area available for activities.
   proj_objective_treated <- stands_treated %>%
