@@ -11,7 +11,8 @@ apply_treatment(
   proj_id_field,
   proj_objective = "weightedPriority",
   proj_target_field,
-  proj_target = "master_target"
+  proj_target = "master_target",
+  treatment_name = NULL
 )
 }
 \arguments{

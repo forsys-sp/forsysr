@@ -1,0 +1,68 @@
+library(forsys)
+library(tidyverse)
+library(sf)
+
+data("test_forest")
+head(test_forest)
+
+jsonlite::fromJSON('misc/test_static_config.json')
+
+stands <- test_forest %>% st_drop_geometry()
+forsys::run(config_file = 'misc/test_static_config.json', stands)
+
+outputs = forsys::run(
+  return_outputs = TRUE,
+  stand_data = stands,
+  scenario_name = "static_test",
+  stand_id_field = "stand_id",
+  proj_id_field = "proj_id",
+  stand_area_field = "area_ha",
+  scenario_priorities = "priority3",
+  stand_threshold = "threshold1 == 1",
+  global_threshold = "ownership %in% c(2,3)",
+  scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
+  scenario_output_grouping_fields = "ownership",
+  proj_fixed_target =  FALSE,
+  proj_target_field = "area_ha",
+  proj_target_value = 0.2
+)
+
+outputs$stand_output
+
+plot_proj <- test_forest %>% group_by(proj_id) %>% summarize() %>% st_geometry()
+plot_stand_dat <- test_forest %>% dplyr::select(stand_id) %>% dplyr::left_join(outputs$stand_output %>% dplyr::select(stand_id, ETrt_YR))
+plot(plot_proj)
+plot(plot_stand_dat[,'ETrt_YR'], border=NA, key.pos = NULL, add=T)
+
+plot_proj_dat <- test_forest %>%
+  group_by(proj_id) %>% summarize() %>%
+  dplyr::left_join(outputs$project_output %>% dplyr::select(proj_id, treatment_rank))
+plot(plot_proj_dat[,'treatment_rank'])
+
+plot(plot_proj)
+plot(plot_proj_dat[,'treatment_rank'], key.pos = NULL, border=NA, add=T)
+plot(plot_stand_dat[,'ETrt_YR'], border=NA, add=T, pal = colfunc(2))
+
+colfunc <- colorRampPalette(c('black', NA))
+
+adj = Patchmax::calculate_adj(Shapefile = test_forest, St_id = stands$stand_id, method = 'nb')
+forsys::run(config_file = 'misc/test_patchmax_config.json', stand_data = stands, patchmax_stnd_adj = adj)
+
+
+outputs = forsys::run(
+  return_outputs = TRUE,
+  stand_data = stands,
+  scenario_name = "patchmax_test",
+  stand_id_field = "stand_id",
+  proj_id_field = "proj_id",
+  stand_area_field = "area_ha",
+  scenario_priorities = "priority1",
+  stand_threshold = "priority3 >= 0.5",
+  scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
+  scenario_output_grouping_fields = "ownership",
+  run_with_patchmax = TRUE,
+  patchmax_stnd_adj = adj,
+  patchmax_proj_size = 25000,
+  patchmax_proj_number = 5,
+  patchmax_sample_n = 1000
+)

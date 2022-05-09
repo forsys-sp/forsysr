@@ -1,159 +1,135 @@
 ForSysR
 ================
 
-## GitHub Documents
-
-This is an R Markdown format used for publishing markdown documents to
-GitHub. When you click the **Knit** button all R code chunks are run and
-a markdown file (.md) suitable for publishing to GitHub is generated.
-
-## Including Code
-
-You can include R code in the document as follows:
-
-``` r
-summary(cars)
-```
-
-    ##      speed           dist       
-    ##  Min.   : 4.0   Min.   :  2.00  
-    ##  1st Qu.:12.0   1st Qu.: 26.00  
-    ##  Median :15.0   Median : 36.00  
-    ##  Mean   :15.4   Mean   : 42.98  
-    ##  3rd Qu.:19.0   3rd Qu.: 56.00  
-    ##  Max.   :25.0   Max.   :120.00
-
-## Including Plots
-
-You can also embed plots, for example:
-
-![](README_files/figure-gfm/pressure-1.png)<!-- -->
-
-Note that the `echo = FALSE` parameter was added to the code chunk to
-prevent printing of the R code that generated the plot.
-
 <!--- README.md is generated from README.Rmd. Please edit that file -->
 
-# prioritizr: <img src="man/figures/logo.png" align="right" style="height:90px!important;" />
+<img src="man/figures/forsys_icon.png" align="right" style="height:90px!important; position:absolute; top:10px; right:10px" />
 
-# Systematic Conservation Prioritization in R
+# Scenario planning for restoration and fuel treatments
 
-<!-- badges: start -->
-
-[![lifecycle](https://img.shields.io/badge/Lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html)
-[![R-CMD-check-ubuntu](https://img.shields.io/github/workflow/status/prioritizr/prioritizr/Ubuntu/master.svg?label=Ubuntu)](https://github.com/prioritizr/prioritizr/actions)
-[![R-CMD-check-windows](https://img.shields.io/github/workflow/status/prioritizr/prioritizr/Windows/master.svg?label=Windows)](https://github.com/prioritizr/prioritizr/actions)
-[![R-CMD-check-macos](https://img.shields.io/github/workflow/status/prioritizr/prioritizr/macOS/master.svg?label=macOS)](https://github.com/prioritizr/prioritizr/actions)
-[![Documentation](https://img.shields.io/github/workflow/status/prioritizr/prioritizr/Documentation/master.svg?label=Documentation)](https://github.com/prioritizr/prioritizr/actions)
-[![Coverage-Status](https://codecov.io/github/prioritizr/prioritizr/coverage.svg?branch=master)](https://codecov.io/github/prioritizr/prioritizr?branch=master)
-[![CRAN-Status-Badge](http://www.r-pkg.org/badges/version/prioritizr)](https://CRAN.R-project.org/package=prioritizr)
-<!-- badges: end -->
-
-The *prioritizr R* package uses mixed integer linear programming (MILP)
-techniques to provide a flexible interface for building and solving
-conservation planning problems. It supports a broad range of objectives,
-constraints, and penalties that can be used to custom-tailor
-conservation planning problems to the specific needs of a conservation
-planning exercise. Once built, conservation planning problems can be
-solved using a variety of commercial and open-source exact algorithm
-solvers. In contrast to the algorithms conventionally used to solve
-conservation problems, such as heuristics or simulated annealing, the
-exact algorithms used here are guaranteed to find optimal solutions.
-Furthermore, conservation problems can be constructed to optimize the
-spatial allocation of different management actions or zones, meaning
-that conservation practitioners can identify solutions that benefit
-multiple stakeholders. Finally, this package has the functionality to
-read input data formatted for the *Marxan* conservation planning
-program, and find much cheaper solutions in a much shorter period of
-time than *Marxan*.
+ForSys is a flexible platform for exploring landscape management
+scenarios and optimizing decisions in terms of where and how to achieve
+landscape restoration and fuel management goals. The model is spatially
+explicit and uses multi-criteria prioritization and optimization created
+to rapidly design fuel treatment and restoration scenarios. The program
+evolved from the Landscape Treatment Designer used in prior studies. The
+program has been used in several research and applied case studies at a
+range of scales (projects, forests, states, continental United States)
+to prioritize projects and stand treatments (see case studies). ForSys
+is available in a windows desktop (ForSysX) and R version (ForSysR).
 
 ## Installation
 
-The latest official version of the *prioritizr R* package can be
-installed from the [Comprehensive R Archive Network
-(CRAN)](https://cran.r-project.org/) using the following *R* code.
-
-Alternatively, the latest development version can be installed from
-[GitHub](https://github.com/prioritizr/prioritizr) using the following
+The latest official version of the *forsysr* package can be installed
+from [GitHub](https://github.com/forsys-sp/forsysr/) using the following
 code. Please note that while developmental versions may contain
 additional features not present in the official version, they may also
 contain coding errors.
 
+``` r
+if (!require(remotes)) install.packages("remotes")
+remotes::install_github("forsys-sp/forsysr")
+```
+
 ## Citation
 
-Please cite the *prioritizr R* package when using it in publications. To
-cite the latest official version, please use:
+Please cite the *forsysr* package when using it in publications. To cite
+the latest official version, please use:
+
+> Evers CR, Ager AA, Day M, Houtman R, Belavenutti P, Lankston R, Bunzel
+> K. (2022). ForSysR: Systematic Project Planning and Prioritization in
+> R. R package version 1.0. Available at
+> <https://github.com/forsys-sp/forsysr>.
 
 ## Usage
 
-Here we will provide a short example showing how the *prioritizr R*
-package can be used to build and solve conservation problems. For
-brevity, we will use one of the built-in simulated datasets that is
-distributed with the package. First, we will load the *prioritizr R*
-package.
+Here we will provide a short example showing how the *forsysr* package
+can be used to build and solve a simple multi-objective restoration and
+fuel management problems. For brevity, we will use one of the built-in
+simulated datasets that is distributed with the package. First, we will
+load the *forsysr* package.
 
-We will use the sim_pu_polygons object to represent our planning units.
-Although the *prioritizr R* can support many different types of planning
-unit data, here our planning units are represented as polygons in a
-spatial vector format (i.e. `SpatialPolygonsDataFrame`). Each polygon
-represents a different planning unit and we have r
-length(sim_pu_polygons) planning units in total. The attribute table
-associated with this dataset contains information describing the
-acquisition cost of each planning (“cost” column), and a value
-indicating if the unit is already located in protected area (“locked_in”
-column). Let’s explore the planning unit data.
+``` r
+# load package
+library(forsys)
+```
 
-## Learning resources
+Although the *forsysr* can support many different types of planning unit
+data, here our planning units are represented as polygons in a spatial
+vector format. Each polygon represents a different planning unit.
 
-The [package website](https://prioritizr.net/index.html) contains
-information on the *prioritizr R* package. Here you can find
-[documentation for every function and built-in
-dataset](https://prioritizr.net/reference/index.html), and [news
-describing the updates in each package
-version](https://prioritizr.net/news/index.html). It also contains the
-following articles and tutorials.
+``` r
+# load planning unit data
+data(test_forest)
+# show the first rows in the attribute table
+head(test_forest)
+```
 
--   [**Getting
-    started**](https://prioritizr.net/articles/prioritizr.html): Short
-    tutorial on using the package.
--   [**Package
-    overview**](https://prioritizr.net/articles/package_overview.html):
-    Introduction to systematic conservation planning and a comprehensive
-    overview of the package.
--   [**Connectivity
-    tutorial**](https://prioritizr.net/articles/connectivity_tutorial.html):
-    Tutorial on incorporating connectivity into prioritizations.
--   [**Calibrating trade-offs
-    tutorial**](https://prioritizr.net/articles/calibrating_trade-offs_tutorial.html):
-    Tutorial on running calibration analyses to satisfy multiple
-    criteria.
--   [**Management zones
-    tutorial**](https://prioritizr.net/articles/management_zones_tutorial.html):
-    Tutorial on incorporating multiple management zones and actions into
-    prioritizations.
--   [**Gurobi installation
-    guide**](https://prioritizr.net/articles/gurobi_installation_guide.html):
-    Instructions for installing the *Gurobi* optimization suite for
-    generating prioritizations.
--   [**Solver
-    benchmarks**](https://prioritizr.net/articles/solver_benchmarks.html):
-    Performance comparison of optimization solvers for generating
-    prioritizations.
--   [**Publication
-    record**](https://prioritizr.net/articles/publication_record.html):
-    List of publications that have cited the package.
+    ## Simple feature collection with 6 features and 12 fields
+    ## Geometry type: POLYGON
+    ## Dimension:     XY
+    ## Bounding box:  xmin: -1805472 ymin: 2689815 xmax: -1799472 ymax: 2690815
+    ## Projected CRS: NAD83 / Conus Albers
+    ## # A tibble: 6 × 13
+    ##   stand_id proj_id area_ha priority1 priority2 priority3 priority4 threshold1
+    ##      <int>   <int>   <dbl>     <dbl>     <dbl>     <dbl>     <dbl>      <dbl>
+    ## 1        1       1     100     0.417     0.526     0.483     0.513          1
+    ## 2        2       1     100     0.418     0.488     0.482     0.646          1
+    ## 3        3       1     100     0.419     0.452     0.482     0.661          1
+    ## 4        4       1     100     0.422     0.420     0.481     0.604          1
+    ## 5        5       1     100     0.428     0.392     0.479     0.621          1
+    ## 6        6       1     100     0.438     0.369     0.477     0.514          1
+    ## # … with 5 more variables: threshold2 <dbl>, ownership <dbl>,
+    ## #   geometry <POLYGON [m]>, Project <dbl>, DoTreat <dbl>
 
-Additional resources can also be found in [online repositories under the
-*prioritizr* organization](https://github.com/prioritizr). These
-resources include [slides for talks and seminars about the
-package](https://github.com/prioritizr/teaching). Additionally, workshop
-materials are available too (e.g., the [Massey University 2021
-workshop](https://prioritizr.github.io/massey-workshop/) and the
-[PacMara 2019
-workshop](https://prioritizr.github.io/PacMara_workshop/)).
+``` r
+# plot the planning units
+plot(test_forest[,c(4:5,7:10)], border=NA)
+```
+
+<img src="README_files/figure-gfm/unnamed-chunk-5-1.png" width="600" />
+
+### Preparing the scenario config file
+
+ForSys is easiest to run by referencing a text file saved using json
+notation.
+
+``` r
+forsys::run(config_file = 'configs/ce_config.json')
+```
+
+The json config file provides a simple way to save and specify
+parameters for running ForSys. These parameters can be pass directly
+within the function. See `help(forsys::run)` for the complete arguments
+
+``` r
+cat(readLines('configs/ce_config.json'), sep='\n')
+```
+
+### Running forsysr
+
+ForSys is a modular system is constantly being expanded to new planning
+problems. In its most general form, ForSys prioritizing projects by
+maximizing an objective given one or more constraints. The objective
+represent one or more priorities while the constraints may include a
+maximum cost or area treated. Thresholds can be set to specify either to
+define the study area (e.g., a particular ownership) or based on
+requirements for treatment (e.g., minimum forest cover). ForSys then
+builds projects and ranks them in order of their priority. Projects can
+either predefined units or can be built dynamically.
+
+### Examining results
+
+### Exploring different project selection methods
+
+## Additional resources
+
+The [package
+website](https://www.fs.usda.gov/rmrs/projects/forsys-scenario-planning-model-multi-objective-restoration-and-fuel-management-planning)
+contains information on the *forsysr* package.
 
 ## Getting help
 
-If you have any questions about the *prioritizr R* package or
-suggestions for improving it, please [post an issue on the code
-repository](https://github.com/prioritizr/prioritizr/issues/new).
+If you have any questions about the *forsysr* package or suggestions for
+improving it, please [post an issue on the code
+repository](https://github.com/forsysr/issues/new).

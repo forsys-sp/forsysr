@@ -3,14 +3,22 @@ Title: ForSys Scenario Planning
 Version: 0.17
 Authors@R: 
     c(
+        person(given = "Cody",
+           family = "Evers",
+           role = c("aut"),
+           email = "cevers@pdx.edu",), 
+        person(given = "Alan",
+           family = "Ager",
+           role = c("aut"),
+           email = "alan.ager@usda.gov",), 
+        person(given = "Michelle",
+           family = "Day",
+           role = c("aut"),
+           email = "michelle.day@usda.gov",), 
         person(given = "Rachel",
            family = "Houtman",
            role = c("aut"),
            email = "Rachel.Houtman@oregonstate.edu",),
-        person(given = "Cody",
-           family = "Evers",
-           role = c("aut"),
-           email = "evers.cody@gmail.com",), 
         person(given = "Robb",
            family = "Lankston",
            role = c("cre"),
@@ -31,13 +39,12 @@ Imports:
     tidyr,
     utils,
     glue,
-    pacman
+    pacman,
+    sf,
 Suggests:
     doParallel,
     rgdal, 
-    rgeos, 
-    sp,
-    sf
+    rgeos
 License: GPL-3
 URL: https://www.forsys.app
 Encoding: UTF-8

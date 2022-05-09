@@ -52,14 +52,15 @@
 #' @export
 run <- function(
     config_file = NULL,
+    return_outputs = FALSE,
+    # basic
     stand_data = NULL,
     stand_data_filename = "",
-    # basic
     stand_id_field = "",
-    stand_pcp_spm = NULL,
     stand_area_field = NULL,
-    global_threshold = NULL,
-    stand_threshold = NULL,
+    stand_pcp_spm = NULL, # TODO rename scenario_pcp_spm
+    stand_threshold = NULL, # TODO rename proj_stand_threshold
+    global_threshold = NULL, # TODO rename scenario_stand_threshold
     # project variables
     proj_id_field = "proj_id",
     proj_fixed_target = FALSE,
@@ -67,8 +68,13 @@ run <- function(
     proj_target_value = NULL,
     proj_treatment_name = "",
     # scenario variables
+    scenario_name = "",
     scenario_priorities = NULL,
-    scenario_weighting_values = NULL,
+    scenario_weighting_values = "1 1 1",
+    scenario_output_fields = NULL,
+    scenario_output_grouping_fields = NULL,
+    scenario_write_tags = NULL,
+    overwrite_output = TRUE,
     # module toggles
     run_with_shiny = FALSE,
     run_with_patchmax = FALSE,
@@ -89,13 +95,7 @@ run <- function(
     patchmax_proj_size_slack  = NULL,
     patchmax_candidate_min_size = NULL,
     patchmax_sample_n = NULL,
-    patchmax_sample_seed = NULL,
-    # misc
-    scenario_output_fields = NULL,
-    scenario_output_grouping_fields = NULL,
-    scenario_name = "",
-    scenario_write_tags = NULL,
-    overwrite_output = TRUE
+    patchmax_sample_seed = NULL
     ) {
 
     # source config file if provided
@@ -142,9 +142,11 @@ run <- function(
     if (!is.null(stand_data)) {
       message("Forsys Shiny data detected.")
       stands <- stand_data
+      data.table::setDT(stands)
     } else if(!is.null(stand_data_filename)) {
       message("Loading stand data from file")
       stands <- load_dataset(path_to_file = stand_data_filename)
+      data.table::setDT(stands)
     } else {
       stop("No stand data provided")
     }
@@ -176,6 +178,10 @@ run <- function(
       filter_stands(filter_txt = global_threshold)
 
     # Calculate SPM & PCP values
+    if(is.null(stand_pcp_spm)){
+      stand_pcp_spm <- c(scenario_priorities, scenario_output_fields)
+    }
+
     stands <- stands %>%
       calculate_spm_pcp(fields = stand_pcp_spm) %>%
       calculate_spm_pcp(fields = scenario_output_fields)
@@ -195,9 +201,6 @@ run <- function(
                      " of ", nrow(weights),
                      ": ", paste0(weights[w,], collapse = '-')))
 
-      # create objects for tracking treated and burnt stands
-      stands_treated <- NULL
-      stands_burned <- NULL
 
       # prep stand data
       stands <- stands %>%
@@ -212,24 +215,27 @@ run <- function(
         stands <- stands %>% dplyr::mutate(!!proj_id_field := NA)
       }
 
+      # create objects for tracking treated and burnt stands
       stands_available <- stands
+      stands_selected <- NULL
+      stands_treated <- NULL
+      stands_burned <- NULL
 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
       # 2. SELECT STANDS ----------
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      for (yr in 1:fire_planning_years) { # BEGIN YEAR LOOP
+      for (y in 1:fire_planning_years) { # BEGIN YEAR LOOP
 
-        if (fire_planning_years > 1) message(paste('\nYear', yr, '\n---------------'))
+        if (fire_planning_years > 1) message(paste('\nYear', y, '\n---------------'))
 
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # 2a. DYNAMIC PROJECTS ------
+        # !! 2a. DYNAMIC PROJECTS ------
 
-        if(run_with_patchmax){ # run with patchamx
+        if(run_with_patchmax){ # run with PatchMax
 
-          require(Patchmax)
+          suppressMessages(suppressWarnings(require(Patchmax)))
 
-          # TODO fail if not igraph adjacency is not provided
+          # fail if no adjacency object
           if(is.null(adj_object)){
             stop('Patchmax requires an adjacency igraph object')
           }
@@ -238,51 +244,30 @@ run <- function(
           threshold_dat <- Patchmax::forsys_helper_prep_threshold(stand_threshold)
           threshold_field <- threshold_dat$st_threshold
           threshold_value <- threshold_dat$st_threshold_value
-          threshold_field <- 'priority2'
-          threshold_value <- 0.5
-          patchmax_proj_id = proj_id_field
-
-          # create list of arguments for running patchmax
-          patchmax_args <- list(
-            adj_object = adj_object,
-            st_id = stands_available %>% dplyr::pull(!!stand_id_field), # stand id vector
-            st_area = stands_available %>% dplyr::pull(!!stand_area_field), # stand area vector
-            st_objective = stands_available %>% dplyr::pull(weightedPriority), # vector of stand values to maximize
-            p_size = patchmax_proj_size, # numeric project size constraint based on St_area
-            p_size_slack = patchmax_proj_size_slack,  # 0-1 numeric setting flexibility in hitting P_size constraint
-            p_number = patchmax_proj_number, # integer count of projects to create
-            sample_n = patchmax_sample_n, # integer number of candidate stands used to build projects
-            sample_seed = patchmax_sample_seed, # set seed for random seed selection
-            st_threshold = stands_available %>% dplyr::pull(!!threshold_field),
-            st_threshold_value = threshold_value
-          )
 
           # run patchmax
           patchmax_out <- Patchmax::simulate_projects(
-            St_id = patchmax_args$st_id,
-            St_area = patchmax_args$st_area,
-            St_objective = patchmax_args$st_objective,
-            St_adj = patchmax_args$adj_object,
-            P_size = patchmax_args$p_size,
-            P_size_slack  = patchmax_args$p_size_slack,
-            P_number = patchmax_args$p_number,
-            St_threshold = patchmax_args$st_threshold,
-            St_threshold_value = patchmax_args$st_threshold_value,
-            P_constraint = NULL,
-            P_constraint_min_value = NULL,
-            P_constraint_max_value = NULL,
+            St_id = stands_available %>% dplyr::pull(!!stand_id_field), # stand id vector
+            St_area = stands_available %>% dplyr::pull(!!stand_area_field), # stand area vector
+            St_objective = stands_available %>% dplyr::pull(weightedPriority), # vector of stand values to maximize
+            St_adj = adj_object,
+            P_size = patchmax_proj_size, # numeric project size constraint based on St_area
+            P_size_slack  = patchmax_proj_size_slack,  # 0-1 numeric setting flexibility in hitting P_size constraint
+            P_number = patchmax_proj_number, # integer count of projects to create
+            St_threshold = stands_available %>% dplyr::pull(!!threshold_field),
+            St_threshold_value = threshold_value,
             Candidate_min_size = 50,
-            Sample_n = patchmax_args$sample_n,
-            Sample_seed = patchmax_args$sample_seed
+            Sample_n = patchmax_sample_n, # integer number of candidate stands used to build projects
+            Sample_seed = patchmax_sample_seed, # set seed for random seed selection
           )
 
           # clean up output
-          projects_selected <- patchmax_out[[1]] %>%
+          projects_selected_y <- patchmax_out[[1]] %>%
             dplyr::rename(treatment_rank = Project,
                           weightedPriority = Objective) %>%
             dplyr::mutate(!!proj_id_field := treatment_rank)
 
-          stands_selected <- patchmax_out[[2]] %>%
+          stands_selected_y <- patchmax_out[[2]] %>%
             dplyr::select(!!stand_id_field := Stands,
                           !!proj_id_field := Project,
                           treatment_rank := Project,
@@ -291,11 +276,8 @@ run <- function(
 
         } else { # run with preassigned (static) projects
 
-          # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-          # !! 2a. STATIC PROJECTS ----
-
-          # create list of arguments for building predetermined projects
-          patchstat_args <- list(
+          patchstat_out <- build_static_projects(
+            stands = stands_available,
             stand_id_field = stand_id_field,
             stand_area_field = stand_area_field,
             proj_id_field = proj_id_field,
@@ -304,28 +286,24 @@ run <- function(
             proj_target_value = proj_target_value,
             stand_threshold = stand_threshold,
             proj_treatment_name = proj_treatment_name,
-            proj_number = patchmax_proj_number,
+            proj_number = NULL,
             proj_area_ceiling = fire_annual_target
-            )
+          )
 
-          # run patchstat
-          patchstat_out <- stands_available %>% build_static_projects(patchstat_args)
-
-          projects_selected <- patchstat_out[[1]]
-          stands_selected <- patchstat_out[[2]]
-
+          projects_selected_y <- patchstat_out[[1]]
+          stands_selected_y <- patchstat_out[[2]]
         }
 
         # FIRE: randomize project rank if desired (research specific task)
         if(fire_random_projects){
           message('!! Randomizing projects')
 
-          shuffled_weights <- projects_selected %>%
+          shuffled_weights <- projects_selected_y %>%
             dplyr::filter(treatment_rank %>% is.na == FALSE) %>%
             dplyr::mutate(weightedPriority = sample(weightedPriority)) %>%
             dplyr::select(proj_id_field, weightedPriority)
 
-           projects_selected <- projects_selected %>% dplyr::select(-weightedPriority) %>%
+           projects_selected_y <- projects_selected_y %>% dplyr::select(-weightedPriority) %>%
              dplyr::left_join(shuffled_weights, by = proj_id_field) %>%
              dplyr::arrange(-weightedPriority) %>%
              dplyr::mutate(treatment_rank = ifelse(weightedPriority > 0, 1:dplyr::n(), NA)) %>%
@@ -334,50 +312,49 @@ run <- function(
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # 4. UPDATE AVAILABILITY ----------
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # set annual target
-        fire_annual_target_i = fire_annual_target[yr]
-        if(is.na(fire_annual_target_i)) fire_annual_target_i = Inf # if no target available, set to Inf
-
-        # assign all projects to year one if annual target is NULL
-        if(is.null(fire_annual_target_field) == TRUE){
-          projects_scheduled <- projects_selected %>%
-            dplyr::mutate(ETrt_YR = 1)
-          stands_selected <- stands_selected %>% dplyr::mutate(ETrt_YR = 1)
+        fire_annual_target_i = fire_annual_target[y]
+        if(is.na(fire_annual_target_i)) {
+          message("Assuming an infinite annual target")
+          fire_annual_target_i = Inf # if no target available, set to Inf
         }
 
-        # assign project year based on annual target(s)
-        if(is.null(fire_annual_target_field) == FALSE) {
-          projects_scheduled <- projects_selected %>%
+        if(is.null(fire_annual_target_field) == TRUE){ # assign all projects to year one if annual target is NULL
+          projects_scheduled <- projects_selected_y %>% dplyr::mutate(ETrt_YR = 1)
+          stands_selected_y <- stands_selected_y %>% dplyr::mutate(ETrt_YR = 1)
+        } else if(is.null(fire_annual_target_field) == FALSE) { # assign project year based on annual target(s)
+          projects_scheduled <- projects_selected_y %>%
             dplyr::mutate(ETrt_YR = cumsum(get(fire_annual_target_field)) %/% !!fire_annual_target_i + 1) %>%
             dplyr::mutate(ETrt_YR = ifelse(weightedPriority == 0, NA, ETrt_YR)) %>%
             dplyr::filter(ETrt_YR == 1) %>%
-            dplyr::mutate(ETrt_YR = !!yr)
-          stands_selected <- stands_selected %>%
-            dplyr::inner_join(stand_id_field, ETrt_YR)
+            dplyr::mutate(ETrt_YR = !!y)
+          stands_selected_y <- stands_selected_y %>% dplyr::inner_join(stand_id_field, ETrt_YR)
         }
 
-        stands_available <- stands
-        stands_treated <- NULL
-
         # record stands scheduled for treatment in current year
-        stands_treated <- stands_selected %>%
+        stands_treated <- stands_selected_y %>%
           dplyr::filter(treated == 1) %>%
           dplyr::bind_rows(stands_treated)
 
+        # record stands scheduled for treatment in current year
+        stands_selected <- stands_selected_y %>%
+          dplyr::bind_rows(stands_selected)
+
         # remove stands or project areas that were treated from available stands
-        x1 = unique(stands_selected[[stand_id_field]])
-        # x2 = unique(stands_selected[[proj_id_field]])
-        stands_available <- stands_available %>%
-          dplyr::filter(.data[[stand_id_field]] %in% x1 == FALSE) #%>%
-          # dplyr::filter(.data[[proj_id_field]] %in% x2 == FALSE)
+        x1 = unique(stands_selected_y[[stand_id_field]])
+        stands_available <- stands_available %>% dplyr::filter(.data[[stand_id_field]] %in% x1 == FALSE)
 
         # report yearly work
-        s_n = stands_treated %>% dplyr::filter(ETrt_YR == yr) %>% dplyr::pull(stand_id_field) %>% dplyr::n_distinct()
-        p_n = stands_treated %>% dplyr::filter(ETrt_YR == yr) %>% dplyr::pull(treatment_rank) %>% dplyr::n_distinct()
+        s_n = stands_treated %>% dplyr::filter(ETrt_YR == y) %>% dplyr::pull(stand_id_field) %>% dplyr::n_distinct()
+        p_n = stands_treated %>% dplyr::filter(ETrt_YR == y) %>% dplyr::pull(treatment_rank) %>% dplyr::n_distinct()
         message(paste0(s_n, ' stands (', round(s_n/nrow(stands) * 100, 2), '% of total) treated in ', p_n, ' projects'))
 
-        # BEGIN ANNUAL FIRES /////////////
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # 5. BEGIN ANNUAL FIRES ----------
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
         if(run_with_fire & !is.null(fire_intersect_table)) {
 
           # record stands that burned this year
@@ -385,12 +362,12 @@ run <- function(
             dplyr::left_join(projects_scheduled, by=proj_id_field) %>%
             dplyr::left_join(stands_treated %>% dplyr::select(stand_id_field), by=stand_id_field) %>%
             dplyr::left_join(fires %>% dplyr::select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field) %>%
-            dplyr::filter(FIRE_YR == !!yr) %>%
+            dplyr::filter(FIRE_YR == !!y) %>%
             dplyr::select(stand_id_field, proj_id_field, ETrt_YR, FIRE_YR, FIRE_NUMBER, treatment_rank, weightedPriority) %>%
             dplyr::bind_rows(stands_burned)
 
           # report yearly fire
-          b_n = stands_burned %>% dplyr::filter(FIRE_YR == yr) %>% dplyr::pull(stand_id_field) %>% dplyr::n_distinct()
+          b_n = stands_burned %>% dplyr::filter(FIRE_YR == y) %>% dplyr::pull(stand_id_field) %>% dplyr::n_distinct()
           message(paste0(b_n, ' (', round(b_n/nrow(stands) * 100, 2), '%) stands burned'))
 
           # remove burnt stands from future selection only if fire_dynamic_forsys is TRUE
@@ -406,14 +383,15 @@ run <- function(
 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
       # 5. WRITE DATA -------------
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       # tag stands with specific scenario attributes
-      stands_selected_out <- stands_treated %>%
+      stands_treated_out <- stands_treated %>%
                               dplyr::select(!!stand_id_field, !!proj_id_field, ETrt_YR)
 
       # record fire information if provided
       if(run_with_fire & !is.null(fire_intersect_table)){
-        stands_selected_out <- stands_selected_out %>%
+        stands_treated_out <- stands_treated_out %>%
           dplyr::left_join(fires %>% dplyr::select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field)
       }
 
@@ -423,18 +401,19 @@ run <- function(
 
       # ........................................
       # write stands to file ...................
+      # ........................................
 
       # add scenario tag to output
-      stands_selected_out <- stands_selected_out %>%
+      stands_treated_out <- stands_treated_out %>%
         dplyr::bind_cols(scenario_write_tags)
 
-      stands_selected_out <- stands_selected_out %>%
+      stands_treated_out <- stands_treated_out %>%
         dplyr::left_join(
           y= stands %>% dplyr::select(!!stand_id_field, scenario_output_fields),
           by = stand_id_field)
 
       # assign weight scenario values to stand out out
-      stands_selected_out[,paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[w,]
+      stands_treated_out[,paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[w,]
 
       # generate output filename
       if (length(scenario_write_tags_txt) > 1) {
@@ -444,22 +423,17 @@ run <- function(
       }
 
       # write data
-      data.table::fwrite(stands_selected_out, stand_fn, row.names = FALSE, append = TRUE)
+      data.table::fwrite(stands_treated_out, stand_fn, row.names = FALSE, append = TRUE)
 
       # ........................................
-      # write project data to file ..................
+      # write project data to file .............
+      # ........................................
 
-      browser()
       # summarize selected stands by grouping fields and tag with ETrt_ prefix
-      projects_etrt_out <- stands_selected_out %>%
+      projects_etrt_out <- stands_treated_out  %>%
         dplyr::select(stand_id_field, proj_id_field, ETrt_YR) %>%
         dplyr::left_join(stands %>%
-                           dplyr::select(
-                             stand_id_field,
-                             # proj_id_field,
-                             scenario_output_grouping_fields,
-                             scenario_output_fields,
-                             'weightedPriority'),
+                           dplyr::select(stand_id_field, scenario_output_grouping_fields, scenario_output_fields, weightedPriority),
                          by = stand_id_field) %>%
         create_grouped_dataset(
           grouping_vars = c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR'),
@@ -470,7 +444,11 @@ run <- function(
         base::replace(is.na(.), 0)
 
       # summarize available stands by grouping fields and tag with ESum_ prefix
-      projects_esum_out <- stands %>%
+      projects_esum_out <- stands_selected %>%
+        dplyr::select(stand_id_field, proj_id_field) %>%
+        dplyr::left_join(stands %>%
+                           dplyr::select(stand_id_field, scenario_output_grouping_fields, scenario_output_fields, weightedPriority),
+                         by = stand_id_field) %>%
         compile_planning_areas_and_stands(
           unique_weights = uniqueWeights,
           group_by = c(proj_id_field, scenario_output_grouping_fields),
@@ -525,6 +503,13 @@ run <- function(
     }
     # END WEIGHT LOOP
 
+    if(return_outputs){
+      return(list(
+        stand_output = stands_treated_out,
+        project_output = projects_out,
+        subset_output = subset_out
+      ))
+    }
     message('Forsys simulation is complete')
 }
 # END RUN
