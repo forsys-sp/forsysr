@@ -31,14 +31,6 @@ if (!require(remotes)) install.packages("remotes")
 remotes::install_github("forsys-sp/forsysr")
 ```
 
-## Citation
-
-Please cite the _forsysr_ package when using it in publications. To cite the latest official version, please use:
-
-```{r, echo = FALSE, results = "asis", comment = ""}
-cat(paste0("> Evers C, Houtman R, Day M, Belavenutti P, Lankston R, and Ager A. (",format(Sys.time(), "%Y"),"). ForSysR: Systematic Project Planning and Prioritization in R. R package version 0.9. Available at https://github.com/forsys-sp/forsysr.\n"))
-```
-
 ## Usage
 
 Here we will provide a short example showing how the _forsysr_ package can be used to build and solve a simple multi-objective restoration and fuel management problems. For brevity, we will use one of the built-in simulated datasets that is distributed with the package. First, we will load the _forsysr_ package.
@@ -47,6 +39,8 @@ Here we will provide a short example showing how the _forsysr_ package can be us
 # load package
 library(forsys)
 ```
+
+### Loading data
 
 Although the _forsysr_ can support many different types of planning unit data, here our planning units are represented as polygons in a spatial vector format. Each polygon represents a different planning unit. 
 
@@ -212,6 +206,13 @@ plot_dat_5 <- test_forest %>% left_join(plot_dat_5 %>% select(stand_id, treatmen
 plot(plot_dat_5[,'treatment_rank'], border=NA)
 ```
 
+## Citation
+
+Please cite the _forsysr_ package when using it in publications. To cite the latest official version, please use:
+
+```{r, echo = FALSE, results = "asis", comment = ""}
+cat(paste0("> Evers C, Houtman R, Day M, Belavenutti P, Lankston R, and Ager A. (",format(Sys.time(), "%Y"),"). ForSysR: Systematic Project Planning and Prioritization in R. R package version 0.9. Available at https://github.com/forsys-sp/forsysr.\n"))
+```
 
 ## Additional resources
 

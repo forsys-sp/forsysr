@@ -31,16 +31,6 @@ if (!require(remotes)) install.packages("remotes")
 remotes::install_github("forsys-sp/forsysr")
 ```
 
-## Citation
-
-Please cite the *forsysr* package when using it in publications. To cite
-the latest official version, please use:
-
-> Evers C, Houtman R, Day M, Belavenutti P, Lankston R, and Ager A.
-> (2022). ForSysR: Systematic Project Planning and Prioritization in R.
-> R package version 0.9. Available at
-> <https://github.com/forsys-sp/forsysr>.
-
 ## Usage
 
 Here we will provide a short example showing how the *forsysr* package
@@ -53,6 +43,8 @@ load the *forsysr* package.
 # load package
 library(forsys)
 ```
+
+### Loading data
 
 Although the *forsysr* can support many different types of planning unit
 data, here our planning units are represented as polygons in a spatial
@@ -87,7 +79,7 @@ head(test_forest)
 plot(test_forest[,c(4:5,7:10)], border=NA)
 ```
 
-<img src="README_files/figure-gfm/unnamed-chunk-5-1.png" width="600" />
+<img src="README_files/figure-gfm/unnamed-chunk-4-1.png" width="600" />
 
 ### Preparing the scenario config file
 
@@ -125,7 +117,7 @@ each project based on ‘priority1’)
 plot(test_forest[,c('proj_id','priority1')], border=NA)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 We run forsys within the following arguments. Remember that these can
 also be run using the json config file, as described above. Forsys
@@ -161,7 +153,7 @@ plot_dat <- test_forest %>%
 plot(plot_dat[,'treatment_rank'])
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 Below we plot the stands rather than the project area and only retain
 those stands that were treated.
@@ -174,7 +166,7 @@ plot_dat_2 <- test_forest %>%
   plot(plot_dat_2[,'treatment_rank'], border=NA)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ### Multiple priorities
 
@@ -185,7 +177,7 @@ that areas where priority 1 is highest tend to be lower for priority 2.
 plot(test_forest[,c('priority1','priority2')], border=NA)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- --> We
+![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- --> We
 prioritize on a new variable called priority_12 which is the product of
 priorities 1 and 2. The resulting graph of treatment rank represents
 areas that are highest in both priorities.
@@ -212,7 +204,7 @@ plot_dat_3 <- test_forest %>%
 plot(plot_dat_3[,'treatment_rank'])
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- --> We expand on
+![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- --> We expand on
 this scenario further by limiting stand selection to a single ownership.
 
 ``` r
@@ -237,7 +229,7 @@ plot_dat_4 <- test_forest %>%
 plot(plot_dat_4[,'treatment_rank'])
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 ### Exploring different project selection methods
 
@@ -272,7 +264,17 @@ plot_dat_5 <- test_forest %>% left_join(plot_dat_5 %>% select(stand_id, treatmen
 plot(plot_dat_5[,'treatment_rank'], border=NA)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+## Citation
+
+Please cite the *forsysr* package when using it in publications. To cite
+the latest official version, please use:
+
+> Evers C, Houtman R, Day M, Belavenutti P, Lankston R, and Ager A.
+> (2022). ForSysR: Systematic Project Planning and Prioritization in R.
+> R package version 0.9. Available at
+> <https://github.com/forsys-sp/forsysr>.
 
 ## Additional resources
 
