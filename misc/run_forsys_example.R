@@ -6,10 +6,9 @@ data("test_forest")
 head(test_forest)
 
 jsonlite::fromJSON('misc/test_static_config.json')
+# forsys::run(config_file = 'misc/test_static_config.json', stands)
 
-stands <- test_forest %>% st_drop_geometry()
-forsys::run(config_file = 'misc/test_static_config.json', stands)
-
+stands <- test_forest %>% st_drop_geometry() %>% mutate(priority12 = priority1 * priority2)
 outputs = forsys::run(
   return_outputs = TRUE,
   stand_data = stands,
@@ -17,9 +16,9 @@ outputs = forsys::run(
   stand_id_field = "stand_id",
   proj_id_field = "proj_id",
   stand_area_field = "area_ha",
-  scenario_priorities = "priority3",
+  scenario_priorities = "priority12",
   stand_threshold = "threshold1 == 1",
-  global_threshold = "ownership %in% c(2,3)",
+  global_threshold = "ownership == 2",
   scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
   scenario_output_grouping_fields = "ownership",
   proj_fixed_target =  FALSE,
@@ -29,15 +28,18 @@ outputs = forsys::run(
 
 outputs$stand_output
 
-plot_proj <- test_forest %>% group_by(proj_id) %>% summarize() %>% st_geometry()
-plot_stand_dat <- test_forest %>% dplyr::select(stand_id) %>% dplyr::left_join(outputs$stand_output %>% dplyr::select(stand_id, ETrt_YR))
-plot(plot_proj)
-plot(plot_stand_dat[,'ETrt_YR'], border=NA, key.pos = NULL, add=T)
-
 plot_proj_dat <- test_forest %>%
   group_by(proj_id) %>% summarize() %>%
   dplyr::left_join(outputs$project_output %>% dplyr::select(proj_id, treatment_rank))
 plot(plot_proj_dat[,'treatment_rank'])
+
+plot_proj <- test_forest %>% group_by(proj_id) %>% summarize() %>% st_geometry()
+plot_stand_dat <- test_forest %>%
+  select(stand_id, proj_id) %>%
+  inner_join(outputs$stand_output %>% select(stand_id, ETrt_YR)) %>%
+  left_join(outputs$project_output %>% select(proj_id, treatment_rank))
+plot(plot_proj)
+plot(plot_stand_dat[,'treatment_rank'], border=NA, key.pos = NULL, add=T)
 
 plot(plot_proj)
 plot(plot_proj_dat[,'treatment_rank'], key.pos = NULL, border=NA, add=T)
