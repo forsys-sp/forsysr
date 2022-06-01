@@ -209,7 +209,7 @@ attainment_data_filter <- function(results_data, priority, constraint_field, sec
 #'
 attainment_data_format <- function(attainment_data) {
   foi <- c("treatment_rank", "x", list_attainment_targets(attainment_data))
-  data <- attainment_data[, foi]
+  data <- attainment_data %>% dplyr::select(dplyr::all_of(foi))
   data_long <- data %>%
                 tidyr::gather(pcp, value, -c(treatment_rank, x)) %>%
                 dplyr::mutate(pcp = stringr::str_replace(pcp, "y_ETrt_", "")) %>%
@@ -301,6 +301,7 @@ attainment_chart_by_target_treated <- function(results_data, priority, constrain
 #'
 #' @export
 cumulative_attainment_chart <- function(results_data, priority, constraint_field, secondary_effects=c()) {
+
   g <- attainment_data_filter(results_data, priority, constraint_field, secondary_effects)
   g_long <- attainment_data_format(g)
 
@@ -334,7 +335,7 @@ cumulative_attainment_chart <- function(results_data, priority, constraint_field
 #'
 #' @param results_data TODO
 #' @param proj_field The planning area or project ID
-#' @param x_field The first priority to look at. Should be the priority name, e.g. "TVMIN", 
+#' @param x_field The first priority to look at. Should be the priority name, e.g. "TVMIN",
 #' which will be parsed to "ETrt_TVMIN_PCP"
 #' @param y_field The second priotity to look at
 #' @return TODO
@@ -446,14 +447,14 @@ stacked_barchart <- function(subset_data, priority, proj_field, constraint_field
         + ggplot2::theme(panel.grid.major = element_line(color = grid_color)) %>%
         + ggplot2::theme(panel.grid.minor = element_line(color = grid_color)) %>%
         + ggplot2::theme(plot.title = element_text(size = main_title, color = theme_palette))
-  
+
   return(p)
 }
 
 #' Custom scale for the boxplot, this implements an inverted logrithmic scale
-#' 
+#'
 #' @param base The logrithmic base to use
-#' @return 
+#' @return
 reverselog_trans <- function(base = exp(1)) {
     trans <- function(x) -log(x, base)
     inv <- function(x) base^(-x)
@@ -470,7 +471,7 @@ reverselog_trans <- function(base = exp(1)) {
 #' @param proj_field The planning area or project ID
 #' @param x_field The NAME of the first priority. This will be the filter for
 #' weight, and will add ETrt_*_PCP to access the value field
-#' @param y_field The NAME of the secondary priority. This will be used to 
+#' @param y_field The NAME of the secondary priority. This will be used to
 #' rank projects between weighting scenarios
 #' @param constraint_field Field used to constrain simulation. Usually some
 #' form of area.

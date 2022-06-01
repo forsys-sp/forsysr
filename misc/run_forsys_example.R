@@ -16,7 +16,8 @@ outputs = forsys::run(
   stand_id_field = "stand_id",
   proj_id_field = "proj_id",
   stand_area_field = "area_ha",
-  scenario_priorities = "priority12",
+  scenario_priorities = c("priority1", "priority2"),
+  scenario_weighting_values = "0 3 1",
   stand_threshold = "threshold1 == 1",
   global_threshold = "ownership == 2",
   scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
@@ -27,6 +28,18 @@ outputs = forsys::run(
 )
 
 outputs$stand_output
+results_data = outputs$project_output# %>% filter(Pr_1_priority1 == 5 & Pr_2_priority2 == 4)
+results_data = outputs$project_output %>% filter(Pr_1_priority1 == 1 & Pr_2_priority2 == 0)
+results_data = outputs$project_output %>% filter(Pr_1_priority1 == 0 & Pr_2_priority2 == 1)
+
+
+theme_toggle('light')
+# built in graphing examples
+cumulative_attainment_chart(results_data = results_data, priority = 'priority2', constraint_field = 'area_ha')
+
+
+
+
 
 plot_proj_dat <- test_forest %>%
   group_by(proj_id) %>% summarize() %>%

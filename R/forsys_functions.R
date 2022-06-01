@@ -358,7 +358,7 @@ build_static_projects <- function(
     dplyr::select(stand_id_field,
                   proj_id_field,
                   stand_area_field,
-                  weightedPriority) %>%
+                  'weightedPriority') %>%
     dplyr::mutate(treated = 1)
 
   stands_selected <- stands_selected_st
@@ -367,7 +367,7 @@ build_static_projects <- function(
   projects_selected <- stands_selected %>%
     create_grouped_dataset(
       grouping_vars = proj_id_field,
-      summing_vars = c(stand_area_field, "weightedPriority")) %>%
+      summing_vars = c(stand_area_field, 'weightedPriority')) %>%
     base::replace(is.na(.), 0) %>%
     dplyr::arrange(-weightedPriority) %>%
     dplyr::mutate(treatment_rank = ifelse(weightedPriority > 0, 1:dplyr::n(), NA)) %>%
@@ -388,7 +388,7 @@ build_static_projects <- function(
                   weightedPriority) %>%
     dplyr::left_join(
       y = stands_selected %>%
-        dplyr::inner_join(projects_selected_out %>% dplyr::select(proj_id_field, 'treatment_rank')) %>%
+        dplyr::inner_join(projects_selected_out %>% dplyr::select(proj_id_field, 'treatment_rank'), by = proj_id_field) %>%
         dplyr::select(stand_id_field, treated),
       by = stand_id_field
       ) %>%

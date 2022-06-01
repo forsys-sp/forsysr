@@ -126,11 +126,14 @@ run <- function(
       dir.create(absolute_output_path, recursive=TRUE)
     } else {
       if (run_with_shiny) {
-        message(paste0("output directory, ", absolute_output_path, ", already exists"))
-        # if (overwrite_output) list.files(absolute_output_path, full.names = T) %>% file.remove()
+        message(paste0("Output directory, ", absolute_output_path, ", already exists"))
         list.files(absolute_output_path, full.names = T) %>% file.remove()
       } else {
-        message(paste0("output directory, ", absolute_output_path, ", already exists"))
+        message(paste0("Output directory, ", absolute_output_path, ", already exists"))
+        if (overwrite_output) {
+          list.files(absolute_output_path, full.names = T) %>% file.remove()
+          message('...Overwriting previous files')
+        }
       }
     }
 
@@ -317,7 +320,7 @@ run <- function(
         # set annual target
         fire_annual_target_i = fire_annual_target[y]
         if(is.na(fire_annual_target_i)) {
-          message("Assuming an infinite annual target")
+          message("Assuming unlimited annual target")
           fire_annual_target_i = Inf # if no target available, set to Inf
         }
 
@@ -336,6 +339,7 @@ run <- function(
         # record stands scheduled for treatment in current year
         stands_treated <- stands_selected_y %>%
           dplyr::filter(treated == 1) %>%
+          dplyr::mutate(weighting_combo = w) %>%
           dplyr::bind_rows(stands_treated)
 
         # record stands scheduled for treatment in current year
@@ -429,6 +433,10 @@ run <- function(
       # write project data to file .............
       # ........................................
 
+      scenario_output_grouping_fields <- c('ownership','proj_id')
+      tmp <- grepl(proj_id_field, scenario_output_grouping_fields)
+      scenario_output_grouping_fields <- scenario_output_grouping_fields[tmp == FALSE]
+
       # summarize selected stands by grouping fields and tag with ETrt_ prefix
       projects_etrt_out <- stands_treated_out  %>%
         dplyr::select(stand_id_field, proj_id_field, ETrt_YR) %>%
@@ -496,6 +504,8 @@ run <- function(
         subset_fn = paste0(relative_output_path, "/subset_", scenario_name, ".csv")
       }
 
+      projects_out %>% ungroup() %>% dplyr::select(matches('Pr_[0-9]_')) %>% apply(1, paste0, collapse='_') %>% unique()
+
       # write out project data
       data.table::fwrite(projects_out, file = project_fn, sep = ",", row.names = FALSE, append = TRUE)
       data.table::fwrite(subset_out, file = subset_fn, sep = ",", row.names = FALSE, append = TRUE)
@@ -505,9 +515,9 @@ run <- function(
 
     if(return_outputs){
       return(list(
-        stand_output = stands_treated_out,
-        project_output = projects_out,
-        subset_output = subset_out
+        stand_output = data.table::fread(stand_fn),
+        project_output = data.table::fread(project_fn),
+        subset_output = data.table::fread(subset_fn)
       ))
     }
     message('Forsys simulation is complete')
