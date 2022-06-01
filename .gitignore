@@ -43,7 +43,6 @@ vignettes/*.pdf
 # Forsys Specific
 /output/*
 /output_graphics/*
-/data/*
 
 # Mac OSX
 .DS_Store
