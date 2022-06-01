@@ -343,7 +343,7 @@ cumulative_attainment_chart <- function(results_data, priority, constraint_field
 #' @importFrom dplyr %>%
 #'
 #' @export
-tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field) {
+tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field, proj_n = 10) {
 
   # Save the names for labels
   x_name <- x_field
@@ -352,14 +352,15 @@ tradeoff_analysis_chart <- function(results_data, proj_field, x_field, y_field) 
   x_field <- priority_etrt_pcp_name(x_field)
   y_field <- priority_etrt_pcp_name(y_field)
 
-  results_data['rank'] <- results_data[x_field] + results_data[y_field]
+  # results_data[,'rank'] <- results_data[,x_field] + results_data[,y_field]
+  results_data <- results_data %>% mutate(rank = get(x_field) + get(y_field))
 
   # First, find the top PA_IDs in terms of target performance
   # Right now it's set to top 10, maybe make this dynamic?
   dat <- results_data %>%
       dplyr::group_by_at(proj_field) %>%
       dplyr::summarize(sum = sum(get('rank'))) %>%
-      dplyr::slice_max(n = 10, order_by = sum)
+      dplyr::slice_max(n = proj_n, order_by = sum)
 
   # print(dat)
 
@@ -461,7 +462,7 @@ reverselog_trans <- function(base = exp(1)) {
     scales::trans_new(paste0("reverselog-", format(base)),
                       trans,
                       inv,
-                      log_breaks(base = base),
+                      scales::log_breaks(base = base),
                       domain = c(1e-100, Inf))
 }
 
@@ -489,7 +490,8 @@ project_boxplot <- function(results_data, proj_field, x_field, y_field, constrai
   y_field <- priority_etrt_pcp_name(y_field)
   constraint_field <- priority_etrt_pcp_name(constraint_field)
 
-  results_data['rank'] <- results_data[x_field] + results_data[y_field]
+  # results_data['rank'] <- results_data[x_field] + results_data[y_field]
+  results_data <- results_data %>% mutate(rank = get(x_field) + get(y_field))
 
   # First, find the top PA_IDs in terms of target performance
   # Right now it's set to top 10, maybe make this dynamic?
