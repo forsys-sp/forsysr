@@ -1,0 +1,19 @@
+{
+  "config_file": [""],
+  "scenario_name": ["test_forest"],
+  "stand_id_field": ["stand_id"],
+  "proj_id_field": ["proj_id"],
+  "scenario_priorities": ["priority1", "priority2"],
+  "global_threshold": ["ownership == 1"],
+  "stand_threshold": ["priority4 > 0.5"],
+  "proj_fixed_target": [true],
+  "proj_target_field": ["area_ha"],
+  "proj_target_value": [2000],
+  "scenario_weighting_values": ["1 1 1"],
+  "scenario_output_fields": ["priority1", "priority2",  "priority3"],
+  "scenario_output_grouping_fields": ["pa_id"],
+  "fire_planning_years": [1],
+  "fire_annual_target": [null],
+  "fire_dynamic_forsys": [false],
+  "fire_random_projects": [false]
+}

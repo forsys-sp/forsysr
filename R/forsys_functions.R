@@ -190,7 +190,7 @@ weight_priorities <- function(numPriorities, weights = c("1 1 1")){
 
 
 printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_constraint) {
-  parameters <- paste0("ForSys simulation designed and coded by Rachel Houtman, run on: ", Sys.Date(), "\n",
+  parameters <- paste0("ForSysR was designed and coded by Cody Evers and Rachel Houtman, run on: ", Sys.Date(), "\n",
                        "This code creates attainment graphs for to explore both WUI exposure (HUIDW) and merchantable timber volume\n",
                        "with the following ForSys settings:\n",
                        "1) Subunit = PA_ID_New\n",
@@ -317,6 +317,95 @@ make_thresholds <- function(txt) {
   return(out)
 }
 
+#' Wrapper for selecting static stands
+#' @param stands
+#' @param args
+#'
+#' @importFrom dplyr rename
+#'
+build_static_projects <- function(
+    stands,
+    stand_id_field,
+    stand_area_field,
+    proj_id_field,
+    proj_target_field,
+    proj_fixed_target,
+    proj_target_value,
+    stand_threshold,
+    proj_treatment_name,
+    proj_number,
+    proj_area_ceiling
+    ){
+
+  # stand selection based on predetermined projects
+  stands_selected_st <- stands %>%
+    set_treatment_target( # set treatment target
+      proj_id_field = proj_id_field,
+      proj_fixed_target = proj_fixed_target,
+      proj_target_field = proj_target_field,
+      proj_target_value = proj_target_value) %>%
+    filter_stands( # apply treatment thresholds
+      filter_txt = stand_threshold,
+      verbose = T) %>%
+    apply_treatment( # select stands
+      stand_id_field = stand_id_field,
+      proj_id_field = proj_id_field,
+      proj_objective = 'weightedPriority',
+      proj_target_field = proj_target_field,
+      proj_target = 'master_target',
+      treatment_name = proj_treatment_name
+    ) %>%
+    dplyr::select(stand_id_field,
+                  proj_id_field,
+                  stand_area_field,
+                  'weightedPriority') %>%
+    dplyr::mutate(treated = 1)
+
+  stands_selected <- stands_selected_st
+
+  # group selected stands by project, summarize, and rank
+  projects_selected <- stands_selected %>%
+    create_grouped_dataset(
+      grouping_vars = proj_id_field,
+      summing_vars = c(stand_area_field, 'weightedPriority')) %>%
+    base::replace(is.na(.), 0) %>%
+    dplyr::arrange(-weightedPriority) %>%
+    dplyr::mutate(treatment_rank = ifelse(weightedPriority > 0, 1:dplyr::n(), NA)) %>%
+    tidyr::drop_na(treatment_rank)
+
+  # filter project level output by project number or treatment area ceiling
+  proj_number = ifelse(proj_number %>% is.null, Inf, proj_number)
+  proj_area_ceiling = ifelse(proj_area_ceiling %>% is.na, Inf, proj_area_ceiling)
+  projects_selected_out <- projects_selected %>%
+    dplyr::filter(treatment_rank <= proj_number) %>%
+    dplyr::filter(proj_area_ceiling <= proj_area_ceiling)
+
+  # create stand level output by joining with output projects
+  stands_selected_out <- stands %>%
+    dplyr::select(stand_id_field,
+                  proj_id_field,
+                  stand_area_field,
+                  weightedPriority) %>%
+    dplyr::left_join(
+      y = stands_selected %>%
+        dplyr::inner_join(projects_selected_out %>% dplyr::select(proj_id_field, 'treatment_rank'), by = proj_id_field) %>%
+        dplyr::select(stand_id_field, treated),
+      by = stand_id_field
+      ) %>%
+    dplyr::mutate(treated = ifelse(treated %>% is.na, 0, 1)) %>%
+    dplyr::inner_join(
+      y = projects_selected_out %>%
+        dplyr::select(proj_id_field, 'treatment_rank'),
+      by = proj_id_field
+      ) %>%
+    dplyr::arrange(treatment_rank, stand_id)
+
+  return(list(
+    projects_selected_out,
+    stands_selected_out
+  ))
+}
+
 #' Threshold string statement parser
 #'
 #' @param stands TODO
@@ -372,7 +461,8 @@ apply_treatment <- function(stands,
                             proj_id_field,
                             proj_objective = 'weightedPriority',
                             proj_target_field,
-                            proj_target = 'master_target'
+                            proj_target = 'master_target',
+                            treatment_name = NULL
                             ) {
 
   # select stands for treatment
@@ -380,14 +470,15 @@ apply_treatment <- function(stands,
     select_simple_greedy_algorithm(
       grouped_by = proj_id_field,
       prioritize_by = proj_objective,
-      constrain_by = c(1, proj_target_field, proj_target))
+      constrain_by = c(1, proj_target_field, proj_target)) %>%
+    dplyr::mutate(treatment_name = !!treatment_name)
 
   # update the total area available for activities.
   proj_objective_treated <- stands_treated %>%
     create_grouped_dataset(
       grouping_vars = proj_id_field,
       summing_vars = c(proj_target_field, 'weightedPriority')) %>%
-    arrange(-.data$weightedPriority)
+    dplyr::arrange(-.data$weightedPriority)
 
   # # mark selected stands
   # selected <- treat_stands %>% pull(!!stand_id_field)

@@ -3,10 +3,10 @@
 #' @param config_file Relative path to a config file that defines needed
 #' parameters
 #' @param scenario_name A name for this scenario
-#' @param scenario_stand_filename Path to the input dataset
-#' @param area_field Field for spatial area of the data
+#' @param stand_data_filename Path to the input dataset
+#' @param stand_area_field Field for spatial area of the data
 #' @param shape_file The path to the saved shapefile
-#' @param stand_id_field The field in the scenario_stand_filename which is a
+#' @param stand_id_field The field in the stand_data_filename which is a
 #' unique ID for each stand
 #' @param stand_pcp_spm PCP and SPM values will be calculated for these
 #' variables. This should include the priorities and any value outputs.
@@ -17,7 +17,7 @@
 #' lands are included in the calculation.
 #' @param scenario_priorities Priorities are named here. If only one priority
 #' exists, only a weight of one will be used.
-#' @param proj_id_field The field in the scenario_stand_filename that indicates which
+#' @param proj_id_field The field in the stand_data_filename that indicates which
 #' project or planning area a stand belongs to
 #' @param use_stand_threshold TODO
 #' @param stand_threshold TODO
@@ -46,8 +46,8 @@
 write_save_file <- function(
     config_file = "",
     scenario_name = "",
-    scenario_stand_filename = "",
-    area_field = "",
+    stand_data_filename = "",
+    stand_area_field = "",
     shape_file = "",
     stand_id_field = "",
     stand_pcp_spm = NULL,
@@ -77,8 +77,8 @@ write_save_file <- function(
   vector_names <- c(
     "config_file",
     "scenario_name",
-    "scenario_stand_filename",
-    "area_field",
+    "stand_data_filename",
+    "stand_area_field",
     "shape_file",
     "stand_id_field",
     "stand_pcp_spm",
@@ -110,8 +110,8 @@ write_save_file <- function(
 
   vector_data$config_file <- config_file
   vector_data$scenario_name <- scenario_name
-  vector_data$scenario_stand_filename <- scenario_stand_filename
-  vector_data$area_field <- area_field
+  vector_data$stand_data_filename <- stand_data_filename
+  vector_data$stand_area_field <- stand_area_field
   vector_data$shape_file <- shape_file
   vector_data$stand_id_field <- stand_id_field
   vector_data$stand_pcp_spm <- stand_pcp_spm
@@ -207,8 +207,8 @@ write_save_file_helper <- function(input, r_data) {
 
   json <- write_save_file(
     scenario_name = input$scenario_name,
-    scenario_stand_filename = r_data$data_path,
-    area_field = input$area_field,
+    stand_data_filename = r_data$data_path,
+    stand_area_field = input$stand_area_field,
     shape_file = r_data$shape_file,
     stand_id_field = input$stand_id_field,
     stand_pcp_spm = input$priorities_fields,
@@ -286,7 +286,7 @@ load_json_config <- function(json_filename){
 
 #   forsys::run(stand_id)
 #   # scenario_name = input$scenario_name
-#   # scenario_stand_filename = r_data$data_path
+#   # stand_data_filename = r_data$data_path
 #   # scenario_priorities = input$priorities_fields
 #   # scenario_weighting_values = weight_values
 #   # scenario_output_fields = input$outputs_select
