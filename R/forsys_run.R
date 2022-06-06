@@ -433,10 +433,6 @@ run <- function(
       # write project data to file .............
       # ........................................
 
-      scenario_output_grouping_fields <- c('ownership','proj_id')
-      tmp <- grepl(proj_id_field, scenario_output_grouping_fields)
-      scenario_output_grouping_fields <- scenario_output_grouping_fields[tmp == FALSE]
-
       # summarize selected stands by grouping fields and tag with ETrt_ prefix
       projects_etrt_out <- stands_treated_out  %>%
         dplyr::select(stand_id_field, proj_id_field, ETrt_YR) %>%

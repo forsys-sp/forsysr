@@ -117,3 +117,33 @@ outputs = forsys::run(
   patchmax_proj_number = 5,
   patchmax_sample_n = 1000
 )
+
+
+
+# USING SERAL DATA
+
+library(forsys)
+library(tidyverse)
+library(sf)
+
+# example for calculating combined objective value
+stands <- st_read('~/GitHub/forsys-data/YSS_LandMgtUnits_v16_20210924/YSS_LandMgtUnits_v16_20210924.shp') 
+stands_dat <- stands %>% st_drop_geometry()
+# run forsys using specified parameters (see help for complete list)
+outputs = forsys::run(
+  return_outputs = TRUE,
+  stand_data = stands_dat,
+  scenario_name = "YSS_test",
+  stand_id_field = "LMU_ID",
+  proj_id_field = "POD",
+  stand_area_field = "Acres",
+  scenario_priorities = c("TotConVol"),
+  scenario_weighting_values = "0 3 1",
+  # stand_threshold = "threshold1 == 1",
+  # global_threshold = "ownership == 2",
+  scenario_output_fields = c("Acres", "TotConVol"),
+  scenario_output_grouping_fields = "Forest_Typ",
+  proj_fixed_target =  FALSE,
+  proj_target_field = "Acres",
+  proj_target_value = 0.2
+)

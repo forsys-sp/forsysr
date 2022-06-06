@@ -398,7 +398,7 @@ build_static_projects <- function(
         dplyr::select(proj_id_field, 'treatment_rank'),
       by = proj_id_field
       ) %>%
-    dplyr::arrange(treatment_rank, stand_id)
+    dplyr::arrange(treatment_rank, stand_id_field)
 
   return(list(
     projects_selected_out,
