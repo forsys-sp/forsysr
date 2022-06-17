@@ -281,7 +281,7 @@ set_up_treatment_types <- function(stands, args=NULL) {
 #' @importFrom data.table :=
 #'
 set_up_priorities_helper <- function(stands, i, weight, priority) {
-  stands$weightedPriority <- stands$weightedPriority + weight * stands[, get(priority)]
+  stands$weightedPriority <- stands$weightedPriority + weight * stands[, priority]
   priorityName <- paste0("Pr_", i, "_", priority)
   stands[, (priorityName) := weight]
 }

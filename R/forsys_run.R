@@ -92,7 +92,7 @@ run <- function(
     patchmax_stnd_adj_filename = NULL,
     patchmax_proj_number = 1,
     patchmax_proj_size = Inf,
-    patchmax_proj_size_slack  = NULL,
+    patchmax_proj_size_slack  = 0.05,
     patchmax_candidate_min_size = NULL,
     patchmax_sample_n = NULL,
     patchmax_sample_seed = NULL
