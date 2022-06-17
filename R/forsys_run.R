@@ -500,7 +500,7 @@ run <- function(
         subset_fn = paste0(relative_output_path, "/subset_", scenario_name, ".csv")
       }
 
-      projects_out %>% ungroup() %>% dplyr::select(matches('Pr_[0-9]_')) %>% apply(1, paste0, collapse='_') %>% unique()
+      projects_out %>% dplyr::ungroup() %>% dplyr::select(matches('Pr_[0-9]_')) %>% apply(1, paste0, collapse='_') %>% unique()
 
       # write out project data
       data.table::fwrite(projects_out, file = project_fn, sep = ",", row.names = FALSE, append = TRUE)
