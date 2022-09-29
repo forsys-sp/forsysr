@@ -204,7 +204,6 @@ run <- function(
                      " of ", nrow(weights),
                      ": ", paste0(weights[w,], collapse = '-')))
 
-
       # prep stand data
       stands <- stands %>%
         set_up_treatment_types() %>%
@@ -436,11 +435,11 @@ run <- function(
       # summarize selected stands by grouping fields and tag with ETrt_ prefix
       projects_etrt_out <- stands_treated_out  %>%
         dplyr::select(stand_id_field, proj_id_field, ETrt_YR) %>%
-        dplyr::left_join(stands %>%
-                           dplyr::select(stand_id_field, scenario_output_grouping_fields, scenario_output_fields, weightedPriority),
-                         by = stand_id_field) %>%
+        dplyr::left_join(stands %>% dplyr::select(stand_id_field, scenario_output_grouping_fields, 
+                                                  scenario_output_fields, weightedPriority),
+                         by = stand_id_field, suffix = c("", ".dup")) %>%
         create_grouped_dataset(
-          grouping_vars = c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR'),
+          grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
           summing_vars = c(scenario_output_fields, 'weightedPriority')
           ) %>%
         dplyr::arrange(ETrt_YR, -weightedPriority) %>%
@@ -450,9 +449,9 @@ run <- function(
       # summarize available stands by grouping fields and tag with ESum_ prefix
       projects_esum_out <- stands_selected %>%
         dplyr::select(stand_id_field, proj_id_field) %>%
-        dplyr::left_join(stands %>%
-                           dplyr::select(stand_id_field, scenario_output_grouping_fields, scenario_output_fields, weightedPriority),
-                         by = stand_id_field) %>%
+        dplyr::left_join(stands %>% dplyr::select(stand_id_field, scenario_output_grouping_fields, 
+                                                  scenario_output_fields, weightedPriority),
+                         by = stand_id_field, suffix = c("", ".dup")) %>%
         compile_planning_areas_and_stands(
           unique_weights = uniqueWeights,
           group_by = c(proj_id_field, scenario_output_grouping_fields),
