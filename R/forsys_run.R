@@ -41,6 +41,7 @@
 #' @param patchmax_proj_size Integer. Number of patchmax stands to estimate
 #' @param patchmax_proj_size_slack Numeric between 0 and 1 represent percent of slack allowed in project size constraint
 #' @param patchmax_candidate_min_size TODO
+#' @param patchmax_st_seed set stand seed IDs
 #' @param patchmax_sample_n number of nodes used to build projects
 #' @param patchmax_sample_seed set seed to reproduce random node selection above
 #'
@@ -94,8 +95,9 @@ run <- function(
     patchmax_proj_size = Inf,
     patchmax_proj_size_slack  = 0.05,
     patchmax_candidate_min_size = NULL,
-    patchmax_sample_n = NULL,
-    patchmax_sample_seed = NULL
+    patchmax_st_seed = NULL,
+    patchmax_st_distance = NULL,
+    patchmax_SDW = NULL
     ) {
 
     # source config file if provided
@@ -259,8 +261,9 @@ run <- function(
             St_threshold = stands_available %>% dplyr::pull(!!threshold_field),
             St_threshold_value = threshold_value,
             Candidate_min_size = 50,
-            Sample_n = patchmax_sample_n, # integer number of candidate stands used to build projects
-            Sample_seed = patchmax_sample_seed, # set seed for random seed selection
+            St_seed = patchmax_st_seed,
+            St_distance = patchmax_st_distance,
+            SDW = patchmax_SDW
           )
 
           # clean up output
