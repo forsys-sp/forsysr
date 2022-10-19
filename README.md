@@ -44,6 +44,15 @@ load the *forsysr* package.
 library(forsys)
 ```
 
+There are two additional packages required to run the post-processing
+forsys code in the following examples.
+
+``` r
+# load dplyr and sf packages
+library(dplyr)
+library(sf)
+```
+
 ### Loading data
 
 Although the *forsysr* can support many different types of planning unit
