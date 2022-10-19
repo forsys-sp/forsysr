@@ -42,14 +42,14 @@ library(forsys)
 
 ### Loading data
 
-Although the _forsys_ can support many different types of planning unit data, here our planning units are represented as polygons in a spatial vector format. Each polygon represents a different planning unit. 
+Although the _forsys_ can support many different types of treatment unit data, here our treatment units are represented as polygons in a spatial vector format. Each polygon represents a different treatment unit. 
 
 ```{r, out.width=ow}
-# load planning unit data
+# load treatment unit data
 data(test_forest)
 # show the first rows in the attribute table
 head(test_forest)
-# plot the planning units
+# plot the treatment units
 plot(test_forest[,c(4:5,7:10)], border=NA)
 ```
 
@@ -69,7 +69,7 @@ cat(readLines('configs/test_forest_config.json'), sep='\n')
 
 ### Running forsysr
 
-ForSys prioritizing projects by maximizing an objective given one or more constraints. The objective represent one or more priorities while the constraints may include a maximum cost or area treated. Thresholds can be set to specify either to define the study area (e.g., a particular ownership) or based on requirements for treatment (e.g., minimum forest cover). ForSys then builds projects and ranks them in order of their priority. Projects can either predefined units or can be built dynamically.
+ForSys prioritizing projects by maximizing an objective given one or more constraints. The objectives represent one or more priorities while the constraints may include a maximum cost or area treated. Thresholds can be set to specify either to define the study area (e.g., a particular ownership) or based on requirements for treatment (e.g., minimum forest cover). ForSys then builds projects and ranks them in order of their priority. Projects can be either predefined units or can be built dynamically.
 
 Let's set up a very simple ForSys run to see how things work. We'll use the test_forest data shown above. We want to find the top 2000 ha within each project based on 'priority1')
 
@@ -97,7 +97,7 @@ run_outputs <- forsys::run(
 )
 
 ```
-Not surprisingly, the treatment rank of the projects selected correspond directly to those areas where stands with those priorities are highest.
+Not surprisingly, the treatment rank of the projects selected corresponds directly to those areas where stands with those priorities are highest.
 
 ```{r, message=F, fig.height=3}
 plot_dat <- test_forest %>%
@@ -179,31 +179,32 @@ plot(plot_dat_4[,'treatment_rank'])
 Forsys can build projects dynamically using a feature called patchmax, which requires some additional arguments. I
 
 ```{r, message=FALSE, results='hide'}
-# first we need to create an object describing stand adjacency
+# first we need to create an object describing stand adjacency and for gridded data, distance
 adj = Patchmax::calculate_adj(test_forest, St_id = test_forest$stand_id, method='nb')
+dist = Patchmax::calculate_dist(test_forest)
 
 run_outputs_5 = forsys::run(
   return_outputs = TRUE,
-  stand_data = stand_dat_3,
+  stand_data = stand_dat,
   scenario_name = "patchmax_test",
   stand_id_field = "stand_id",
   proj_id_field = "proj_id",
   stand_area_field = "area_ha",
-  scenario_priorities = "priority1",
-  # stand_threshold = "ownership == 2",
+  stand_threshold = "threshold2 >= 1",
+  scenario_priorities = "priority2",
   scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
-  scenario_output_grouping_fields = "ownership",
   run_with_patchmax = TRUE,
   patchmax_stnd_adj = adj,
-  patchmax_proj_size = 50000,
+  patchmax_proj_size = 25000,
   patchmax_proj_number = 10,
-  patchmax_sample_n = 1000
+  patchmax_st_distance = dist,
+  patchmax_SDW = 10
 )
 
 plot_dat_5 <- run_outputs_5$stand_output %>% mutate(treatment_rank = proj_id)
 plot_dat_5 <- test_forest %>% left_join(plot_dat_5 %>% select(stand_id, treatment_rank)) %>%
   group_by(treatment_rank) %>% summarize()
-plot(plot_dat_5[,'treatment_rank'], border=NA)
+plot(plot_dat_5[,'treatment_rank'], border=NA, main="Patch rank")
 ```
 
 ## Citation
@@ -211,7 +212,7 @@ plot(plot_dat_5[,'treatment_rank'], border=NA)
 Please cite the _forsysr_ package when using it in publications. To cite the latest official version, please use:
 
 ```{r, echo = FALSE, results = "asis", comment = ""}
-cat(paste0("> Evers C, Houtman R, Day M, Belavenutti P, Lankston R, and Ager A. (",format(Sys.time(), "%Y"),"). ForSysR: Systematic Project Planning and Prioritization in R. R package version 0.9. Available at https://github.com/forsys-sp/forsysr.\n"))
+cat(paste0("> Evers C, Houtman R, Belavenutti P, Day M, and Ager A. (",format(Sys.time(), "%Y"),"). ForSysR: Systematic Project Planning and Prioritization in R. R package version 0.9. Available at https://github.com/forsys-sp/forsysr.\n"))
 ```
 
 ## Additional resources
