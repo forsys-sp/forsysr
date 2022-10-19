@@ -7,7 +7,7 @@ ForSysR
 
 ## Scenario planning for restoration and fuel treatments
 
-ForSys is a flexible platform for exploring landscape management
+*ForSys* is a flexible platform for exploring landscape management
 scenarios and optimizing decisions in terms of where and how to achieve
 landscape restoration and fuel management goals. The model is spatially
 explicit and uses multi-criteria prioritization and optimization created
@@ -15,7 +15,7 @@ to rapidly design fuel treatment and restoration scenarios. The program
 evolved from the Landscape Treatment Designer used in prior studies. The
 program has been used in several research and applied case studies at a
 range of scales (projects, forests, states, continental United States)
-to prioritize projects and stand treatments (see case studies). ForSys
+to prioritize projects and stand treatments (see case studies). *ForSys*
 is available in a windows desktop (ForSysX) and R version (ForSysR).
 
 ## Installation
@@ -42,7 +42,7 @@ remotes::install_github("forsys-sp/patchmax", auth_token = 'your_token_here')
 ## Usage
 
 Here we will provide a short example showing how the *forsys* package
-can be used to build and solve a simple multi-objective restoration and
+can be used to build and solve simple multi-objective restoration and
 fuel management problems. For brevity, we will use one of the built-in
 simulated datasets that is distributed with the package. First, we will
 load the *forsys* package.
@@ -53,7 +53,7 @@ library(forsys)
 
 ### Loading data
 
-Although the *forsys* can support many different types of treatment unit
+Although *forsys* can support many different types of treatment unit
 data, here our treatment units are represented as polygons in a spatial
 vector format. Each polygon represents a different treatment unit.
 
@@ -90,7 +90,7 @@ plot(test_forest[,c(4:5,7:10)], border=NA)
 
 ### Preparing the scenario config file
 
-ForSys is easiest to run by referencing a text file saved using json
+*Forsys* is easiest to run by referencing a text file saved using json
 notation.
 
 ``` r
@@ -98,7 +98,7 @@ forsys::run(config_file = 'configs/test_forest_config.json')
 ```
 
 The json config file provides a simple way to save and specify
-parameters for running ForSys. These parameters can be pass directly
+parameters for running *forsys*. These parameters can be passed directly
 within the function. See `help(forsys::run)` for the complete arguments
 
 ``` r
@@ -107,18 +107,18 @@ cat(readLines('configs/test_forest_config.json'), sep='\n')
 
 ### Running forsysr
 
-ForSys prioritizing projects by maximizing an objective given one or
+*Forsys* prioritizes projects by maximizing an objective given one or
 more constraints. The objectives represent one or more priorities while
 the constraints may include a maximum cost or area treated. Thresholds
-can be set to specify either to define the study area (e.g., a
-particular ownership) or based on requirements for treatment (e.g.,
-minimum forest cover). ForSys then builds projects and ranks them in
-order of their priority. Projects can be either predefined units or can
-be built dynamically.
+are environmental or categorical conditions that trigger the need to
+treat a indiviudal treatment unit or stad (e.g., a particular ownership
+or minimum forest cover). *Forsys* then builds projects and ranks them
+in order of their priority. Projects can be either predefined units
+(e.g., watersheds) or can be built dynamically.
 
-Let’s set up a very simple ForSys run to see how things work. We’ll use
-the test_forest data shown above. We want to find the top 2000 ha within
-each project based on ‘priority1’)
+Let’s set up a very simple *forsys* run to see how things work. We’ll
+use the test_forest data shown above. We want to find the top 2000 ha
+within each predefined project based on ‘priority1’.
 
 ``` r
 plot(test_forest[,c('proj_id','priority1')], border=NA)
@@ -126,8 +126,8 @@ plot(test_forest[,c('proj_id','priority1')], border=NA)
 
 ![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
-We run forsys within the following arguments. Remember that these can
-also be run using the json config file, as described above. Forsys
+We run *forsys* with the following arguments. Remember that these can
+also be run using the json config file, as described above. *Forsys*
 always writes its outputs to csv files saved within the output folder,
 but we can optionally set it to write that data out to a list which has
 three elements containing the outputs.
@@ -151,27 +151,28 @@ run_outputs <- forsys::run(
 ```
 
 Not surprisingly, the treatment rank of the projects selected
-corresponds directly to those areas where stands with those priorities
-are highest.
+corresponds directly to those areas where are priority was highest, as
+plotted below. Projeck rank \#1 (darkest blue) is the highest ranked
+project.
 
 ``` r
 plot_dat <- test_forest %>%
   group_by(proj_id) %>% summarize() %>%
   left_join(run_outputs$project_output %>% select(proj_id, treatment_rank))
-plot(plot_dat[,'treatment_rank'])
+plot(plot_dat[,'treatment_rank'], main="Project rank")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
-Below we plot the stands rather than the project area and only retain
+Below we plot the stands rather than the project rank and only retain
 those stands that were treated.
 
 ``` r
 plot_dat_2 <- test_forest %>%
   select(stand_id, proj_id) %>%
-  inner_join(run_outputs$stand_output %>% select(stand_id, ETrt_YR)) %>%
+  inner_join(run_outputs$stand_output %>% select(stand_id)) %>%
   left_join(run_outputs$project_output %>% select(proj_id, treatment_rank))
-  plot(plot_dat_2[,'treatment_rank'], border=NA)
+  plot(plot_dat_2[,'treatment_rank'], border=NA, main="Project rank by stand")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
@@ -179,27 +180,30 @@ plot_dat_2 <- test_forest %>%
 ### Multiple priorities
 
 Next we look at multiple priorities. Plotting priorities 1 and 2 shows
-that areas where priority 1 is highest tend to be lower for priority 2.
+that areas where priority 1 are highest tend to be lower for priority 2.
 
 ``` r
 plot(test_forest[,c('priority1','priority2')], border=NA)
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- --> We
-prioritize on a new variable called priority_12 which is the product of
-priorities 1 and 2. The resulting graph of treatment rank represents
-areas that are highest in both priorities.
+![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- --> Let’s see if
+*forsys* can find locations where we can achieve both objectives. We
+prioritize on both variables, priority1 and priority2. We will run
+*forsys* weighting the two objectives from 0 to 5 resulting in 20
+scenarios. We will then filter the results to see the scenario where the
+two objectives are equally weighted. The resulting graph of project rank
+represents areas that are highest in both priorities.
 
 ``` r
-stand_dat_3 <- stand_dat %>% mutate(priority_12 = priority1 * priority2)
 run_outputs_3 = forsys::run(
   return_outputs = TRUE,
   scenario_name = "test_scenario",
-  stand_data = stand_dat_3,
+  stand_data = stand_dat,
   stand_id_field = "stand_id",
   proj_id_field = "proj_id",
   stand_area_field = "area_ha",
-  scenario_priorities = "priority_12",
+  scenario_priorities = c("priority1","priority2"),
+  scenario_weighting_values = c("0 5 1"),
   scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
   proj_fixed_target =  TRUE,
   proj_target_field = "area_ha",
@@ -208,8 +212,10 @@ run_outputs_3 = forsys::run(
 
 plot_dat_3 <- test_forest %>%
   group_by(proj_id) %>% summarize() %>%
-  left_join(run_outputs_3$project_output %>% select(proj_id, treatment_rank))
-plot(plot_dat_3[,'treatment_rank'])
+  left_join(run_outputs_3$project_output %>% filter(Pr_1_priority1 == 1 & Pr_2_priority2 == 1) %>% 
+              select(proj_id, treatment_rank))
+
+plot(plot_dat_3[,'treatment_rank'], main="Project rank for two priorities")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- --> We expand on
@@ -219,12 +225,13 @@ this scenario further by limiting stand selection to a single ownership.
 run_outputs_4 = forsys::run(
   return_outputs = TRUE,
   scenario_name = "test_scenario",
-  stand_data = stand_dat_3,
+  stand_data = stand_dat,
   stand_id_field = "stand_id",
   proj_id_field = "proj_id",
   stand_area_field = "area_ha",
   stand_threshold = "ownership == 2",
-  scenario_priorities = "priority_12",
+  scenario_priorities = c("priority1","priority2"),
+  scenario_weighting_values = c("0 5 1"),
   scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
   proj_fixed_target =  TRUE,
   proj_target_field = "area_ha",
@@ -233,27 +240,25 @@ run_outputs_4 = forsys::run(
 
 plot_dat_4 <- test_forest %>%
   group_by(proj_id) %>% summarize() %>%
-  left_join(run_outputs_4$project_output %>% select(proj_id, treatment_rank = treatment_rank)) 
-plot(plot_dat_4[,'treatment_rank'])
+  left_join(run_outputs_4$project_output %>% filter(Pr_1_priority1 == 1 & Pr_2_priority2 == 1) %>% 
+              select(proj_id, treatment_rank))
+
+plot(plot_dat_4[,'treatment_rank'], main="Project rank for two priorities on ownership2")
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 ### Exploring different project selection methods
 
-Forsys can build projects dynamically using a feature called patchmax,
+*Forsys* can build projects dynamically using a feature called Patchmax,
 which requires some additional arguments. I
 
 ``` r
 # first we need to create an object describing stand adjacency and for gridded data, distance
 adj = Patchmax::calculate_adj(test_forest, St_id = test_forest$stand_id, method='nb')
 dist = Patchmax::calculate_dist(test_forest)
-```
 
-    ## Warning in st_centroid.sf(Shapefile): st_centroid assumes attributes are
-    ## constant over geometries of x
-
-``` r
+# then in the run functions we set the search distance weight to 10 to search further for high objective stands
 run_outputs_5 = forsys::run(
   return_outputs = TRUE,
   stand_data = stand_dat,
@@ -285,7 +290,7 @@ plot(plot_dat_5[,'treatment_rank'], border=NA, main="Patch rank")
 Please cite the *forsysr* package when using it in publications. To cite
 the latest official version, please use:
 
-> Evers C, Houtman R, Belavenutti P, Day M, and Ager A. (2022). ForSysR:
+> Houtman R, Evers C, Belavenutti P, Day M, and Ager A. (2022). ForSysR:
 > Systematic Project Planning and Prioritization in R. R package version
 > 0.9. Available at <https://github.com/forsys-sp/forsysr>.
 
