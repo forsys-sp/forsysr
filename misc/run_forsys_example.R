@@ -1,3 +1,7 @@
+if (!require(remotes)) install.packages("remotes")
+remotes::install_github("forsys-sp/forsysr", auth_token = 'your_token_here')
+remotes::install_github("forsys-sp/patchmax", auth_token = 'your_token_here')
+
 # STATIC PROJECTS ------------------------
 
 library(tidyverse)
@@ -7,14 +11,20 @@ library(sf)
 data("test_forest")
 head(test_forest)
 
-# example for calculating combined objective value
-stands <- test_forest %>% st_drop_geometry() %>% mutate(priority12 = priority1 * priority2)
+# plot the treatment units
+plot(test_forest[,c(4:5,7:10)], border=NA)
+
+# example for exploring two priorities
+stands <- test_forest %>% st_drop_geometry()
 
 # example running forsys from json config file
-# jsonlite::fromJSON('misc/test_static_config.json')
-# forsys::run(config_file = 'misc/test_static_config.json', stand_data = stands)
+jsonlite::fromJSON('misc/test_static_config.json')
+forsys::run(config_file = 'misc/test_static_config.json', stand_data = stands)
 
 # run forsys using specified parameters (see help for complete list)
+# prioritize priority1 AND priority2 within predefined boundaries (proj_id)
+# group outputs by ownership
+# treat 20% of the area within each predefined boundary (proj_id)
 outputs = forsys::run(
   return_outputs = TRUE,
   stand_data = stands,
@@ -23,9 +33,8 @@ outputs = forsys::run(
   proj_id_field = "proj_id",
   stand_area_field = "area_ha",
   scenario_priorities = c("priority1", "priority2"),
-  scenario_weighting_values = "0 3 1",
+  scenario_weighting_values = "0 5 1",
   stand_threshold = "threshold1 == 1",
-  # global_threshold = "ownership == 2",
   scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
   scenario_output_grouping_fields = "ownership",
   proj_fixed_target =  FALSE,
@@ -78,7 +87,10 @@ forsys::stacked_barchart(
 
 # MAP OUTPUT ------------------------
 
-# plot project
+# plot project where only priority1 is prioritized
+# to see priority2 flip argument: (Pr_1_priority1 == 0 & Pr_2_priority2 == 1)
+# t0 see where the two priorities are equally weighted replace with this argument:
+#  (Pr_1_priority1 == 1 & Pr_2_priority2 == 1)
 proj_output <- outputs$project_output %>% 
   dplyr::filter(Pr_1_priority1 == 1 & Pr_2_priority2 == 0)
 
@@ -97,7 +109,7 @@ plot_proj <- test_forest %>%
 
 plot_stand_dat <- test_forest %>%
   select(stand_id, proj_id) %>%
-  inner_join(outputs$stand_output %>% select(stand_id, ETrt_YR)) %>%
+  inner_join(outputs$stand_output %>% select(stand_id)) %>%
   left_join(outputs$project_output %>% select(proj_id, treatment_rank))
 
 ggplot() + 
@@ -109,21 +121,14 @@ colfunc <- colorRampPalette(c('black', NA))
 # USING PATCHMAX ------------------------
 
 data("test_forest")
-stands <- test_forest %>% 
-  st_drop_geometry() %>% 
-  mutate(priority12 = priority1 * priority2)
+stands <- test_forest %>% st_drop_geometry() 
 
-adj = Patchmax::calculate_adj(Shapefile = test_forest, 
-                              St_id = stands$stand_id, 
-                              Adjdist = 100, 
-                              method = 'buffer')
+# first we need to create an object describing stand adjacency and for gridded data, distance
+# the distance function takes a few minutes
+adj = Patchmax::calculate_adj(test_forest, St_id = test_forest$stand_id, method='nb')
+dist = Patchmax::calculate_dist(test_forest)
 
-# run patchmax using config file
-forsys::run(config_file = 'misc/test_patchmax_config.json', 
-            stand_data = stands, 
-            patchmax_stnd_adj = adj)
-
-# fun patchmax by specifiying parameters
+# run patchmax by specifying parameters
 outputs = forsys::run(
   return_outputs = TRUE,
   stand_data = stands,
@@ -131,117 +136,18 @@ outputs = forsys::run(
   stand_id_field = "stand_id",
   proj_id_field = "proj_id",
   stand_area_field = "area_ha",
-  scenario_priorities = "priority12",
+  scenario_priorities = "priority2",
   stand_threshold = "priority3 >= 0.5",
   scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
-  scenario_output_grouping_fields = "ownership",
   run_with_patchmax = TRUE,
   patchmax_stnd_adj = adj,
   patchmax_proj_size = 25000,
-  patchmax_proj_number = 5,
-  patchmax_sample_n = 1000
+  patchmax_proj_number = 10,
+  patchmax_st_distance = dist,
+  patchmax_SDW = 10
 )
 
-
-# USING SERAL DATA ------------------------
-
-library(forsys)
-library(tidyverse)
-library(sf)
-
-# example for calculating combined objective value
-stands <- st_read('~/GitHub/forsys-data/YSS_LandMgtUnits/YSS_LandMgtUnits_v16_20210924.shp') 
-adj = Patchmax::calculate_adj(Shapefile = stands, St_id = stands$LMU_ID, method = 'buffer', Adjdist = 1)
-stands_dat <- stands %>% st_drop_geometry()
-
-# run forsys using specified parameters (see help for complete list)
-outputs = forsys::run(
-  return_outputs = TRUE,
-  stand_data = stands,
-  scenario_name = "YSS_test",
-  stand_id_field = "LMU_ID",
-  proj_id_field = "POD",
-  stand_area_field = "Acres",
-  scenario_priorities = c("TotConVol"),
-  scenario_weighting_values = "0 3 1",
-  scenario_output_fields = c("Acres", "TotConVol"),
-  scenario_output_grouping_fields = "Forest_Typ",
-  proj_fixed_target =  FALSE,
-  proj_target_field = "Acres",
-  proj_target_value = 0.2
-)
-
-
-outputs = forsys::run(
-  return_outputs = TRUE,
-  stand_data = stands,
-  scenario_name = "yss_patchmax_test",
-  stand_id_field = "LMU_ID",
-  proj_id_field = "POD",
-  stand_area_field = "Acres",
-  scenario_priorities = "TotConVol",
-  stand_threshold = "TotConVol > 0",
-  global_threshold = "Forest_Typ == 'Mixed conifer/fir'",
-  scenario_output_fields = c("Acres", "TotConVol"),
-  run_with_patchmax = TRUE,
-  patchmax_stnd_adj = adj,
-  patchmax_proj_size = 25000,
-  patchmax_proj_number = 5,
-  patchmax_sample_n = 1000
-)
-
-
-
-# USING EL DORADO DATA ------------------------
-
-library(forsys)
-library(tidyverse)
-library(sf)
-
-# example for calculating combined objective value
-eldor <- st_read('~/GitHub/forsys-data/El_Dorado_Poly/El_Dorado_Poly.shp') 
-
-unique(eldor$PODid)
-
-i = 10
-adj = Patchmax::calculate_adj(Shapefile = eldor, St_id = eldor$CELL_ID, method = 'buffer', Adjdist = 1)
-stands_dat <- stands %>% st_drop_geometry()
-
-
-# for each POD i....
-# combined_outputs <- unique(eldor$PODid)[1:5] %>% 
-combined_outputs <- c(10,19,25,44,32) %>%
-  purrr::map(function(i){
-    
-    # filter stands to i and calculate adjacency
-    print(i)
-    eldor_i = eldor %>% filter(PODid == i)
-    stands_i <- eldor_i %>% st_drop_geometry()
-    adj_i = eldor_i %>% Patchmax::calculate_adj(St_id = .$CELL_ID) # << now defaults to buffer approach
-    
-    # run forsys w/ patchmax for pod i
-    outputs_i = forsys::run(
-      return_outputs = TRUE,
-      stand_data = stands_i,
-      scenario_name = "eldor_pod40",
-      stand_id_field = "CELL_ID",
-      proj_id_field = "patchmax_id",
-      stand_area_field = "Acres",
-      scenario_priorities = c("prio_fire"),
-      stand_threshold = "Available >= 1",
-      #global_threshold = "Available == 1",
-      scenario_output_fields = c("Acres", "Threat_Ac", "Defend_Ac", "HVRAres_Ac"),
-      scenario_output_grouping_fields = c("PODid","priority"),
-      run_with_patchmax = TRUE,
-      patchmax_stnd_adj = adj_i,
-      patchmax_proj_size = 100,
-      patchmax_proj_number = 2,
-      patchmax_sample_n = 100
-    )
-    return(outputs_i)
-  })
-
-# extract first element (i.e., stands) in combined_outputs list and bind rows
-combined_outputs %>% 
-  purrr::map(2) %>% 
-  bind_rows()
+plot_patch <- outputs$stand_output %>% mutate(treatment_rank = proj_id)
+plot_patch <- test_forest %>% left_join(plot_patch %>% select(stand_id, treatment_rank)) %>%
+  group_by(treatment_rank) %>% summarize()
+plot(plot_patch[,'treatment_rank'], border=NA, main="Patch rank")
