@@ -42,8 +42,8 @@
 #' @param patchmax_proj_size_slack Numeric between 0 and 1 represent percent of slack allowed in project size constraint
 #' @param patchmax_candidate_min_size TODO
 #' @param patchmax_st_seed set stand seed IDs
-#' @param patchmax_sample_n number of nodes used to build projects
-#' @param patchmax_sample_seed set seed to reproduce random node selection above
+#' @param patchmax_st_distance Stand distance table. Coupled with SDW parameter. If NULL, then stand distance weight function is not applied.
+#' @param patchmax_SDW Stand distance weight parameter. If NULL, then the value = 1 is used by default.
 #'
 #' @return Forsys results with weightedPriority, treatmentRank, and weights
 #'
