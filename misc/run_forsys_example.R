@@ -7,6 +7,7 @@ remotes::install_github("forsys-sp/patchmax", auth_token = 'your_token_here')
 library(tidyverse)
 library(forsys)
 library(sf)
+library(dplyr)
 
 data("test_forest")
 head(test_forest)
@@ -119,6 +120,7 @@ ggplot() +
 colfunc <- colorRampPalette(c('black', NA))
 
 # USING PATCHMAX ------------------------
+library(Patchmax)
 
 data("test_forest")
 stands <- test_forest %>% st_drop_geometry() 
