@@ -234,8 +234,9 @@ filter_stands <- function(stands, filter_txt, verbose = TRUE){
 #'
 #' @param stands data.table of stands
 #' @param fields vector of character field names to calculate pcm & spm values
+#' @param area_field optional string of field name used to calculate spm
 #'
-calculate_spm_pcp <- function(stands, fields=NULL){
+calculate_spm_pcp <- function(stands, fields=NULL, area_field=NULL){
 
   if(fields %>% is.null){
     x <- stands %>% lapply(is.numeric) %>% unlist()
