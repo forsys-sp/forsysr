@@ -234,29 +234,38 @@ filter_stands <- function(stands, filter_txt, verbose = TRUE){
 #'
 #' @param stands data.table of stands
 #' @param fields vector of character field names to calculate pcm & spm values
+#' @param area_field optional string of field name used to calculate spm
 #'
-calculate_spm_pcp <- function(stands, fields=NULL){
+calculate_spm_pcp <- function(stands, fields=NULL, normalize=TRUE){
 
-  if(fields %>% is.null){
+  # default to calculating spm for all numeric fields if fields is null 
+  if(is.null(fields)){
     x <- stands %>% lapply(is.numeric) %>% unlist()
     fields <- names(x)[x == TRUE]
   }
 
   for (f in fields) {
-    maximum <- max(stands[, get(f)], na.rm=T)
-    cn <- paste0(f, "_SPM")
-    expr <- bquote(.(as.name(cn)):= 0)
-    stands[,eval(expr)]
-    expr <- bquote(.(as.name(cn)):= (100 * get(f) / maximum))
-    stands[, eval(expr)]
-
-    sum.total <- sum(as.numeric(stands[, get(f)]), na.rm=T)
+    
+    if(normalize == TRUE){
+      # normalize values based on maximum and multiple by 100
+      cn <- paste0(f, "_SPM")
+      maximum <- max(stands[, get(f)], na.rm=T)
+      stands <- stands %>% 
+        mutate(!!cn := (100 * get(f) / maximum))
+    } else {
+      # else assign original value ot spm field
+      cn <- paste0(f, "_SPM")
+      stands <- stands %>%
+        mutate(!!cn := get(f))
+    }
+    
+    # calculate percent of total and multiple by 100
     cn <- paste0(f, "_PCP")
-    expr <- bquote(.(as.name(cn)):= 0)
-    stands[,eval(expr)]
-    expr <- bquote(.(as.name(cn)):= (100 * get(f) / sum.total))
-    stands[, eval(expr)]
+    sum.total <- sum(as.numeric(stands[, get(f)]), na.rm=T)
+    stands <- stands %>%
+      mutate(!!cn := (100 * get(f) / sum.total))
   }
+  
   return(stands)
 }
 

@@ -1,7 +1,8 @@
 #' ForSysR
 #'
-#' Primary function for running the ForSys treatment planner. Either provide parameters, or define parameters
-#' in a config file and pass the name of the file to this run function.
+#' Primary function for running the ForSys treatment planner. Either provide 
+#' parameters, or define parameters in a config file and pass the name of the 
+#' file to this run function.
 #'
 #' @param config_file relative path to a config file that defines needed parameters
 #' @param scenario_name name for this scenario
@@ -9,19 +10,28 @@
 #' @param stand_data_filename path to the input dataset (if not passed)
 #' @param stand_id_field The field in the stand_data_filename which is a unique ID for each stand
 #' @param stand_area_field string of field containing stand area
-#' @param stand_pcp_spm PCP and SPM values will be calculated for these variables. This should include the priorities and any value outputs.
-#' @param global_threshold Boolean statement passed as a string used to define stands within the scenario.
-        #' Excluded stands are not considered part of the problem so are not used to calculate PCP or ESum values.
-#' @param scenario_priorities Priorities are named here. If only one priority exists, only a weight of one will be used.
-#' @param proj_id_field string of field in the stand_data_filename that indicates which project or planning area a stand belongs to.
-#' @param stand_threshold Boolean statement passed as a string and used as threshold for whether stands are counted towards project objective
+#' @param stand_pcp_spm PCP and SPM values will be calculated for these variables. 
+#' This should include the priorities and any value outputs. If null, use scenario priority fields
+#' @param global_threshold Boolean statement passed as a string used to define 
+#' stands within the scenario. Excluded stands are not considered part of the 
+#' problem so are not used to calculate PCP or ESum values.
+#' @param normalize_values logical whether spm fields should be normalized
+#' @param scenario_priorities Priorities are named here. If only one priority 
+#' exists, only a weight of one will be used.
+#' @param proj_id_field string of field in the stand_data_filename that indicates 
+#' which project or planning area a stand belongs to.
+#' @param stand_threshold Boolean statement passed as a string and used as 
+#' threshold for whether stands are counted towards project objective
 #' @param proj_fixed_target logical describing if target is fixed or relative
 #' @param proj_target_field string of stand field used as target constraint
 #' @param proj_target_value numeric value for target constraint, either an fixed
-        #' value (if proj_fixed_target is TRUE) or a value between 0 and 1 (if proj_fixed_target is FALSE).
-#' @param scenario_weighting_values string of 3 integers separated by a space that defines the weighting min, max, and step.
+#' value if proj_fixed_target == TRUE or a value between 0 and 1 
+#' if proj_fixed_target is FALSE.
+#' @param scenario_weighting_values string of 3 integers separated by a space 
+#' that defines the weighting min, max, and step.
 #' @param scenario_output_fields vector of field names to write out
-#' @param scenario_output_grouping_fields Include the smaller and larger groups here for grouping of treated stands.
+#' @param scenario_output_grouping_fields Include the smaller and larger groups 
+#' here for grouping of treated stands.
 #' @param overwrite_output logical whether to overwrite any existing output of the same name
 #' @param run_with_shiny logical whether run was called from within shiny.
 #' @param run_with_fire logical whether to forsys alongside fire
@@ -39,11 +49,15 @@
 #' @param patchmax_stnd_adj_filename igraph object describe patch adjacency
 #' @param patchmax_proj_number TODO
 #' @param patchmax_proj_size Integer. Number of patchmax stands to estimate
-#' @param patchmax_proj_size_slack Numeric between 0 and 1 represent percent of slack allowed in project size constraint
+#' @param patchmax_proj_size_slack Numeric between 0 and 1 represent percent of 
+#' slack allowed in project size constraint
 #' @param patchmax_candidate_min_size TODO
 #' @param patchmax_st_seed set stand seed IDs
-#' @param patchmax_st_distance Stand distance table. Coupled with SDW parameter. If NULL, then stand distance weight function is not applied.
-#' @param patchmax_SDW Stand distance weight parameter. If NULL, then the value = 1 is used by default.
+#' @param patchmax_st_distance Stand distance table. Coupled with SDW parameter. 
+#' If NULL, then stand distance weight function is not applied.
+#' @param patchmax_SDW Stand distance weight parameter. If NULL, then 
+#' the value = 1 is used by default.
+#' @param return_outputs 
 #'
 #' @return Forsys results with weightedPriority, treatmentRank, and weights
 #'
@@ -62,6 +76,7 @@ run <- function(
     stand_pcp_spm = NULL, # TODO rename scenario_pcp_spm
     stand_threshold = NULL, # TODO rename proj_stand_threshold
     global_threshold = NULL, # TODO rename scenario_stand_threshold
+    normalize_values = TRUE,
     # project variables
     proj_id_field = "proj_id",
     proj_fixed_target = FALSE,
@@ -183,17 +198,21 @@ run <- function(
       filter_stands(filter_txt = global_threshold)
 
     # Calculate SPM & PCP values
+    
+    # assume stand_pcp_spm fields equal scenario priorities if NULL
     if(is.null(stand_pcp_spm)){
-      stand_pcp_spm <- c(scenario_priorities, scenario_output_fields)
+      stand_pcp_spm <- scenario_priorities
     }
 
+    # calculate spm and spm for scenario priorities and scenario output fields
     stands <- stands %>%
-      calculate_spm_pcp(fields = stand_pcp_spm) %>%
-      calculate_spm_pcp(fields = scenario_output_fields)
+      calculate_spm_pcp(fields = stand_pcp_spm, normalize = normalize_values) %>%
+      calculate_spm_pcp(fields = scenario_output_fields, normalize = normalize_values)
 
     # set up weighting scenarios
-    weights <- weight_priorities(numPriorities = length(scenario_priorities),
-                                 weights = scenario_weighting_values[1])
+    weights <- weight_priorities(
+      numPriorities = length(scenario_priorities), 
+      weights = scenario_weighting_values[1])
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
     # 2. LOOP THROUGH WEIGHTS ---
