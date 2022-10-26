@@ -267,22 +267,32 @@ run <- function(
           threshold_dat <- Patchmax::forsys_helper_prep_threshold(stand_threshold)
           threshold_field <- threshold_dat$st_threshold
           threshold_value <- threshold_dat$st_threshold_value
-
+          project_constraint <- stands %>% pull(proj_target_field)
+          project_target_value <- proj_target_value
+          if(proj_fixed_target == FALSE){
+            stop('Patchmax requires that proj_fixed_target == TRUE and that the project_target_value represent the sum of that value allowed for a project (e.g., a project budget)')
+          }
+          
           # run patchmax
           patchmax_out <- Patchmax::simulate_projects(
             St_id = stands_available %>% dplyr::pull(!!stand_id_field), # stand id vector
+            St_adj = adj_object,
             St_area = stands_available %>% dplyr::pull(!!stand_area_field), # stand area vector
             St_objective = stands_available %>% dplyr::pull(weightedPriority), # vector of stand values to maximize
-            St_adj = adj_object,
+            St_seed = patchmax_st_seed,
             P_size = patchmax_proj_size, # numeric project size constraint based on St_area
             P_size_slack  = patchmax_proj_size_slack,  # 0-1 numeric setting flexibility in hitting P_size constraint
+            # P_size_ceiling - Inf,
             P_number = patchmax_proj_number, # integer count of projects to create
             St_threshold = stands_available %>% dplyr::pull(!!threshold_field),
             St_threshold_value = threshold_value,
-            Candidate_min_size = 50,
-            St_seed = patchmax_st_seed,
             St_distance = patchmax_st_distance,
-            SDW = patchmax_SDW
+            SDW = patchmax_SDW,
+            # P_constraint = project_constraint,
+            # P_constraint_max_value = project_target_value,
+            # P_constraint_min_value = NULL,
+            Candidate_min_size = 50
+            
           )
 
           # clean up output
