@@ -121,6 +121,7 @@ colfunc <- colorRampPalette(c('black', NA))
 
 # USING PATCHMAX ------------------------
 library(Patchmax)
+library(tidyverse)
 
 data("test_forest")
 stands <- test_forest %>% st_drop_geometry() 
@@ -142,14 +143,25 @@ outputs = forsys::run(
   stand_threshold = "priority3 >= 0.5",
   scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
   run_with_patchmax = TRUE,
+  proj_target_field = 'priority1',
+  proj_target_value = 90,
   patchmax_stnd_adj = adj,
   patchmax_proj_size = 25000,
-  patchmax_proj_number = 10,
+  pathmax_sample_n = 1000,
+  patchmax_proj_number = 2,
   patchmax_st_distance = dist,
-  patchmax_SDW = 10
+  patchmax_SDW = 5
 )
 
-plot_patch <- outputs$stand_output %>% mutate(treatment_rank = proj_id)
-plot_patch <- test_forest %>% left_join(plot_patch %>% select(stand_id, treatment_rank)) %>%
-  group_by(treatment_rank) %>% summarize()
-plot(plot_patch[,'treatment_rank'], border=NA, main="Patch rank")
+patch_sf <- test_forest %>% 
+  left_join(outputs$stand_output %>% dplyr::select(stand_id, treatment_rank = proj_id)) %>%
+  group_by(treatment_rank) %>% summarize_if(is.numeric, sum) %>% st_as_sf() %>%
+  filter(treatment_rank %in% c(1:2))
+
+availability_sf <- test_forest %>% filter(priority3 > 0.5) %>% summarize()
+
+ggplot() + 
+  geom_sf(data=test_forest, aes(fill=priority3), color=NA) +
+  geom_sf(data=patch_sf, aes(color=factor(treatment_rank)), fill=NA, size=2) +
+  geom_sf(data=availability_sf, fill=NA, color='white', lty=3) +
+  scale_fill_gradientn(colors=sf.colors(10))

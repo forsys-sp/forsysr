@@ -10,9 +10,9 @@
 #' @param stand_data_filename path to the input dataset (if not passed)
 #' @param stand_id_field The field in the stand_data_filename which is a unique ID for each stand
 #' @param stand_area_field string of field containing stand area
-#' @param stand_pcp_spm PCP and SPM values will be calculated for these variables. 
+#' @param stand_pcp_spm character vector of fields to calculate PCP and SPM values.
 #' This should include the priorities and any value outputs. If null, use scenario priority fields
-#' @param global_threshold Boolean statement passed as a string used to define 
+#' @param global_threshold soolean statement passed as a string used to define 
 #' stands within the scenario. Excluded stands are not considered part of the 
 #' problem so are not used to calculate PCP or ESum values.
 #' @param normalize_values logical whether spm fields should be normalized
@@ -39,16 +39,16 @@
 #' @param fire_intersect_table data frame listing stands affected by fire by year
 #' @param fire_intersect_table_filename data frame listing stands affected by fire by year
 #' @param fire_planning_years number of years to run forsys
-#' @param fire_annual_target_field TODO
-#' @param fire_annual_target TODO
+#' @param fire_annual_target_field character field to use for calculating annual target
+#' @param fire_annual_target numeric value of annual cumulative target
 #' @param fire_dynamic_forsys logical. Prevent burnt stands from being selected if TRUE
 #' @param fire_random_projects logical. Randomly shuffle project prioritization if TRUE
 #' @param scenario_write_tags optional string appended to output used to describe scenario
 #' @param proj_treatment_name optional string appended to output used to name treatment
 #' @param patchmax_stnd_adj igraph object describe patch adjacency
 #' @param patchmax_stnd_adj_filename igraph object describe patch adjacency
-#' @param patchmax_proj_number TODO
-#' @param patchmax_proj_size Integer. Number of patchmax stands to estimate
+#' @param patchmax_proj_number integer number of projects to build
+#' @param patchmax_proj_size integer value of target area for each project
 #' @param patchmax_proj_size_slack Numeric between 0 and 1 represent percent of 
 #' slack allowed in project size constraint
 #' @param patchmax_candidate_min_size TODO
@@ -79,8 +79,8 @@ run <- function(
     normalize_values = TRUE,
     # project variables
     proj_id_field = "proj_id",
-    proj_fixed_target = FALSE,
-    proj_target_field = "",
+    proj_fixed_target = TRUE,
+    proj_target_field = NULL,
     proj_target_value = NULL,
     proj_treatment_name = "",
     # scenario variables
@@ -112,7 +112,9 @@ run <- function(
     patchmax_candidate_min_size = NULL,
     patchmax_st_seed = NULL,
     patchmax_st_distance = NULL,
-    patchmax_SDW = NULL
+    patchmax_SDW = NULL,
+    pathmax_sample_n = NULL,
+    pathmax_sample_seed = 12345
     ) {
 
     # source config file if provided
@@ -267,11 +269,21 @@ run <- function(
           threshold_dat <- Patchmax::forsys_helper_prep_threshold(stand_threshold)
           threshold_field <- threshold_dat$st_threshold
           threshold_value <- threshold_dat$st_threshold_value
-          project_constraint <- stands %>% pull(proj_target_field)
-          project_target_value <- proj_target_value
           if(proj_fixed_target == FALSE){
-            stop('Patchmax requires that proj_fixed_target == TRUE and that the project_target_value represent the sum of that value allowed for a project (e.g., a project budget)')
+            stop('Patchmax requires that proj_fixed_target == TRUE')
           }
+          
+          # randomly select stands (for testing purposes)
+          if(!is.null(pathmax_sample_n)){
+            st_id <- stands_available %>% dplyr::pull(!!stand_id_field)
+            patchmax_st_seed <- sample(st_id, pathmax_sample_n, F)
+          }
+          
+          # extract project constraint values if proj_target_field provided
+          proj_target_values <- NULL
+          if(!is.null(proj_target_field)){
+            proj_target_values <- stands[,get(proj_target_field)]
+          } 
           
           # run patchmax
           patchmax_out <- Patchmax::simulate_projects(
@@ -282,17 +294,16 @@ run <- function(
             St_seed = patchmax_st_seed,
             P_size = patchmax_proj_size, # numeric project size constraint based on St_area
             P_size_slack  = patchmax_proj_size_slack,  # 0-1 numeric setting flexibility in hitting P_size constraint
-            # P_size_ceiling - Inf,
+            # P_size_ceiling = Inf,
             P_number = patchmax_proj_number, # integer count of projects to create
             St_threshold = stands_available %>% dplyr::pull(!!threshold_field),
             St_threshold_value = threshold_value,
             St_distance = patchmax_st_distance,
             SDW = patchmax_SDW,
-            # P_constraint = project_constraint,
-            # P_constraint_max_value = project_target_value,
-            # P_constraint_min_value = NULL,
+            P_constraint = proj_target_values, # secondary constraint values
+            P_constraint_max_value = proj_target_value,
+            P_constraint_min_value = -Inf, # minimum secondary project constraint
             Candidate_min_size = 50
-            
           )
 
           # clean up output

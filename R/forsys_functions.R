@@ -251,19 +251,19 @@ calculate_spm_pcp <- function(stands, fields=NULL, normalize=TRUE){
       cn <- paste0(f, "_SPM")
       maximum <- max(stands[, get(f)], na.rm=T)
       stands <- stands %>% 
-        mutate(!!cn := (100 * get(f) / maximum))
+        dplyr::mutate(!!cn := (100 * get(f) / maximum))
     } else {
       # else assign original value ot spm field
       cn <- paste0(f, "_SPM")
       stands <- stands %>%
-        mutate(!!cn := get(f))
+        dplyr::mutate(!!cn := get(f))
     }
     
     # calculate percent of total and multiple by 100
     cn <- paste0(f, "_PCP")
     sum.total <- sum(as.numeric(stands[, get(f)]), na.rm=T)
     stands <- stands %>%
-      mutate(!!cn := (100 * get(f) / sum.total))
+      dplyr::mutate(!!cn := (100 * get(f) / sum.total))
   }
   
   return(stands)
