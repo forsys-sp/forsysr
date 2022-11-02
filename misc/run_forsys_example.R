@@ -131,6 +131,7 @@ stands <- test_forest %>% st_drop_geometry()
 adj = Patchmax::calculate_adj(test_forest, St_id = test_forest$stand_id, method='nb')
 dist = Patchmax::calculate_dist(test_forest)
 
+
 # run patchmax by specifying parameters
 outputs = forsys::run(
   return_outputs = TRUE,

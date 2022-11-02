@@ -57,7 +57,8 @@
 #' If NULL, then stand distance weight function is not applied.
 #' @param patchmax_SDW Stand distance weight parameter. If NULL, then 
 #' the value = 1 is used by default.
-#' @param return_outputs 
+#' @param patchmax_sample_n Integer count of stands to randomly sample (useful for speeding up patchmax during testing)
+#' @param return_outputs
 #'
 #' @return Forsys results with weightedPriority, treatmentRank, and weights
 #'
@@ -81,12 +82,13 @@ run <- function(
     proj_id_field = "proj_id",
     proj_fixed_target = TRUE,
     proj_target_field = NULL,
-    proj_target_value = NULL,
+    proj_target_value = NULL, # TODO rename to proj_target_max_value
+    proj_target_min_value = -Inf,
     proj_treatment_name = "",
     # scenario variables
     scenario_name = "",
     scenario_priorities = NULL,
-    scenario_weighting_values = "1 1 1",
+    scenario_weighting_values = "1 1 1", # TODO separate to 3 parameters? vector of length 3?
     scenario_output_fields = NULL,
     scenario_output_grouping_fields = NULL,
     scenario_write_tags = NULL,
@@ -113,8 +115,7 @@ run <- function(
     patchmax_st_seed = NULL,
     patchmax_st_distance = NULL,
     patchmax_SDW = NULL,
-    pathmax_sample_n = NULL,
-    pathmax_sample_seed = 12345
+    patchmax_sample_n = NULL
     ) {
 
     # source config file if provided
@@ -157,7 +158,7 @@ run <- function(
     }
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # 1. PREP STANDS ------------
+    # 1. PREP STANDS !!!!!!!!!!!!
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Load stand data
@@ -217,7 +218,7 @@ run <- function(
       weights = scenario_weighting_values[1])
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # 2. LOOP THROUGH WEIGHTS ---
+    # 2. LOOP THROUGH WEIGHTS !!!
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     for (w in 1:nrow(weights)) { # START WEIGHT LOOP
@@ -247,7 +248,7 @@ run <- function(
       stands_burned <- NULL
 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-      # 2. SELECT STANDS ----------
+      # 2. SELECT STANDS !!!!!!!!!!
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       for (y in 1:fire_planning_years) { # BEGIN YEAR LOOP
@@ -274,16 +275,24 @@ run <- function(
           }
           
           # randomly select stands (for testing purposes)
-          if(!is.null(pathmax_sample_n)){
-            st_id <- stands_available %>% dplyr::pull(!!stand_id_field)
-            patchmax_st_seed <- sample(st_id, pathmax_sample_n, F)
+          if(!is.null(patchmax_sample_n)){
+            patchmax_st_seed <- sample(
+              x = stands_available %>% dplyr::pull(!!stand_id_field),
+              size = patchmax_sample_n, 
+              replace = F)
           }
           
           # extract project constraint values if proj_target_field provided
-          proj_target_values <- NULL
+          P_constraint_values <- NULL
           if(!is.null(proj_target_field)){
-            proj_target_values <- stands[,get(proj_target_field)]
+            P_constraint_values <- stands[,get(proj_target_field)]
           } 
+          
+          # extract values of stand field used for defining availability
+          St_threshold_values <- NULL
+          if(!is.null(stand_threshold)){
+            St_threshold_values <- stands_available %>% dplyr::pull(!!threshold_field)
+          }
           
           # run patchmax
           patchmax_out <- Patchmax::simulate_projects(
@@ -294,16 +303,15 @@ run <- function(
             St_seed = patchmax_st_seed,
             P_size = patchmax_proj_size, # numeric project size constraint based on St_area
             P_size_slack  = patchmax_proj_size_slack,  # 0-1 numeric setting flexibility in hitting P_size constraint
-            # P_size_ceiling = Inf,
             P_number = patchmax_proj_number, # integer count of projects to create
-            St_threshold = stands_available %>% dplyr::pull(!!threshold_field),
+            St_threshold = St_threshold_values,
             St_threshold_value = threshold_value,
             St_distance = patchmax_st_distance,
             SDW = patchmax_SDW,
-            P_constraint = proj_target_values, # secondary constraint values
+            P_constraint = P_constraint_values, # secondary constraint values
             P_constraint_max_value = proj_target_value,
-            P_constraint_min_value = -Inf, # minimum secondary project constraint
-            Candidate_min_size = 50
+            P_constraint_min_value = proj_target_min_value, 
+            Candidate_min_size = patchmax_candidate_min_size # (patchmax_proj_size * 0.25) if NULL
           )
 
           # clean up output
@@ -329,6 +337,7 @@ run <- function(
             proj_target_field = proj_target_field,
             proj_fixed_target = proj_fixed_target,
             proj_target_value = proj_target_value,
+            proj_target_min_value = proj_target_min_value, # TODO Need to update apply_treatment to recognize this.
             stand_threshold = stand_threshold,
             proj_treatment_name = proj_treatment_name,
             proj_number = NULL,
@@ -356,7 +365,7 @@ run <- function(
         }
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # 4. UPDATE AVAILABILITY ----------
+        # 4. UPDATE AVAILABILITY !!!!!!!!!!
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # set annual target
@@ -398,7 +407,7 @@ run <- function(
         message(paste0(s_n, ' stands (', round(s_n/nrow(stands) * 100, 2), '% of total) treated in ', p_n, ' projects'))
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # 5. BEGIN ANNUAL FIRES ----------
+        # 5. BEGIN ANNUAL FIRES !!!!!!!!!!!
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         if(run_with_fire & !is.null(fire_intersect_table)) {
@@ -428,7 +437,7 @@ run <- function(
 
 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-      # 5. WRITE DATA -------------
+      # 5. WRITE DATA !!!!!!!!!!!!!
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       # tag stands with specific scenario attributes
