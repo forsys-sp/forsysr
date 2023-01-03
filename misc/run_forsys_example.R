@@ -13,7 +13,7 @@ data("test_forest")
 head(test_forest)
 
 # plot the treatment units
-plot(test_forest[,c(4:5,7:10)], border=NA)
+plot(test_forest, border=NA, max.plot=16)
 
 # example for exploring two priorities
 stands <- test_forest %>% st_drop_geometry()
@@ -37,7 +37,7 @@ outputs = forsys::run(
   scenario_weighting_values = "0 5 1",
   stand_threshold = "threshold1 == 1",
   scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
-  scenario_output_grouping_fields = "ownership",
+  scenario_output_grouping_fields = "mosaic2",
   proj_fixed_target =  FALSE,
   proj_target_field = "area_ha",
   proj_target_value = 0.2
@@ -83,7 +83,7 @@ forsys::stacked_barchart(
   subset_data = outputs$subset_output,
   proj_field = 'proj_id',
   priority = 'priority1',
-  group_field = 'ownership'
+  group_field = 'mosaic2'
 )
 
 # MAP OUTPUT ------------------------
@@ -120,17 +120,17 @@ ggplot() +
 colfunc <- colorRampPalette(c('black', NA))
 
 # USING PATCHMAX ------------------------
-library(Patchmax)
+library(patchmax)
 library(tidyverse)
+library(future)
 
 data("test_forest")
-stands <- test_forest %>% st_drop_geometry() 
+stands <- forsys::test_forest
 
-# first we need to create an object describing stand adjacency and for gridded data, distance
-# the distance function takes a few minutes
-adj = Patchmax::calculate_adj(test_forest, St_id = test_forest$stand_id, method='nb')
-dist = Patchmax::calculate_dist(test_forest)
+plot(stands$geometry)
+# unlike the example above, patchmax requires the stand data to contain geometry
 
+plan(multisession, workers=8)
 
 # run patchmax by specifying parameters
 outputs = forsys::run(
@@ -140,18 +140,15 @@ outputs = forsys::run(
   stand_id_field = "stand_id",
   proj_id_field = "proj_id",
   stand_area_field = "area_ha",
-  scenario_priorities = "priority2",
-  stand_threshold = "priority3 >= 0.5",
+  scenario_priorities = "priority1",
+  stand_threshold = "priority4 >= 0.3",
   scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
   run_with_patchmax = TRUE,
-  proj_target_field = 'priority1',
-  proj_target_value = 90,
-  patchmax_stnd_adj = adj,
+  proj_target_field = 'priority4',
+  proj_target_value = 150,
   patchmax_proj_size = 25000,
-  pathmax_sample_n = 1000,
   patchmax_proj_number = 2,
-  patchmax_st_distance = dist,
-  patchmax_SDW = 5
+  patchmax_SDW = .5
 )
 
 patch_sf <- test_forest %>% 

@@ -59,6 +59,8 @@ scenario_generator <- R6Class(
 # load data
 load('data/test_forest.Rda')
 
+a_scenario$selected
+
 # build new scenario object using teh scenario generator
 a_scenario <- scenario_generator$new(stands = test_forest_data)
 # select stands 1 through 100 and assign to project 1
