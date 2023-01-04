@@ -451,6 +451,7 @@ run <- function(
       }
 
       # write data
+      message(paste0('\n\nStand data written to ', stand_fn))
       data.table::fwrite(stands_treated_out, stand_fn, row.names = FALSE, append = TRUE)
 
       # ........................................
@@ -527,6 +528,7 @@ run <- function(
       projects_out %>% dplyr::ungroup() %>% select(matches('Pr_[0-9]_')) %>% apply(1, paste0, collapse='_') %>% unique()
 
       # write out project data
+      message(paste0('Project data written to ', project_fn))
       data.table::fwrite(projects_out, file = project_fn, sep = ",", row.names = FALSE, append = TRUE)
       data.table::fwrite(subset_out, file = subset_fn, sep = ",", row.names = FALSE, append = TRUE)
 
