@@ -4,7 +4,13 @@
 \alias{tradeoff_analysis_chart}
 \title{TODO}
 \usage{
-tradeoff_analysis_chart(results_data, proj_field, x_field, y_field)
+tradeoff_analysis_chart(
+  results_data,
+  proj_field,
+  x_field,
+  y_field,
+  proj_n = 10
+)
 }
 \arguments{
 \item{results_data}{TODO}

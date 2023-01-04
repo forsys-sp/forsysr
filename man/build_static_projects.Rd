@@ -4,7 +4,20 @@
 \alias{build_static_projects}
 \title{Wrapper for selecting static stands}
 \usage{
-build_static_projects(stands, args)
+build_static_projects(
+  stands,
+  stand_id_field,
+  stand_area_field,
+  proj_id_field,
+  proj_target_field,
+  proj_fixed_target,
+  proj_target_value,
+  proj_target_min_value = NULL,
+  stand_threshold,
+  proj_treatment_name,
+  proj_number,
+  proj_area_ceiling
+)
 }
 \arguments{
 \item{args}{}

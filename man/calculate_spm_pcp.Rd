@@ -4,12 +4,14 @@
 \alias{calculate_spm_pcp}
 \title{Add spm and pcp values for specified fields}
 \usage{
-calculate_spm_pcp(stands, fields = NULL)
+calculate_spm_pcp(stands, fields = NULL, normalize = TRUE)
 }
 \arguments{
 \item{stands}{data.table of stands}
 
 \item{fields}{vector of character field names to calculate pcm & spm values}
+
+\item{area_field}{optional string of field name used to calculate spm}
 }
 \description{
 Add spm and pcp values for specified fields

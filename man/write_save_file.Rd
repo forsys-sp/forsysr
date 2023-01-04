@@ -7,8 +7,8 @@
 write_save_file(
   config_file = "",
   scenario_name = "",
-  scenario_stand_filename = "",
-  area_field = "",
+  stand_data_filename = "",
+  stand_area_field = "",
   shape_file = "",
   stand_id_field = "",
   stand_pcp_spm = NULL,
@@ -41,13 +41,13 @@ parameters}
 
 \item{scenario_name}{A name for this scenario}
 
-\item{scenario_stand_filename}{Path to the input dataset}
+\item{stand_data_filename}{Path to the input dataset}
 
-\item{area_field}{Field for spatial area of the data}
+\item{stand_area_field}{Field for spatial area of the data}
 
 \item{shape_file}{The path to the saved shapefile}
 
-\item{stand_id_field}{The field in the scenario_stand_filename which is a
+\item{stand_id_field}{The field in the stand_data_filename which is a
 unique ID for each stand}
 
 \item{stand_pcp_spm}{PCP and SPM values will be calculated for these
@@ -63,7 +63,7 @@ lands are included in the calculation.}
 \item{scenario_priorities}{Priorities are named here. If only one priority
 exists, only a weight of one will be used.}
 
-\item{proj_id_field}{The field in the scenario_stand_filename that indicates which
+\item{proj_id_field}{The field in the stand_data_filename that indicates which
 project or planning area a stand belongs to}
 
 \item{use_stand_threshold}{TODO}

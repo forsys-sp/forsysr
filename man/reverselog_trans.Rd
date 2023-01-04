@@ -9,9 +9,6 @@ reverselog_trans(base = exp(1))
 \arguments{
 \item{base}{The logrithmic base to use}
 }
-\value{
-
-}
 \description{
 Custom scale for the boxplot, this implements an inverted logrithmic scale
 }

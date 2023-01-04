@@ -4,61 +4,47 @@
 #' parameters, or define parameters in a config file and pass the name of the 
 #' file to this run function.
 #'
-#' @param config_file relative path to a config file that defines needed parameters
-#' @param scenario_name name for this scenario
-#' @param stand_data input stand dataset
-#' @param stand_data_filename path to the input dataset (if not passed)
-#' @param stand_id_field The field in the stand_data_filename which is a unique ID for each stand
-#' @param stand_area_field string of field containing stand area
-#' @param stand_pcp_spm character vector of fields to calculate PCP and SPM values.
-#' This should include the priorities and any value outputs. If null, use scenario priority fields
-#' @param global_threshold soolean statement passed as a string used to define 
-#' stands within the scenario. Excluded stands are not considered part of the 
-#' problem so are not used to calculate PCP or ESum values.
-#' @param normalize_values logical whether spm fields should be normalized
-#' @param scenario_priorities Priorities are named here. If only one priority 
-#' exists, only a weight of one will be used.
-#' @param proj_id_field string of field in the stand_data_filename that indicates 
-#' which project or planning area a stand belongs to.
-#' @param stand_threshold Boolean statement passed as a string and used as 
-#' threshold for whether stands are counted towards project objective
-#' @param proj_fixed_target logical describing if target is fixed or relative
-#' @param proj_target_field string of stand field used as target constraint
-#' @param proj_target_value numeric value for target constraint, either an fixed
-#' value if proj_fixed_target == TRUE or a value between 0 and 1 
-#' if proj_fixed_target is FALSE.
-#' @param scenario_weighting_values string of 3 integers separated by a space 
-#' that defines the weighting min, max, and step.
-#' @param scenario_output_fields vector of field names to write out
-#' @param scenario_output_grouping_fields Include the smaller and larger groups 
-#' here for grouping of treated stands.
-#' @param overwrite_output logical whether to overwrite any existing output of the same name
-#' @param run_with_shiny logical whether run was called from within shiny.
-#' @param run_with_fire logical whether to forsys alongside fire
-#' @param run_with_patchmax logical whether PatchMax should be used for building projects
-#' @param fire_intersect_table data frame listing stands affected by fire by year
-#' @param fire_intersect_table_filename data frame listing stands affected by fire by year
-#' @param fire_planning_years number of years to run forsys
-#' @param fire_annual_target_field character field to use for calculating annual target
-#' @param fire_annual_target numeric value of annual cumulative target
+#' @param config_file character. Relative path to a config file that defines needed parameters
+#' @param return_outputs logical. Return project and stand directly
+#' @param write_outputs logical. Write project and stand data to file
+#' @param overwrite_output logical. Whether to overwrite any existing output of the same name
+#' @param scenario_name character. Name for this scenario
+#' @param stand_data data.frame, data.table, sf. Stand dataset
+#' @param stand_data_filename character. Path to the input dataset 
+#' @param stand_id_field character. Field containing unique ID for each stand
+#' @param stand_area_field character. Field containing stand area
+#' @param stand_pcp_spm character vector. Fields to calculate PCP and SPM values. This should include the priorities and any value outputs. If null, use scenario priority fields
+#' @param global_threshold character. Boolean statement passed as a string used to define  stands within the scenario. Excluded stands are not considered part of the problem so are not used to calculate PCP or ESum values.
+#' @param normalize_values logical. Whether spm fields should be normalized
+#' @param scenario_priorities character vector. Scenario priorities. 
+#' @param proj_id_field character. Field in the stand_data_filename that indicates which planning area a stand belongs to.
+#' @param stand_threshold character. Boolean statement passed as a string and used as threshold for whether stands are counted towards project objective
+#' @param proj_fixed_target logical. Is target is fixed or relative?
+#' @param proj_target_field character. Field name used as target constraint
+#' @param proj_target_value numeric. Value for target constraint, either an fixed value if proj_fixed_target == TRUE or a value between 0 and 1 if proj_fixed_target is FALSE.
+#' @param proj_target_min_value 
+#' @param scenario_weighting_values character. String of 3 integers separated by a space that defines the weighting min, max, and step.
+#' @param scenario_output_fields character vector. Field names to write out
+#' @param scenario_output_grouping_fields character vector. Field(s) for grouping of treated stands.
+#' @param run_with_shiny logical. Whether run was called from within shiny.
+#' @param run_with_fire logical. Whether to forsys alongside fire
+#' @param run_with_patchmax logical. Whether PatchMax should be used for building projects
+#' @param fire_intersect_table data.frame. Stands affected by fire by year
+#' @param fire_intersect_table_filename character File name of data frame listing stands affected by fire by year
+#' @param fire_planning_years integer. Number of years to run forsys
+#' @param fire_annual_target_field character. Field to use for calculating annual target
+#' @param fire_annual_target numeric. Value of annual cumulative target
 #' @param fire_dynamic_forsys logical. Prevent burnt stands from being selected if TRUE
 #' @param fire_random_projects logical. Randomly shuffle project prioritization if TRUE
-#' @param scenario_write_tags optional string appended to output used to describe scenario
-#' @param proj_treatment_name optional string appended to output used to name treatment
-#' @param patchmax_stnd_adj igraph object describe patch adjacency
-#' @param patchmax_stnd_adj_filename igraph object describe patch adjacency
-#' @param patchmax_proj_number integer number of projects to build
-#' @param patchmax_proj_size integer value of target area for each project
-#' @param patchmax_proj_size_slack Numeric between 0 and 1 represent percent of 
-#' slack allowed in project size constraint
-#' @param patchmax_candidate_min_size TODO
-#' @param patchmax_st_seed set stand seed IDs
-#' @param patchmax_st_distance Stand distance table. Coupled with SDW parameter. 
-#' If NULL, then stand distance weight function is not applied.
-#' @param patchmax_SDW Stand distance weight parameter. If NULL, then 
-#' the value = 1 is used by default.
-#' @param patchmax_sample_n Integer count of stands to randomly sample (useful for speeding up patchmax during testing)
-#' @param return_outputs
+#' @param scenario_write_tags optional character. String appended to output used to describe scenario
+#' @param proj_treatment_name optional character. String appended to output used to name treatment
+#' @param patchmax_proj_number integer. Number of projects to build
+#' @param patchmax_proj_size integer. Target area for each project
+#' @param patchmax_proj_size_slack numeric 0-1. Percent less than project allowable
+#' @param patchmax_sample_frac numeric 0-1. Percent of stands to search 
+#' @param patchmax_st_seed numeric/character vector. Specific stand IDs to search
+#' @param patchmax_SDW numeric 0-1. Stand distance weight parameter. Default is 0.5.
+#' @param patchmax_EPW numeric 0-1. Stand exclusion weight parameter. Default is 0.5.
 #'
 #' @return Forsys results with weightedPriority, treatmentRank, and weights
 #'
@@ -69,6 +55,7 @@
 run <- function(
     config_file = NULL,
     return_outputs = FALSE,
+    write_outputs = TRUE,
     # basic
     stand_data = NULL,
     stand_data_filename = "",
@@ -88,7 +75,7 @@ run <- function(
     # scenario variables
     scenario_name = "",
     scenario_priorities = NULL,
-    scenario_weighting_values = "1 1 1", # TODO separate to 3 parameters? vector of length 3?
+    scenario_weighting_values = "1 1 1", # TODO separate to 3 parameters?
     scenario_output_fields = NULL,
     scenario_output_grouping_fields = NULL,
     scenario_write_tags = NULL,
@@ -105,17 +92,14 @@ run <- function(
     fire_annual_target = NA,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
-    # patchmax arguments # << TODO delete
-    # patchmax_stnd_adj = NULL, # << TODO delete
-    # patchmax_stnd_adj_filename = NULL, # << TODO delete
+    # patchmax arguments # 
     patchmax_proj_number = 1,
     patchmax_proj_size = Inf,
     patchmax_proj_size_slack  = 0.05,
-    patchmax_candidate_min_size = NULL,
+    patchmax_sample_frac = 0.1,
     patchmax_st_seed = NULL,
-    # patchmax_st_distance = NULL, # << TODO delete
-    patchmax_SDW = NULL,
-    patchmax_sample_n = NULL
+    patchmax_SDW = 0.5,
+    patchmax_EPW = 0.5
     ) {
 
     # source config file if provided
@@ -253,16 +237,6 @@ run <- function(
           # TODO Test that stand_data contains geometry
           geom <- sf::st_as_sf(stands_available)
           
-          # randomly select stands (for testing purposes)
-          if(!is.null(patchmax_sample_n)){
-            patchmax_st_seed <- sample(
-              x = stands_available %>% pull(!!stand_id_field),
-              size = patchmax_sample_n, 
-              replace = F)
-          }
-          
-          sdw = 1
-          
           if(!is.null(proj_target_field)){ 
             P_constraint = pull(geom, !!proj_target_field)
           } else {
@@ -275,16 +249,16 @@ run <- function(
             St_id = pull(geom, !!stand_id_field), 
             St_area = pull(geom, !!stand_area_field), 
             St_objective = pull(geom, weightedPriority), 
-            # St_seed = patchmax_st_seed,
             P_size = patchmax_proj_size, 
             P_size_slack  = patchmax_proj_size_slack, 
             P_number = patchmax_proj_number,
             St_threshold = stand_threshold,
-            SDW = sdw,
+            SDW = patchmax_SDW,
+            EPW = patchmax_EPW,
             P_constraint = P_constraint,
             P_constraint_max_value = proj_target_value,
             P_constraint_min_value = proj_target_min_value,
-            sample_frac = .1
+            sample_frac = patchmax_sample_frac
           )
 
           # clean up output
@@ -450,9 +424,11 @@ run <- function(
         stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, ".csv")
       }
 
-      # write data
-      message(paste0('\n\nStand data written to ', stand_fn))
-      data.table::fwrite(stands_treated_out, stand_fn, row.names = FALSE, append = TRUE)
+      if(write_outputs){
+        # write data
+        message(paste0('\n\nStand data written to ', stand_fn))
+        data.table::fwrite(stands_treated_out, stand_fn, row.names = FALSE, append = TRUE)
+      }
 
       # ........................................
       # write project data to file .............
@@ -528,9 +504,11 @@ run <- function(
       projects_out %>% dplyr::ungroup() %>% select(matches('Pr_[0-9]_')) %>% apply(1, paste0, collapse='_') %>% unique()
 
       # write out project data
-      message(paste0('Project data written to ', project_fn))
-      data.table::fwrite(projects_out, file = project_fn, sep = ",", row.names = FALSE, append = TRUE)
-      data.table::fwrite(subset_out, file = subset_fn, sep = ",", row.names = FALSE, append = TRUE)
+      if(write_outputs){
+        message(paste0('Project data written to ', project_fn))
+        data.table::fwrite(projects_out, file = project_fn, sep = ",", row.names = FALSE, append = TRUE)
+        data.table::fwrite(subset_out, file = subset_fn, sep = ",", row.names = FALSE, append = TRUE)
+      }
 
     }
     # END WEIGHT LOOP
