@@ -13,8 +13,7 @@
 #' @param stand_data_filename character. Path to the input dataset 
 #' @param stand_id_field character. Field containing unique ID for each stand
 #' @param stand_area_field character. Field containing stand area
-#' @param stand_pcp_spm character vector. Fields to calculate PCP and SPM values. This should include the priorities and any value outputs. If null, use scenario priority fields
-#' @param global_threshold character. Boolean statement passed as a string used to define  stands within the scenario. Excluded stands are not considered part of the problem so are not used to calculate PCP or ESum values.
+#' @param global_threshold character. Boolean statement passed as a string used to define stands within the scenario. Excluded stands are not considered part of the problem so are not used to calculate PCP or ESum values.
 #' @param normalize_values logical. Whether spm fields should be normalized
 #' @param scenario_priorities character vector. Scenario priorities. 
 #' @param proj_id_field character. Field in the stand_data_filename that indicates which planning area a stand belongs to.
@@ -61,7 +60,6 @@ run <- function(
     stand_data_filename = "",
     stand_id_field = "",
     stand_area_field = NULL,
-    stand_pcp_spm = NULL, # TODO rename scenario_pcp_spm
     stand_threshold = NULL, # TODO rename proj_stand_threshold
     global_threshold = NULL, # TODO rename scenario_stand_threshold
     normalize_values = TRUE,
@@ -173,18 +171,6 @@ run <- function(
     stands <- stands %>%
       filter_stands(filter_txt = global_threshold)
 
-    # Calculate SPM & PCP values
-    
-    # assume stand_pcp_spm fields equal scenario priorities if NULL
-    if(is.null(stand_pcp_spm)){
-      stand_pcp_spm <- scenario_priorities
-    }
-
-    # calculate spm and spm for scenario priorities and scenario output fields
-    stands <- stands %>%
-      calculate_spm_pcp(fields = stand_pcp_spm, normalize = normalize_values) %>%
-      calculate_spm_pcp(fields = scenario_output_fields, normalize = normalize_values)
-
     # set up weighting scenarios
     weights <- weight_priorities(
       numPriorities = length(scenario_priorities), 
@@ -206,7 +192,7 @@ run <- function(
         set_up_treatment_types() %>%
         set_up_priorities(
           w = w,
-          priorities = paste0(scenario_priorities, '_SPM'),
+          priorities = scenario_priorities,
           weights = weights)
 
       # manually add proj_id field if running with patchmax
@@ -395,11 +381,6 @@ run <- function(
       if(run_with_fire & !is.null(fire_intersect_table)){
         stands_treated_out <- stands_treated_out %>%
           left_join(fires %>% select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field)
-      }
-
-      # update project output fields to include all PCP fields if present
-      pcp_fields <- select(stands, matches('_PCP$')) %>% names()
-      scenario_output_fields <- c(scenario_output_fields, pcp_fields)
 
       # ........................................
       # write stands to file ...................
