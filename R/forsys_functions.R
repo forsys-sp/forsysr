@@ -204,69 +204,6 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
                        "Required files:\n",
                        "1) ForSys output - proj_all.csv")
   writeLines(parameters, file("README.txt"))
-
-}
-
-#' Filter data
-#'
-#' @param stands Data table to filter
-#' @param filter_txt Boolean statement as character string
-#' @param verbose Boolean statement to report filtered results
-#'
-#' @importFrom rlang .data
-#'
-filter_stands <- function(stands, filter_txt, verbose = TRUE){
-  tryCatch({
-    out <- NULL # helps devtools::check()
-    eval_txt <- paste0("out <- stands[", filter_txt ,"]")
-    eval(parse(text=eval_txt))
-    n0 <- nrow(stands)
-    n1 <- nrow(out)
-    if(verbose)
-      message(glue::glue("----------\nFiltering stands where: {filter_txt} ({round((n0-n1)/n0*100,2)}% excluded)\n-----------"))
-  }, error = function(e){
-    message(paste0('!! Filter failed; proceeding with unfiltered data. Error message:\n', print(e)))
-  })
-  return(out)
-}
-
-#' Add spm and pcp values for specified fields
-#'
-#' @param stands data.table of stands
-#' @param fields vector of character field names to calculate pcm & spm values
-#' @param area_field optional string of field name used to calculate spm
-#'
-calculate_spm_pcp <- function(stands, fields=NULL, normalize=TRUE){
-
-  # default to calculating spm for all numeric fields if fields is null 
-  if(is.null(fields)){
-    x <- stands %>% lapply(is.numeric) %>% unlist()
-    fields <- names(x)[x == TRUE]
-  }
-
-  for (f in fields) {
-    
-    if(normalize == TRUE){
-      # normalize values based on maximum and multiple by 100
-      cn <- paste0(f, "_SPM")
-      maximum <- max(stands[, get(f)], na.rm=T)
-      stands <- stands %>% 
-        dplyr::mutate(!!cn := (100 * get(f) / maximum))
-    } else {
-      # else assign original value ot spm field
-      cn <- paste0(f, "_SPM")
-      stands <- stands %>%
-        dplyr::mutate(!!cn := get(f))
-    }
-    
-    # calculate percent of total and multiple by 100
-    cn <- paste0(f, "_PCP")
-    sum.total <- sum(as.numeric(stands[, get(f)]), na.rm=T)
-    stands <- stands %>%
-      dplyr::mutate(!!cn := (100 * get(f) / sum.total))
-  }
-  
-  return(stands)
 }
 
 # Hack the area target - can be set in the shapefile. This code may be updated
