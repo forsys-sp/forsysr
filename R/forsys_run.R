@@ -4,48 +4,47 @@
 #' parameters, or define parameters in a config file and pass the name of the 
 #' file to this run function.
 #'
-#' @param config_file character. Relative path to a config file that defines needed parameters
-#' @param return_outputs logical. Return project and stand directly
-#' @param write_outputs logical. Write project and stand data to file
-#' @param overwrite_output logical. Whether to overwrite any existing output of the same name
-#' @param scenario_name character. Name for this scenario
-#' @param stand_data data.frame, data.table, sf. Stand dataset
-#' @param stand_data_filename character. Path to the input dataset 
-#' @param stand_id_field character. Field containing unique ID for each stand
-#' @param stand_area_field character. Field containing stand area
-#' @param global_threshold character. Boolean statement passed as a string used to define stands within the scenario. Excluded stands are not considered part of the problem so are not used to calculate PCP or ESum values.
-#' @param normalize_values logical. Whether spm fields should be normalized
-#' @param scenario_priorities character vector. Scenario priorities. 
-#' @param proj_id_field character. Field in the stand_data_filename that indicates which planning area a stand belongs to.
-#' @param stand_threshold character. Boolean statement passed as a string and used as threshold for whether stands are counted towards project objective
-#' @param proj_fixed_target logical. Is target is fixed or relative?
-#' @param proj_target_field character. Field name used as target constraint
-#' @param proj_target_value numeric. Value for target constraint, either an fixed value if proj_fixed_target == TRUE or a value between 0 and 1 if proj_fixed_target is FALSE.
-#' @param proj_target_min_value 
-#' @param scenario_weighting_values character. String of 3 integers separated by a space that defines the weighting min, max, and step.
-#' @param scenario_output_fields character vector. Field names to write out
-#' @param scenario_output_grouping_fields character vector. Field(s) for grouping of treated stands.
-#' @param run_with_shiny logical. Whether run was called from within shiny.
-#' @param run_with_fire logical. Whether to forsys alongside fire
-#' @param run_with_patchmax logical. Whether PatchMax should be used for building projects
-#' @param fire_intersect_table data.frame. Stands affected by fire by year
-#' @param fire_intersect_table_filename character File name of data frame listing stands affected by fire by year
-#' @param fire_planning_years integer. Number of years to run forsys
-#' @param fire_annual_target_field character. Field to use for calculating annual target
-#' @param fire_annual_target numeric. Value of annual cumulative target
-#' @param fire_dynamic_forsys logical. Prevent burnt stands from being selected if TRUE
-#' @param fire_random_projects logical. Randomly shuffle project prioritization if TRUE
-#' @param scenario_write_tags optional character. String appended to output used to describe scenario
-#' @param proj_treatment_name optional character. String appended to output used to name treatment
-#' @param patchmax_proj_number integer. Number of projects to build
-#' @param patchmax_proj_size integer. Target area for each project
-#' @param patchmax_proj_size_slack numeric 0-1. Percent less than project allowable
-#' @param patchmax_sample_frac numeric 0-1. Percent of stands to search 
-#' @param patchmax_st_seed numeric/character vector. Specific stand IDs to search
-#' @param patchmax_SDW numeric 0-1. Stand distance weight parameter. Default is 0.5.
-#' @param patchmax_EPW numeric 0-1. Stand exclusion weight parameter. Default is 0.5.
+#' @param config_file Relative path to a config file that defines needed parameters. <\emph{character}> 
+#' @param return_outputs Return project and stand directly. <\emph{logical}> 
+#' @param write_outputs Write project and stand data to file. <\emph{logical}> 
+#' @param overwrite_output Whether to overwrite any existing output of the same name. <\emph{logical}> 
+#' @param run_with_shiny Whether run was called from within shiny. <\emph{logical}> 
+#' @param run_with_fire Whether to forsys alongside fire. <\emph{logical}> 
+#' @param run_with_patchmax Whether PatchMax should be used for building projects. <\emph{logical}> 
+#' @param stand_data Stand dataset. <\emph{data.frame, data.table, sf}> 
+#' @param stand_data_filename Path to the input dataset saved as CSV file. <\emph{character}> 
+#' @param stand_id_field Field name containing unique ID for each stand. <\emph{character}> 
+#' @param stand_area_field Field name containing stand area. <\emph{character}> 
+#' @param global_threshold Boolean statement used to specify which stands are within the scenario. <\emph{character}> 
+#' @param proj_id_field Field name indicating which planning area a stand belongs to. <\emph{character}> 
+#' @param stand_threshold Boolean statement for whether stands are counted towards project objective <\emph{character}> 
+#' @param proj_fixed_target Whether target is fixed or relative. <\emph{logical}> 
+#' @param proj_target_field Field name used as target constraint. <\emph{character}>
+#' @param proj_target_value Target constraint: fixed value if `proj_fixed_target` is TRUE or 0 and 1 if FALSE. <\emph{numeric}> 
+#' @param proj_target_min_value Minimum valid target constraint. Only used if `run_with_patchmax` is TRUE.
+#' @param scenario_name Name for this scenario. <\emph{character}> 
+#' @param scenario_priorities Scenario priorities. <\emph{character vector}> 
+#' @param scenario_weighting_values String of 3 integers separated by a space defining weighting min, max, and step. <\emph{character}> 
+#' @param scenario_output_fields Field names to write out. <\emph{character vector}>
+#' @param scenario_output_grouping_fields Field names for grouping of treated stands. <\emph{character vector}> 
+#' @param scenario_write_tags String appended to output used to describe scenario. <\emph{optional character}> 
+#' @param proj_treatment_name String appended to output used to name treatment. <\emph{optional character}> 
+#' @param fire_intersect_table Stands affected by fire by year. <\emph{data.frame}> 
+#' @param fire_intersect_table_filename File name of csv listing stands affected by fire by year. <\emph{character}> 
+#' @param fire_planning_years Number of years to run forsys. <\emph{integer}> 
+#' @param fire_annual_target_field Field name to use for calculating annual target. <\emph{character}> 
+#' @param fire_annual_target Value of annual cumulative target. <\emph{numeric}> 
+#' @param fire_dynamic_forsys Whether burnt stands are prevented from being selected. <\emph{logical}> 
+#' @param fire_random_projects Whether project prioritization is randomly shuffled. <\emph{logical}> 
+#' @param patchmax_proj_number Number of projects to build with patchmax. <\emph{integer}> 
+#' @param patchmax_proj_size Target area for each patchmax project. <\emph{integer}> 
+#' @param patchmax_proj_size_slack Percent less than project allowable. <\emph{numeric 0-1}> 
+#' @param patchmax_sample_frac Percent of stands to search. <\emph{numeric 0-1}> 
+#' @param patchmax_st_seed Specific stand IDs to search. <\emph{numeric/character vector}> 
+#' @param patchmax_SDW Stand distance weight parameter. Default is 0.5. <\emph{numeric 0-1}> 
+#' @param patchmax_EPW Stand exclusion weight parameter. Default is 0.5. <\emph{numeric 0-1}> 
 #'
-#' @return Forsys results with weightedPriority, treatmentRank, and weights
+#' @return list with selected stands, project summary, project summary by subgroup
 #'
 #' @importFrom rlang .data
 #' @importFrom dplyr %>% select mutate rename arrange filter left_join inner_join bind_rows bind_cols n n_distinct
@@ -55,6 +54,7 @@ run <- function(
     config_file = NULL,
     return_outputs = FALSE,
     write_outputs = TRUE,
+    overwrite_output = TRUE,
     # basic
     stand_data = NULL,
     stand_data_filename = "",
@@ -77,7 +77,6 @@ run <- function(
     scenario_output_fields = NULL,
     scenario_output_grouping_fields = NULL,
     scenario_write_tags = NULL,
-    overwrite_output = TRUE,
     # module toggles
     run_with_shiny = FALSE,
     run_with_patchmax = FALSE,
@@ -111,8 +110,14 @@ run <- function(
 
     # collapse write tags into string if provided as data.frame
     if(length(scenario_write_tags) > 1 & is.null(names(scenario_write_tags)) == FALSE){
-      scenario_write_tags_txt <- paste(names(scenario_write_tags), scenario_write_tags, sep='_', collapse = '_')
-    } else scenario_write_tags_txt <- scenario_write_tags
+      scenario_write_tags_txt <- paste(
+        names(scenario_write_tags), 
+        scenario_write_tags, 
+        sep='_', 
+        collapse = '_')
+    } else {
+      scenario_write_tags_txt <- scenario_write_tags
+    }
 
     options(scipen = 9999)
     relative_output_path = paste0('output/', scenario_name, '/', scenario_write_tags_txt)
@@ -121,7 +126,7 @@ run <- function(
     absolute_output_path = file.path(getwd(), relative_output_path)
     if (!dir.exists(absolute_output_path)) {
       if (run_with_shiny) {
-
+        # ???
       } else {
         message(paste0("Making output directory: ", absolute_output_path))
       }
@@ -168,8 +173,7 @@ run <- function(
     }
 
     # filter stands by availability
-    stands <- stands %>%
-      filter_stands(filter_txt = global_threshold)
+    stands <- stands %>% filter_stands(filter_txt = global_threshold)
 
     # set up weighting scenarios
     weights <- weight_priorities(
@@ -212,15 +216,13 @@ run <- function(
 
       for (y in 1:fire_planning_years) { # BEGIN YEAR LOOP
 
-        if (fire_planning_years > 1) message(paste('\nYear', y, '\n---------------'))
+        if (fire_planning_years > 1){
+          message(paste('\nYear', y, '\n---------------'))
+        }
 
-        # !! 2a. DYNAMIC PROJECTS ------
-
-        if(run_with_patchmax){ # run with PatchMax
+        if(run_with_patchmax){ # run with dynamic patches
 
           suppressMessages(suppressWarnings(require(Patchmax)))
-
-          # TODO Test that stand_data contains geometry
           geom <- sf::st_as_sf(stands_available)
           
           if(!is.null(proj_target_field)){ 
@@ -247,7 +249,6 @@ run <- function(
             sample_frac = patchmax_sample_frac
           )
 
-          # clean up output
           projects_selected_y <- patchmax_out[[1]] %>%
             rename(treatment_rank = Project,
                           weightedPriority = Objective) %>%
@@ -281,22 +282,6 @@ run <- function(
           stands_selected_y <- patchstat_out[[2]]
         }
 
-        # FIRE: randomize project rank if desired (research specific task)
-        if(fire_random_projects){
-          message('!! Randomizing projects')
-
-          shuffled_weights <- projects_selected_y %>%
-            filter(treatment_rank %>% is.na == FALSE) %>%
-            mutate(weightedPriority = sample(weightedPriority)) %>%
-            select(proj_id_field, weightedPriority)
-
-           projects_selected_y <- projects_selected_y %>% select(-weightedPriority) %>%
-             left_join(shuffled_weights, by = proj_id_field) %>%
-             arrange(-weightedPriority) %>%
-             mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA)) %>%
-             tidyr::drop_na(treatment_rank)
-        }
-
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # 4. UPDATE AVAILABILITY !!!!!!!!!!
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -307,11 +292,15 @@ run <- function(
           message("Assuming unlimited annual target")
           fire_annual_target_i = Inf # if no target available, set to Inf
         }
-
-        if(is.null(fire_annual_target_field) == TRUE){ # assign all projects to year one if annual target is NULL
+        
+        # assign all projects to year one if annual target is NULL
+        if(is.null(fire_annual_target_field) == TRUE){ 
           projects_scheduled <- projects_selected_y %>% mutate(ETrt_YR = 1)
           stands_selected_y <- stands_selected_y %>% mutate(ETrt_YR = 1)
-        } else if(is.null(fire_annual_target_field) == FALSE) { # assign project year based on annual target(s)
+        } 
+        
+        # assign project year based on annual target(s)
+        if(is.null(fire_annual_target_field) == FALSE) { 
           projects_scheduled <- projects_selected_y %>%
             mutate(ETrt_YR = cumsum(get(fire_annual_target_field)) %/% !!fire_annual_target_i + 1) %>%
             mutate(ETrt_YR = ifelse(weightedPriority == 0, NA, ETrt_YR)) %>%
@@ -327,8 +316,7 @@ run <- function(
           bind_rows(stands_treated)
 
         # record stands scheduled for treatment in current year
-        stands_selected <- stands_selected_y %>%
-          bind_rows(stands_selected)
+        stands_selected <- stands_selected_y %>% bind_rows(stands_selected)
 
         # remove stands or project areas that were treated from available stands
         x1 = unique(stands_selected_y[[stand_id_field]])
@@ -343,7 +331,7 @@ run <- function(
         # 5. BEGIN ANNUAL FIRES !!!!!!!!!!!
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        if(run_with_fire & !is.null(fire_intersect_table)) { # BEGIN FIRE LOOP
+        if(run_with_fire & is.null(fire_intersect_table) == FALSE) { # BEGIN FIRE LOOP
 
           # record stands that burned this year
           stands_burned <- stands %>%
@@ -360,8 +348,7 @@ run <- function(
 
           # remove burnt stands from future selection only if fire_dynamic_forsys is TRUE
           if(fire_dynamic_forsys == TRUE) {
-            stands_available <- stands_available %>%
-              filter(.data[[stand_id_field]] %in% stands_burned[[stand_id_field]] == FALSE)
+            stands_available <- stands_available %>% filter(.data[[stand_id_field]] %in% stands_burned[[stand_id_field]] == FALSE)
           }
 
         } # END FIRE LOOP
@@ -381,14 +368,11 @@ run <- function(
         stands_treated_out <- stands_treated_out %>%
           left_join(fires %>% select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field)
 
-      # ........................................
-      # write stands to file ...................
-      # ........................................
-
       # add scenario tag to output
       stands_treated_out <- stands_treated_out %>%
         bind_cols(scenario_write_tags)
 
+      # add scenario output fields to stand output
       stands_treated_out <- stands_treated_out %>%
         left_join(
           y= stands %>% select(!!stand_id_field, scenario_output_fields),
@@ -397,7 +381,7 @@ run <- function(
       # assign weight scenario values to stand out out
       stands_treated_out[,paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[w,]
 
-      # generate output filename
+      # create output filename
       if (length(scenario_write_tags_txt) > 1) {
         stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', scenario_write_tags_txt, ".csv")
       } else {
@@ -417,9 +401,12 @@ run <- function(
       # summarize selected stands by grouping fields and tag with ETrt_ prefix
       projects_etrt_out <- stands_treated_out  %>%
         select(stand_id_field, proj_id_field, ETrt_YR) %>%
-        left_join(stands %>% select(stand_id_field, scenario_output_grouping_fields, 
-                                                  scenario_output_fields, weightedPriority),
-                         by = stand_id_field, suffix = c("", ".dup")) %>%
+        left_join(stands %>% select(
+          stand_id_field, 
+          scenario_output_grouping_fields, 
+          scenario_output_fields, 
+          weightedPriority),
+          by = stand_id_field, suffix = c("", ".dup")) %>%
         create_grouped_dataset(
           grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
           summing_vars = c(scenario_output_fields, 'weightedPriority')

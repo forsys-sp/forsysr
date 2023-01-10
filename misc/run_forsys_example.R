@@ -140,7 +140,7 @@ plan(multisession, workers=8)
 # run patchmax by specifying parameters
 outputs = forsys::run(
   return_outputs = TRUE,
-  write_outputs = TRUE,
+  write_outputs = FALSE,
   stand_data = stands,
   scenario_name = "patchmax_test",
   stand_id_field = "stand_id",
@@ -156,7 +156,7 @@ outputs = forsys::run(
   patchmax_proj_number = 2,
   patchmax_SDW = .5,
   patchmax_EPW = .5,
-  patchmax_sample_frac = 0.5,
+  patchmax_sample_frac = 0.1,
 )
 
 patch_sf <- test_forest %>% 

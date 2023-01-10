@@ -8,6 +8,7 @@ run(
   config_file = NULL,
   return_outputs = FALSE,
   write_outputs = TRUE,
+  overwrite_output = TRUE,
   stand_data = NULL,
   stand_data_filename = "",
   stand_id_field = "",
@@ -27,7 +28,6 @@ run(
   scenario_output_fields = NULL,
   scenario_output_grouping_fields = NULL,
   scenario_write_tags = NULL,
-  overwrite_output = TRUE,
   run_with_shiny = FALSE,
   run_with_patchmax = FALSE,
   run_with_fire = FALSE,
@@ -48,88 +48,86 @@ run(
 )
 }
 \arguments{
-\item{config_file}{character. Relative path to a config file that defines needed parameters}
+\item{config_file}{Relative path to a config file that defines needed parameters. <\emph{character}>}
 
-\item{return_outputs}{logical. Return project and stand directly}
+\item{return_outputs}{Return project and stand directly. <\emph{logical}>}
 
-\item{write_outputs}{logical. Write project and stand data to file}
+\item{write_outputs}{Write project and stand data to file. <\emph{logical}>}
 
-\item{stand_data}{data.frame, data.table, sf. Stand dataset}
+\item{overwrite_output}{Whether to overwrite any existing output of the same name. <\emph{logical}>}
 
-\item{stand_data_filename}{character. Path to the input dataset}
+\item{stand_data}{Stand dataset. <\emph{data.frame, data.table, sf}>}
 
-\item{stand_id_field}{character. Field containing unique ID for each stand}
+\item{stand_data_filename}{Path to the input dataset saved as CSV file. <\emph{character}>}
 
-\item{stand_area_field}{character. Field containing stand area}
+\item{stand_id_field}{Field name containing unique ID for each stand. <\emph{character}>}
 
-\item{stand_threshold}{character. Boolean statement passed as a string and used as threshold for whether stands are counted towards project objective}
+\item{stand_area_field}{Field name containing stand area. <\emph{character}>}
 
-\item{global_threshold}{character. Boolean statement passed as a string used to define  stands within the scenario. Excluded stands are not considered part of the problem so are not used to calculate PCP or ESum values.}
+\item{stand_threshold}{Boolean statement for whether stands are counted towards project objective <\emph{character}>}
 
-\item{normalize_values}{logical. Whether spm fields should be normalized}
+\item{global_threshold}{Boolean statement used to specify which stands are within the scenario. <\emph{character}>}
 
-\item{proj_id_field}{character. Field in the stand_data_filename that indicates which planning area a stand belongs to.}
+\item{proj_id_field}{Field name indicating which planning area a stand belongs to. <\emph{character}>}
 
-\item{proj_fixed_target}{logical. Is target is fixed or relative?}
+\item{proj_fixed_target}{Whether target is fixed or relative. <\emph{logical}>}
 
-\item{proj_target_field}{character. Field name used as target constraint}
+\item{proj_target_field}{Field name used as target constraint. <\emph{character}>}
 
-\item{proj_target_value}{numeric. Value for target constraint, either an fixed value if proj_fixed_target == TRUE or a value between 0 and 1 if proj_fixed_target is FALSE.}
+\item{proj_target_value}{Target constraint: fixed value if \code{proj_fixed_target} is TRUE or 0 and 1 if FALSE. <\emph{numeric}>}
 
-\item{proj_target_min_value}{}
+\item{proj_target_min_value}{Minimum valid target constraint. Only used if \code{run_with_patchmax} is TRUE.}
 
-\item{proj_treatment_name}{optional character. String appended to output used to name treatment}
+\item{proj_treatment_name}{String appended to output used to name treatment. <\emph{optional character}>}
 
-\item{scenario_name}{character. Name for this scenario}
+\item{scenario_name}{Name for this scenario. <\emph{character}>}
 
-\item{scenario_priorities}{character vector. Scenario priorities.}
+\item{scenario_priorities}{Scenario priorities. <\emph{character vector}>}
 
-\item{scenario_weighting_values}{character. String of 3 integers separated by a space that defines the weighting min, max, and step.}
+\item{scenario_weighting_values}{String of 3 integers separated by a space defining weighting min, max, and step. <\emph{character}>}
 
-\item{scenario_output_fields}{character vector. Field names to write out}
+\item{scenario_output_fields}{Field names to write out. <\emph{character vector}>}
 
-\item{scenario_output_grouping_fields}{character vector. Field(s) for grouping of treated stands.}
+\item{scenario_output_grouping_fields}{Field names for grouping of treated stands. <\emph{character vector}>}
 
-\item{scenario_write_tags}{optional character. String appended to output used to describe scenario}
+\item{scenario_write_tags}{String appended to output used to describe scenario. <\emph{optional character}>}
 
-\item{overwrite_output}{logical. Whether to overwrite any existing output of the same name}
+\item{run_with_shiny}{Whether run was called from within shiny. <\emph{logical}>}
 
-\item{run_with_shiny}{logical. Whether run was called from within shiny.}
+\item{run_with_patchmax}{Whether PatchMax should be used for building projects. <\emph{logical}>}
 
-\item{run_with_patchmax}{logical. Whether PatchMax should be used for building projects}
+\item{run_with_fire}{Whether to forsys alongside fire. <\emph{logical}>}
 
-\item{run_with_fire}{logical. Whether to forsys alongside fire}
+\item{fire_intersect_table}{Stands affected by fire by year. <\emph{data.frame}>}
 
-\item{fire_intersect_table}{data.frame. Stands affected by fire by year}
+\item{fire_intersect_table_filename}{File name of csv listing stands affected by fire by year. <\emph{character}>}
 
-\item{fire_intersect_table_filename}{character File name of data frame listing stands affected by fire by year}
+\item{fire_planning_years}{Number of years to run forsys. <\emph{integer}>}
 
-\item{fire_planning_years}{integer. Number of years to run forsys}
+\item{fire_annual_target_field}{Field name to use for calculating annual target. <\emph{character}>}
 
-\item{fire_annual_target_field}{character. Field to use for calculating annual target}
+\item{fire_annual_target}{Value of annual cumulative target. <\emph{numeric}>}
 
-\item{fire_annual_target}{numeric. Value of annual cumulative target}
+\item{fire_dynamic_forsys}{Whether burnt stands are prevented from being selected. <\emph{logical}>}
 
-\item{fire_dynamic_forsys}{logical. Prevent burnt stands from being selected if TRUE}
+\item{fire_random_projects}{Whether project prioritization is randomly shuffled. <\emph{logical}>}
 
-\item{fire_random_projects}{logical. Randomly shuffle project prioritization if TRUE}
+\item{patchmax_proj_number}{Number of projects to build with patchmax. <\emph{integer}>}
 
-\item{patchmax_proj_number}{integer. Number of projects to build}
+\item{patchmax_proj_size}{Target area for each patchmax project. <\emph{integer}>}
 
-\item{patchmax_proj_size}{integer. Target area for each project}
+\item{patchmax_proj_size_slack}{Percent less than project allowable. <\emph{numeric 0-1}>}
 
-\item{patchmax_proj_size_slack}{numeric 0-1. Percent less than project allowable}
+\item{patchmax_sample_frac}{Percent of stands to search. <\emph{numeric 0-1}>}
 
-\item{patchmax_sample_frac}{numeric 0-1. Percent of stands to search}
+\item{patchmax_st_seed}{Specific stand IDs to search. <\emph{numeric/character vector}>}
 
-\item{patchmax_st_seed}{numeric/character vector. Specific stand IDs to search}
+\item{patchmax_SDW}{Stand distance weight parameter. Default is 0.5. <\emph{numeric 0-1}>}
 
-\item{patchmax_SDW}{numeric 0-1. Stand distance weight parameter. Default is 0.5.}
-
-\item{patchmax_EPW}{numeric 0-1. Stand exclusion weight parameter. Default is 0.5.}
+\item{patchmax_EPW}{Stand exclusion weight parameter. Default is 0.5. <\emph{numeric 0-1}>}
 }
 \value{
-Forsys results with weightedPriority, treatmentRank, and weights
+list with selected stands, project summary, project summary by subgroup
 }
 \description{
 Primary function for running the ForSys treatment planner. Either provide
