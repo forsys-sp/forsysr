@@ -515,9 +515,9 @@ run <- function(
 
     if(return_outputs){
       return(list(
-        stand_output = data.table::fread(stand_fn),
-        project_output = data.table::fread(project_fn),
-        subset_output = data.table::fread(subset_fn)
+        stand_output = stands_treated_out,
+        project_output = projects_out,
+        subset_output = subset_out
       ))
     }
     message('Forsys simulation is complete')
