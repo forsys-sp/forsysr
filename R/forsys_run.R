@@ -60,20 +60,20 @@ run <- function(
     stand_data_filename = "",
     stand_id_field = "",
     stand_area_field = NULL,
-    stand_threshold = NULL, # TODO rename proj_stand_threshold
-    global_threshold = NULL, # TODO rename scenario_stand_threshold
+    stand_threshold = NULL, # TODO rename `proj_stand_threshold`?
+    global_threshold = NULL, # TODO rename `scenario_stand_threshold`?
     normalize_values = TRUE,
     # project variables
     proj_id_field = "proj_id",
     proj_fixed_target = TRUE,
     proj_target_field = NULL,
-    proj_target_value = NULL, # TODO rename to proj_target_max_value
+    proj_target_value = NULL, # TODO rename `proj_target_max_value`?
     proj_target_min_value = -Inf,
     proj_treatment_name = "",
     # scenario variables
     scenario_name = "",
     scenario_priorities = NULL,
-    scenario_weighting_values = "1 1 1", # TODO separate to 3 parameters?
+    scenario_weighting_values = "1 1 1", # TODO separate to 3 parameters? 
     scenario_output_fields = NULL,
     scenario_output_grouping_fields = NULL,
     scenario_write_tags = NULL,
@@ -89,7 +89,7 @@ run <- function(
     fire_annual_target = NA,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
-    # patchmax arguments # 
+    # patchmax arguments
     patchmax_proj_number = 1,
     patchmax_proj_size = Inf,
     patchmax_proj_size_slack  = 0.05,
@@ -256,10 +256,10 @@ run <- function(
 
           stands_selected_y <- patchmax_out[[2]] %>%
             select(!!stand_id_field := Stands,
-                          !!proj_id_field := Project,
-                          treatment_rank := Project,
-                          treated := DoTreat,
-                          weightedPriority = Objective)
+                   !!proj_id_field := Project,
+                   treatment_rank := Project,
+                   treated := DoTreat,
+                   weightedPriority = Objective)
 
         } else { # run with preassigned (static) projects
 

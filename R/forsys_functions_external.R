@@ -39,7 +39,14 @@ filter_stands <- function(stands, filter_txt, verbose = TRUE){
 #' @importFrom dplyr pull mutate
 #' @export
 #' 
-calculate_spm <- function(stands, fields=NULL, area_field=NULL){
+calculate_spm <- function(stands, fields=NULL, area_field=NULL, availability_txt=NULL){
+
+  # filter for availability
+  include = TRUE
+  if(!is.null(availability_txt)){
+    eval_txt <- paste0("stands %>% mutate(out = ifelse(",filter_txt,", TRUE, FALSE)) %>% pull(out)")
+    include = eval(parse(text = eval_txt))
+  }
   
   # default to calculating spm for all numeric fields if fields is null 
   if(is.null(fields)){
@@ -49,7 +56,8 @@ calculate_spm <- function(stands, fields=NULL, area_field=NULL){
   
   for (f in fields) {
       values <- pull(stands, f)
-      maximum <- max(vals, na.rm=T)
+      values[include == FALSE] <- 0
+      maximum <- max(values, na.rm=T)
       spm_values <- (100 * values / maximum)
       cn <- paste0(f, "_SPM")
       stands <- stands %>% mutate(!!cn := spm_values)
@@ -66,7 +74,14 @@ calculate_spm <- function(stands, fields=NULL, area_field=NULL){
 #' @importFrom dplyr pull mutate
 #' @export
 #'
-calculate_pcp <- function(stands, fields=NULL){
+calculate_pcp <- function(stands, fields=NULL, availability_txt=NULL){
+  
+  # filter for availability
+  include = TRUE
+  if(!is.null(availability_txt)){
+    eval_txt <- paste0("stands %>% mutate(out = ifelse(",filter_txt,", TRUE, FALSE)) %>% pull(out)")
+    include = eval(parse(text = eval_txt))
+  }
   
   # default to calculating spm for all numeric fields if fields is null 
   if(is.null(fields)){
@@ -75,11 +90,12 @@ calculate_pcp <- function(stands, fields=NULL){
   }
   
   for (f in fields) {
-    
     # calculate percent of total and multiple by 100
     cn <- paste0(f, "_PCP")
-    sum.total <- sum(as.numeric(pull(stands, f)), na.rm=T)
-    stands <- stands %>% mutate(!!cn := (100 * get(f) / sum.total))
+    values <- as.numeric(pull(stands, f))
+    values[include == FALSE] <- 0
+    sum.total <- sum(values, na.rm=T)
+    stands <- stands %>% mutate(!!cn := (100 * values / sum.total))
   }
   
   return(stands)

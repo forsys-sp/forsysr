@@ -9,12 +9,15 @@ library(forsys)
 library(sf)
 library(dplyr)
 
-data("test_forest")
+test_forest <- forsys::test_forest
 head(test_forest)
 
 filter_stands(test_forest, filter_txt = 'mosaic1 == 3')
-calculate_spm(test_forest, fields = c("priority1"))
-calculate_pcp(test_forest, fields = c("priority1","priority2"))
+
+# calculate and append SPM and PCP values
+test_forest <- test_forest %>% 
+  calculate_spm(fields = c("priority1"), availability_txt = 'mosaic1 == 3') %>%
+  calculate_pcp(fields = c("priority1","priority2"), availability_txt = 'mosaic1 == 3')
 
 # plot the treatment units
 plot(test_forest, border=NA, max.plot=16)
