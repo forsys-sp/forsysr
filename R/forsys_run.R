@@ -343,7 +343,7 @@ run <- function(
         # 5. BEGIN ANNUAL FIRES !!!!!!!!!!!
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        if(run_with_fire & !is.null(fire_intersect_table)) {
+        if(run_with_fire & !is.null(fire_intersect_table)) { # BEGIN FIRE LOOP
 
           # record stands that burned this year
           stands_burned <- stands %>%
@@ -364,10 +364,9 @@ run <- function(
               filter(.data[[stand_id_field]] %in% stands_burned[[stand_id_field]] == FALSE)
           }
 
-        } # END ANNUAL FIRES
+        } # END FIRE LOOP
 
       } # END YEAR LOOP
-
 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
       # 5. WRITE DATA !!!!!!!!!!!!!
@@ -405,8 +404,8 @@ run <- function(
         stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, ".csv")
       }
 
+      # write stand data data
       if(write_outputs){
-        # write data
         message(paste0('\n\nStand data written to ', stand_fn))
         data.table::fwrite(stands_treated_out, stand_fn, row.names = FALSE, append = TRUE)
       }
@@ -432,9 +431,12 @@ run <- function(
       # summarize available stands by grouping fields and tag with ESum_ prefix
       projects_esum_out <- stands_selected %>%
         select(stand_id_field, proj_id_field) %>%
-        left_join(stands %>% select(stand_id_field, scenario_output_grouping_fields, 
-                                                  scenario_output_fields, weightedPriority),
-                         by = stand_id_field, suffix = c("", ".dup")) %>%
+        left_join(stands %>% select(
+          stand_id_field, 
+          scenario_output_grouping_fields, 
+          scenario_output_fields, 
+          weightedPriority),
+          by = stand_id_field, suffix = c("", ".dup")) %>%
         compile_planning_areas_and_stands(
           unique_weights = uniqueWeights,
           group_by = c(proj_id_field, scenario_output_grouping_fields),
@@ -482,17 +484,16 @@ run <- function(
         subset_fn = paste0(relative_output_path, "/subset_", scenario_name, ".csv")
       }
 
-      projects_out %>% dplyr::ungroup() %>% select(matches('Pr_[0-9]_')) %>% apply(1, paste0, collapse='_') %>% unique()
-
       # write out project data
       if(write_outputs){
         message(paste0('Project data written to ', project_fn))
         data.table::fwrite(projects_out, file = project_fn, sep = ",", row.names = FALSE, append = TRUE)
         data.table::fwrite(subset_out, file = subset_fn, sep = ",", row.names = FALSE, append = TRUE)
       }
+      
+      } # END FIRE LOOP
 
-    }
-    # END WEIGHT LOOP
+    }  # END WEIGHT LOOP
 
     if(return_outputs){
       return(list(
@@ -502,5 +503,4 @@ run <- function(
       ))
     }
     message('Forsys simulation is complete')
-}
-# END RUN
+} # END FUNCTION
