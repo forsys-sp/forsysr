@@ -1,6 +1,6 @@
-if (!require(remotes)) install.packages("remotes")
-remotes::install_github("forsys-sp/forsysr", auth_token = 'your_token_here')
-remotes::install_github("forsys-sp/patchmax", auth_token = 'your_token_here')
+# if (!require(remotes)) install.packages("remotes")
+# remotes::install_github("forsys-sp/forsysr", auth_token = 'your_token_here')
+# remotes::install_github("forsys-sp/patchmax", auth_token = 'your_token_here')
 
 # STATIC PROJECTS ------------------------
 
@@ -11,6 +11,10 @@ library(dplyr)
 
 data("test_forest")
 head(test_forest)
+
+filter_stands(test_forest, filter_txt = 'mosaic1 == 3')
+calculate_spm(test_forest, fields = c("priority1"))
+calculate_pcp(test_forest, fields = c("priority1","priority2"))
 
 # plot the treatment units
 plot(test_forest, border=NA, max.plot=16)
@@ -28,6 +32,7 @@ forsys::run(config_file = 'misc/test_static_config.json', stand_data = stands)
 # treat 20% of the area within each predefined boundary (proj_id)
 outputs = forsys::run(
   return_outputs = TRUE,
+  write_outputs = FALSE,
   stand_data = stands,
   scenario_name = "static_test",
   stand_id_field = "stand_id",

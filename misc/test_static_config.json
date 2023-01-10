@@ -5,9 +5,9 @@
   "stand_area_field": ["area_ha"],
   "scenario_priorities": ["priority3"],
   "stand_threshold": ["threshold1 == 1"],
-  "global_threshold": ["ownership %in% c(2,3)"],
+  "global_threshold": ["mosaic2 %in% c(2,3)"],
   "scenario_output_fields": ["area_ha", "priority1", "priority2", "priority3", "priority4"],
-  "scenario_output_grouping_fields": ["ownership"],
+  "scenario_output_grouping_fields": ["mosaic2"],
   "proj_fixed_target": [false],
   "proj_target_field": ["area_ha"],
   "proj_target_value": [0.2]

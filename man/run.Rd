@@ -12,7 +12,6 @@ run(
   stand_data_filename = "",
   stand_id_field = "",
   stand_area_field = NULL,
-  stand_pcp_spm = NULL,
   stand_threshold = NULL,
   global_threshold = NULL,
   normalize_values = TRUE,
@@ -62,8 +61,6 @@ run(
 \item{stand_id_field}{character. Field containing unique ID for each stand}
 
 \item{stand_area_field}{character. Field containing stand area}
-
-\item{stand_pcp_spm}{character vector. Fields to calculate PCP and SPM values. This should include the priorities and any value outputs. If null, use scenario priority fields}
 
 \item{stand_threshold}{character. Boolean statement passed as a string and used as threshold for whether stands are counted towards project objective}
 
