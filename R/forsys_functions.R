@@ -279,7 +279,7 @@ build_static_projects <- function(
     proj_target_value,
     proj_target_min_value = NULL,
     stand_threshold,
-    proj_treatment_name,
+    proj_treatment_name = NULL,
     proj_number,
     proj_area_ceiling
     ){

@@ -28,7 +28,6 @@
 #' @param scenario_output_fields Field names to write out. <\emph{character vector}>
 #' @param scenario_output_grouping_fields Field names for grouping of treated stands. <\emph{character vector}> 
 #' @param scenario_write_tags String appended to output used to describe scenario. <\emph{optional character}> 
-#' @param proj_treatment_name String appended to output used to name treatment. <\emph{optional character}> 
 #' @param fire_intersect_table Stands affected by fire by year. <\emph{data.frame}> 
 #' @param fire_intersect_table_filename File name of csv listing stands affected by fire by year. <\emph{character}> 
 #' @param fire_planning_years Number of years to run forsys. <\emph{integer}> 
@@ -47,7 +46,7 @@
 #' @return list with selected stands, project summary, project summary by subgroup
 #'
 #' @importFrom rlang .data
-#' @importFrom dplyr %>% select mutate rename arrange filter left_join inner_join bind_rows bind_cols n n_distinct
+#' @importFrom dplyr %>% select mutate rename arrange filter left_join inner_join bind_rows bind_cols n n_distinct group_by summarize summarize_at summarize_if
 #'
 #' @export
 run <- function(
@@ -69,7 +68,6 @@ run <- function(
     proj_target_field = NULL,
     proj_target_value = NULL, # TODO rename `proj_target_max_value`?
     proj_target_min_value = -Inf,
-    proj_treatment_name = "",
     # scenario variables
     scenario_name = "",
     scenario_priorities = NULL,
@@ -273,7 +271,6 @@ run <- function(
             proj_target_value = proj_target_value,
             proj_target_min_value = proj_target_min_value, # TODO Need to update apply_treatment to recognize this.
             stand_threshold = stand_threshold,
-            proj_treatment_name = proj_treatment_name,
             proj_number = NULL,
             proj_area_ceiling = fire_annual_target
           )
@@ -381,19 +378,6 @@ run <- function(
       # assign weight scenario values to stand out out
       stands_treated_out[,paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[w,]
 
-      # create output filename
-      if (length(scenario_write_tags_txt) > 1) {
-        stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', scenario_write_tags_txt, ".csv")
-      } else {
-        stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, ".csv")
-      }
-
-      # write stand data data
-      if(write_outputs){
-        message(paste0('\n\nStand data written to ', stand_fn))
-        data.table::fwrite(stands_treated_out, stand_fn, row.names = FALSE, append = TRUE)
-      }
-
       # ........................................
       # write project data to file .............
       # ........................................
@@ -436,8 +420,8 @@ run <- function(
 
       # rank projects
       projects_rank <- projects_etrt_out %>%
-        dplyr::group_by(!!proj_id_field := get(proj_id_field)) %>%
-        dplyr::summarize_at('weightedPriority', sum) %>%
+        group_by(!!proj_id_field := get(proj_id_field)) %>%
+        summarize_at('weightedPriority', sum) %>%
         arrange(-weightedPriority) %>%
         mutate(treatment_rank = rank(-weightedPriority)) %>%
         select(!!proj_id_field, treatment_rank)
@@ -455,32 +439,36 @@ run <- function(
 
       # tag project output with treatment rank, scenario_write_tags, priority weights
       projects_out <- projects_etrt_esum_out %>%
-        dplyr::group_by(!!proj_id_field := get(proj_id_field), ETrt_YR) %>%
-        dplyr::summarize_if(is.numeric, sum) %>%
+        group_by(!!proj_id_field := get(proj_id_field), ETrt_YR) %>%
+        summarize_if(is.numeric, sum) %>%
         left_join(projects_rank, by = proj_id_field) %>%
         arrange(treatment_rank) %>%
         bind_cols(scenario_write_tags) %>%
         bind_cols(priority_write_tags)
-
-      # write tag for selection scenario
-      if (length(scenario_write_tags_txt) > 1) {
-        project_fn = paste0(relative_output_path, "/proj_", scenario_name,  '_', scenario_write_tags_txt, ".csv")
-        subset_fn = paste0(relative_output_path, "/subset_", scenario_name,  '_', scenario_write_tags_txt, ".csv")
-      } else {
-        project_fn = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
-        subset_fn = paste0(relative_output_path, "/subset_", scenario_name, ".csv")
-      }
-
-      # write out project data
-      if(write_outputs){
-        message(paste0('Project data written to ', project_fn))
-        data.table::fwrite(projects_out, file = project_fn, sep = ",", row.names = FALSE, append = TRUE)
-        data.table::fwrite(subset_out, file = subset_fn, sep = ",", row.names = FALSE, append = TRUE)
-      }
       
       } # END FIRE LOOP
 
     }  # END WEIGHT LOOP
+    
+    if(write_outputs){
+        
+      # create output filename
+      if (length(scenario_write_tags_txt) > 1) {
+        stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, '_', scenario_write_tags_txt, ".csv")
+        project_fn = paste0(relative_output_path, "/proj_", scenario_name,  '_', scenario_write_tags_txt, ".csv")
+        subset_fn = paste0(relative_output_path, "/subset_", scenario_name,  '_', scenario_write_tags_txt, ".csv")
+      } else {
+        stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, ".csv")
+        project_fn = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
+        subset_fn = paste0(relative_output_path, "/subset_", scenario_name, ".csv")
+      }
+    
+      # write stand data data
+      message(paste0('\n\Data written to ', relative_output_path))
+      data.table::fwrite(stands_treated_out, stand_fn, row.names = FALSE, append = TRUE)
+      data.table::fwrite(projects_out, file = project_fn, sep = ",", row.names = FALSE, append = TRUE)
+      data.table::fwrite(subset_out, file = subset_fn, sep = ",", row.names = FALSE, append = TRUE)
+    }
 
     if(return_outputs){
       return(list(
