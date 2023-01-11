@@ -12,12 +12,21 @@ library(dplyr)
 test_forest <- forsys::test_forest
 head(test_forest)
 
+combine_priorities(
+  stands = test_forest, 
+  fields = c('priority1','priority2','priority3'), 
+  weights = c(3,1,1), 
+  new_field = 'new_priority')
+
 filter_stands(test_forest, filter_txt = 'mosaic1 == 3')
 
 # calculate and append SPM and PCP values
 test_forest <- forsys::test_forest %>% 
-  calculate_spm(fields = c("priority1"), availability_txt = 'mosaic1 == 3') %>%
-  calculate_pcp(fields = c("priority1","priority2"), availability_txt = 'mosaic1 == 3')
+  calculate_spm(fields = c("priority1","priority2"), availability_txt = 'mosaic1 == 3') %>%
+  calculate_pcp(fields = c("priority1","priority2"), availability_txt = 'mosaic1 == 3') %>%
+  combine_priorities(fields = c("priority1_SPM","priority2_SPM"))
+
+test_forest$combined_priority
 
 # plot the treatment units
 # plot(test_forest, border=NA, max.plot=16)

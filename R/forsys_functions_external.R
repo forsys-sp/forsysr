@@ -1,3 +1,37 @@
+#' Combine priorities
+#'
+#' Combines 2 or more priorities into a new field.
+#'
+#' @param stands Data frame containing stand data
+#' @param fields Field names (2 or more) to combine
+#' @param weights Numeric vector with weights. Assume equal weighting if NULL
+#' @param new_field Name to assign combined priority
+#' 
+#' @import glue sf
+#' @export
+#' 
+combine_priorities <- function(
+    stands, 
+    fields = NULL, 
+    weights = NULL, 
+    new_field = 'combined_priority'
+    ){
+  
+  if(is.null(weights) | length(weights) == 1){
+    weights = rep(1, length(fields))
+  }
+  
+  if(is.null(fields) | length(fields) < 2 | length(fields) != length(weights)){
+    stop('Function requires >= 2 fields and a vector with weight values of equal length ')
+  }
+  
+  sp <- stands %>% st_drop_geometry() %>% select(fields)
+  cp <- apply(sp * weights, 1, sum)
+  stands <- stands %>% mutate(!!new_field := cp)
+  message(glue('Combined priority assigned to: ', new_field))
+  return(stands)
+}
+
 
 #' Filter data
 #'
@@ -50,7 +84,10 @@ calculate_spm <- function(stands, fields=NULL, area_field=NULL, availability_txt
   # filter for availability
   include = TRUE
   if(!is.null(availability_txt)){
-    eval_txt <- paste0("stands %>% mutate(out = ifelse(", availability_txt,", TRUE, FALSE)) %>% pull(out)")
+    eval_txt <- paste0(
+      "stands %>% mutate(out = ifelse(", 
+      availability_txt,
+      ", TRUE, FALSE)) %>% pull(out)")
     include = eval(parse(text = eval_txt))
   }
   
