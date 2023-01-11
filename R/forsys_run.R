@@ -37,7 +37,7 @@
 #' @param fire_random_projects Whether project prioritization is randomly shuffled. <\emph{logical}> 
 #' @param patchmax_proj_number Number of projects to build with patchmax. <\emph{integer}> 
 #' @param patchmax_proj_size Target area for each patchmax project. <\emph{integer}> 
-#' @param patchmax_proj_size_slack Percent less than project allowable. <\emph{numeric 0-1}> 
+#' @param patchmax_min_proj_size_min Minimum valid project size when using patchmax. <\emph{numeric 0-1}> 
 #' @param patchmax_sample_frac Percent of stands to search. <\emph{numeric 0-1}> 
 #' @param patchmax_st_seed Specific stand IDs to search. <\emph{numeric/character vector}> 
 #' @param patchmax_SDW Stand distance weight parameter. Default is 0.5. <\emph{numeric 0-1}> 
@@ -90,7 +90,7 @@ run <- function(
     # patchmax arguments
     patchmax_proj_number = 1,
     patchmax_proj_size = Inf,
-    patchmax_proj_size_slack  = 0.05,
+    patchmax_proj_size_min = -Inf,
     patchmax_sample_frac = 0.1,
     patchmax_st_seed = NULL,
     patchmax_SDW = 0.5,
@@ -236,7 +236,7 @@ run <- function(
             St_area = pull(geom, !!stand_area_field), 
             St_objective = pull(geom, weightedPriority), 
             P_size = patchmax_proj_size, 
-            P_size_slack  = patchmax_proj_size_slack, 
+            P_size_min  = patchmax_proj_size_min, 
             P_number = patchmax_proj_number,
             St_threshold = stand_threshold,
             SDW = patchmax_SDW,
