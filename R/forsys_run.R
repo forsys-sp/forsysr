@@ -118,29 +118,33 @@ run <- function(
     }
 
     options(scipen = 9999)
-    relative_output_path = paste0('output/', scenario_name, '/', scenario_write_tags_txt)
-
-    # Check if output directory exists
-    absolute_output_path = file.path(getwd(), relative_output_path)
-    if (!dir.exists(absolute_output_path)) {
-      if (run_with_shiny) {
-        # ???
+    
+    if(write_outputs){
+      relative_output_path = paste0('output/', scenario_name, '/', scenario_write_tags_txt)
+      
+      # Check if output directory exists
+      absolute_output_path = file.path(getwd(), relative_output_path)
+      if (!dir.exists(absolute_output_path)) {
+        if (run_with_shiny) {
+          # ???
+        } else {
+          message(paste0("Making output directory: ", absolute_output_path))
+        }
+        dir.create(absolute_output_path, recursive=TRUE)
       } else {
-        message(paste0("Making output directory: ", absolute_output_path))
-      }
-      dir.create(absolute_output_path, recursive=TRUE)
-    } else {
-      if (run_with_shiny) {
-        message(paste0("Output directory, ", absolute_output_path, ", already exists"))
-        list.files(absolute_output_path, full.names = T) %>% file.remove()
-      } else {
-        message(paste0("Output directory, ", absolute_output_path, ", already exists"))
-        if (overwrite_output) {
+        if (run_with_shiny) {
+          message(paste0("Output directory, ", absolute_output_path, ", already exists"))
           list.files(absolute_output_path, full.names = T) %>% file.remove()
-          message('...Overwriting previous files')
+        } else {
+          message(paste0("Output directory, ", absolute_output_path, ", already exists"))
+          if (overwrite_output) {
+            list.files(absolute_output_path, full.names = T) %>% file.remove()
+            message('...Overwriting previous files')
+          }
         }
       }
     }
+
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
     # 1. PREP STANDS !!!!!!!!!!!!
