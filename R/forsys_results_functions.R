@@ -455,7 +455,8 @@ stacked_barchart <- function(subset_data, priority, proj_field, constraint_field
 #' Custom scale for the boxplot, this implements an inverted logrithmic scale
 #'
 #' @param base The logrithmic base to use
-#' @return
+#' @return TODO
+#' 
 reverselog_trans <- function(base = exp(1)) {
     trans <- function(x) -log(x, base)
     inv <- function(x) base^(-x)

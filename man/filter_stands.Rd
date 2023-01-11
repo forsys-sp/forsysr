@@ -4,7 +4,7 @@
 \alias{filter_stands}
 \title{Filter data}
 \usage{
-filter_stands(stands, filter_txt, verbose = TRUE)
+filter_stands(stands, filter_txt = NULL, verbose = TRUE)
 }
 \arguments{
 \item{stands}{Data table to filter}

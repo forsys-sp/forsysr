@@ -37,7 +37,7 @@
 #' @param fire_random_projects Whether project prioritization is randomly shuffled. <\emph{logical}> 
 #' @param patchmax_proj_number Number of projects to build with patchmax. <\emph{integer}> 
 #' @param patchmax_proj_size Target area for each patchmax project. <\emph{integer}> 
-#' @param patchmax_min_proj_size_min Minimum valid project size when using patchmax. <\emph{numeric 0-1}> 
+#' @param patchmax_proj_size_min Minimum valid project size when using patchmax. <\emph{numeric 0-1}> 
 #' @param patchmax_sample_frac Percent of stands to search. <\emph{numeric 0-1}> 
 #' @param patchmax_st_seed Specific stand IDs to search. <\emph{numeric/character vector}> 
 #' @param patchmax_SDW Stand distance weight parameter. Default is 0.5. <\emph{numeric 0-1}> 
@@ -96,7 +96,7 @@ run <- function(
     patchmax_SDW = 0.5,
     patchmax_EPW = 0.5
     ) {
-
+  
     # source config file if provided
     if (length(config_file) > 0) {
       # setwd(dirname(config_file))
@@ -177,6 +177,11 @@ run <- function(
     weights <- weight_priorities(
       numPriorities = length(scenario_priorities), 
       weights = scenario_weighting_values[1])
+    
+    # reserve key output data
+    stands_out <- NULL
+    projects_out <- NULL
+    subset_out <- NULL
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
     # 2. LOOP THROUGH WEIGHTS !!!
@@ -335,8 +340,8 @@ run <- function(
             left_join(projects_scheduled, by=proj_id_field) %>%
             left_join(stands_treated %>% select(stand_id_field), by=stand_id_field) %>%
             left_join(fires %>% select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field) %>%
-            filter(FIRE_YR == !!y) %>%
             select(stand_id_field, proj_id_field, ETrt_YR, FIRE_YR, FIRE_NUMBER, treatment_rank, weightedPriority) %>%
+            filter(FIRE_YR == !!y) %>%
             bind_rows(stands_burned)
 
           # report yearly fire
@@ -353,37 +358,32 @@ run <- function(
       } # END YEAR LOOP
 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
-      # 5. WRITE DATA !!!!!!!!!!!!!
+      # 5. SUMMARIZE DATA !!!!!!!!!
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       # tag stands with specific scenario attributes
-      stands_treated_out <- stands_treated %>%
-                              select(!!stand_id_field, !!proj_id_field, ETrt_YR)
+      stands_out_w <- stands_treated %>% select(!!stand_id_field, !!proj_id_field, ETrt_YR)
 
       # record fire information if provided
       if(run_with_fire & !is.null(fire_intersect_table)){
-        stands_treated_out <- stands_treated_out %>%
+        stands_out_w <- stands_out_w %>%
           left_join(fires %>% select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field)
+      }
 
       # add scenario tag to output
-      stands_treated_out <- stands_treated_out %>%
-        bind_cols(scenario_write_tags)
+      stands_out_w <- stands_out_w %>% bind_cols(scenario_write_tags)
 
       # add scenario output fields to stand output
-      stands_treated_out <- stands_treated_out %>%
+      stands_out_w <- stands_out_w %>%
         left_join(
           y= stands %>% select(!!stand_id_field, scenario_output_fields),
           by = stand_id_field)
 
       # assign weight scenario values to stand out out
-      stands_treated_out[,paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[w,]
-
-      # ........................................
-      # write project data to file .............
-      # ........................................
+      stands_out_w[,paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[w,]
 
       # summarize selected stands by grouping fields and tag with ETrt_ prefix
-      projects_etrt_out <- stands_treated_out  %>%
+      projects_etrt_out_w <- stands_out_w  %>%
         select(stand_id_field, proj_id_field, ETrt_YR) %>%
         left_join(stands %>% select(
           stand_id_field, 
@@ -400,7 +400,7 @@ run <- function(
         base::replace(is.na(.), 0)
 
       # summarize available stands by grouping fields and tag with ESum_ prefix
-      projects_esum_out <- stands_selected %>%
+      projects_esum_out_w <- stands_selected %>%
         select(stand_id_field, proj_id_field) %>%
         left_join(stands %>% select(
           stand_id_field, 
@@ -414,12 +414,12 @@ run <- function(
           output_fields = scenario_output_fields)
 
       # join etrt w/ esum outputs
-      projects_etrt_esum_out <- projects_etrt_out %>%
-        inner_join(projects_esum_out, by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
+      projects_etrt_esum_out_w <- projects_etrt_out_w %>%
+        inner_join(projects_esum_out_w, by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
         base::replace(is.na(.), 0)
 
       # rank projects
-      projects_rank <- projects_etrt_out %>%
+      projects_rank <- projects_etrt_out_w %>%
         group_by(!!proj_id_field := get(proj_id_field)) %>%
         summarize_at('weightedPriority', sum) %>%
         arrange(-weightedPriority) %>%
@@ -431,14 +431,14 @@ run <- function(
         setNames(paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities))
 
       # tag subset output with treatment rank, scenario_write_tags, priority weights
-      subset_out <- projects_etrt_esum_out %>%
+      subset_out_w <- projects_etrt_esum_out_w %>%
         left_join(projects_rank, by = proj_id_field) %>%
         arrange(treatment_rank) %>%
         bind_cols(scenario_write_tags) %>%
         bind_cols(priority_write_tags)
 
       # tag project output with treatment rank, scenario_write_tags, priority weights
-      projects_out <- projects_etrt_esum_out %>%
+      projects_out_w <- projects_etrt_esum_out_w %>%
         group_by(!!proj_id_field := get(proj_id_field), ETrt_YR) %>%
         summarize_if(is.numeric, sum) %>%
         left_join(projects_rank, by = proj_id_field) %>%
@@ -446,9 +446,15 @@ run <- function(
         bind_cols(scenario_write_tags) %>%
         bind_cols(priority_write_tags)
       
-      } # END FIRE LOOP
-
+      stands_out <- bind_rows(stands_out, stands_out_w)
+      projects_out <- bind_rows(projects_out, projects_out_w)
+      subset_out <- bind_rows(subset_out, subset_out_w)
+      
     }  # END WEIGHT LOOP
+    
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # 6. WRITE DATA !!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     if(write_outputs){
         
@@ -464,15 +470,15 @@ run <- function(
       }
     
       # write stand data data
-      message(paste0('\n\Data written to ', relative_output_path))
-      data.table::fwrite(stands_treated_out, stand_fn, row.names = FALSE, append = TRUE)
+      message(paste0('\nScenario output data written to: ', relative_output_path))
+      data.table::fwrite(stands_out, stand_fn, row.names = FALSE, append = TRUE)
       data.table::fwrite(projects_out, file = project_fn, sep = ",", row.names = FALSE, append = TRUE)
       data.table::fwrite(subset_out, file = subset_fn, sep = ",", row.names = FALSE, append = TRUE)
     }
 
     if(return_outputs){
       return(list(
-        stand_output = stands_treated_out,
+        stand_output = stands_out,
         project_output = projects_out,
         subset_output = subset_out
       ))

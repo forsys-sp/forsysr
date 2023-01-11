@@ -4,13 +4,18 @@
 \alias{calculate_pcp}
 \title{Calculate pcp for specified fields}
 \usage{
-calculate_pcp(stands, fields = NULL)
+calculate_pcp(stands, fields = NULL, availability_txt = NULL)
 }
 \arguments{
 \item{stands}{stand data}
 
 \item{fields}{vector of character field names to calculate spm values}
+
+\item{availability_txt}{Boolean statement describing stand availability}
 }
 \description{
 Calculate pcp for specified fields
+}
+\details{
+Unavailable stands are given a value of zero.
 }

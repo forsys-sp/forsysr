@@ -21,7 +21,6 @@ run(
   proj_target_field = NULL,
   proj_target_value = NULL,
   proj_target_min_value = -Inf,
-  proj_treatment_name = "",
   scenario_name = "",
   scenario_priorities = NULL,
   scenario_weighting_values = "1 1 1",
@@ -40,7 +39,7 @@ run(
   fire_random_projects = FALSE,
   patchmax_proj_number = 1,
   patchmax_proj_size = Inf,
-  patchmax_proj_size_slack = 0.05,
+  patchmax_proj_size_min = -Inf,
   patchmax_sample_frac = 0.1,
   patchmax_st_seed = NULL,
   patchmax_SDW = 0.5,
@@ -78,8 +77,6 @@ run(
 
 \item{proj_target_min_value}{Minimum valid target constraint. Only used if \code{run_with_patchmax} is TRUE.}
 
-\item{proj_treatment_name}{String appended to output used to name treatment. <\emph{optional character}>}
-
 \item{scenario_name}{Name for this scenario. <\emph{character}>}
 
 \item{scenario_priorities}{Scenario priorities. <\emph{character vector}>}
@@ -116,7 +113,7 @@ run(
 
 \item{patchmax_proj_size}{Target area for each patchmax project. <\emph{integer}>}
 
-\item{patchmax_proj_size_slack}{Percent less than project allowable. <\emph{numeric 0-1}>}
+\item{patchmax_proj_size_min}{Minimum valid project size when using patchmax. <\emph{numeric 0-1}>}
 
 \item{patchmax_sample_frac}{Percent of stands to search. <\emph{numeric 0-1}>}
 

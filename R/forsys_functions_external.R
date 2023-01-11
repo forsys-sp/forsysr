@@ -10,20 +10,24 @@
 #' @param verbose Boolean statement to report filtered results
 #'
 #' @importFrom rlang .data
+#' @import glue
 #' @export
 #' 
-filter_stands <- function(stands, filter_txt, verbose = TRUE){
+filter_stands <- function(stands, filter_txt = NULL, verbose = TRUE){
+  if(is.null(filter_txt)){
+    return(stands)
+  }
   tryCatch({
     out <- NULL # helps devtools::check()
     out <- subset(stands, eval(parse(text = filter_txt)))
     n0 <- nrow(stands)
     n1 <- nrow(out)
     if(verbose)
-      message(glue::glue("----------\nFiltering stands where: {filter_txt} ({round((n0-n1)/n0*100,2)}% excluded)\n-----------"))
+      message(glue("----------\nFiltering stands where: {filter_txt} ({round((n0-n1)/n0*100,2)}% excluded)\n-----------"))
   }, error = function(e){
     message(paste0('!! Filter failed; proceeding with unfiltered data. Error message:\n', print(e)))
   })
-  return(out)
+  return(stands)
 }
 
 #' Calculate spm for specified fields

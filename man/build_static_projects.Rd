@@ -2,7 +2,7 @@
 % Please edit documentation in R/forsys_functions.R
 \name{build_static_projects}
 \alias{build_static_projects}
-\title{Wrapper for selecting static stands}
+\title{Wrapper for building projects using predetermined project areas}
 \usage{
 build_static_projects(
   stands,
@@ -14,14 +14,33 @@ build_static_projects(
   proj_target_value,
   proj_target_min_value = NULL,
   stand_threshold,
-  proj_treatment_name,
   proj_number,
   proj_area_ceiling
 )
 }
 \arguments{
-\item{args}{}
+\item{stands}{}
+
+\item{stand_id_field}{Field name containing unique stand id.  <emph{character}>}
+
+\item{stand_area_field}{Field name containing stand area.  <emph{character}>}
+
+\item{proj_id_field}{Field name containing unique project area id.  <emph{character}>}
+
+\item{proj_target_field}{Field name used as primary constraint.  <emph{character}>}
+
+\item{proj_fixed_target}{Whether project target is fixed or relative. <emph{logical}>}
+
+\item{proj_target_value}{Either absolute value for target or relative percent (0-1) of project area sum.}
+
+\item{proj_target_min_value}{TODO ???}
+
+\item{stand_threshold}{Boolean state on whether stand is available for treatment. <emph{character}>}
+
+\item{proj_number}{TODO ???}
+
+\item{proj_area_ceiling}{TODO ???}
 }
 \description{
-Wrapper for selecting static stands
+Wrapper for building projects using predetermined project areas
 }

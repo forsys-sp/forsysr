@@ -4,17 +4,25 @@
 \alias{calculate_spm}
 \title{Calculate spm for specified fields}
 \usage{
-calculate_spm(stands, fields = NULL, area_field = NULL)
+calculate_spm(
+  stands,
+  fields = NULL,
+  area_field = NULL,
+  availability_txt = NULL
+)
 }
 \arguments{
 \item{stands}{stand data}
 
 \item{fields}{vector of character field names to calculate spm values}
 
-\item{area_field}{optional string of field name used to calculate spm}
+\item{availability_txt}{Boolean statement describing stand availability}
 }
 \description{
 Used to normalize stands attributes by dividing each field by its maximum
 value and multiplying by 100. Values are first divided by area if the
 \code{area_field} is provides.
+}
+\details{
+Unavailable stands are given a value of zero.
 }

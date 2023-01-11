@@ -15,12 +15,12 @@ head(test_forest)
 filter_stands(test_forest, filter_txt = 'mosaic1 == 3')
 
 # calculate and append SPM and PCP values
-test_forest <- test_forest %>% 
+test_forest <- forsys::test_forest %>% 
   calculate_spm(fields = c("priority1"), availability_txt = 'mosaic1 == 3') %>%
   calculate_pcp(fields = c("priority1","priority2"), availability_txt = 'mosaic1 == 3')
 
 # plot the treatment units
-plot(test_forest, border=NA, max.plot=16)
+# plot(test_forest, border=NA, max.plot=16)
 
 # example for exploring two priorities
 stands <- test_forest %>% st_drop_geometry()
@@ -37,7 +37,7 @@ outputs = forsys::run(
   return_outputs = TRUE,
   write_outputs = FALSE,
   stand_data = stands,
-  scenario_name = "static_test",
+  scenario_name = "run_static_test",
   stand_id_field = "stand_id",
   proj_id_field = "proj_id",
   stand_area_field = "area_ha",
@@ -118,6 +118,7 @@ plot_proj <- test_forest %>%
 
 plot_stand_dat <- test_forest %>%
   select(stand_id, proj_id) %>%
+  mutate(stand_id = as.character(stand_id)) %>%
   inner_join(outputs$stand_output %>% select(stand_id)) %>%
   left_join(outputs$project_output %>% select(proj_id, treatment_rank))
 
@@ -143,15 +144,17 @@ plan(multisession, workers=8)
 # run patchmax by specifying parameters
 outputs = forsys::run(
   return_outputs = TRUE,
-  write_outputs = FALSE,
+  write_outputs = TRUE,
   stand_data = stands,
   scenario_name = "patchmax_test",
   stand_id_field = "stand_id",
   proj_id_field = "proj_id",
   stand_area_field = "area_ha",
   scenario_priorities = "priority1",
+  # scenario_priorities = c("priority1","priority2"),
   stand_threshold = "priority4 >= 0.3",
   scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
+  # scenario_weighting_values = "0 1 1",
   run_with_patchmax = TRUE,
   proj_target_field = 'priority4',
   proj_target_value = Inf,
@@ -162,15 +165,16 @@ outputs = forsys::run(
   patchmax_sample_frac = 0.1,
 )
 
-patch_sf <- test_forest %>% 
+patch_sf <- stands %>%
+  mutate(stand_id = as.character(stand_id)) %>%
   left_join(outputs$stand_output %>% dplyr::select(stand_id, treatment_rank = proj_id)) %>%
   group_by(treatment_rank) %>% summarize_if(is.numeric, sum) %>% st_as_sf() %>%
   filter(treatment_rank %in% c(1:2))
 
-availability_sf <- test_forest %>% filter(priority3 > 0.5) %>% summarize()
+availability_sf <- stands %>% filter(priority3 > 0.5) %>% summarize()
 
 ggplot() + 
-  geom_sf(data=test_forest, aes(fill=priority3), color=NA) +
-  geom_sf(data=patch_sf, aes(color=factor(treatment_rank)), fill=NA, size=2) +
+  geom_sf(data=stands, aes(fill=priority1), color=NA, alpha=0.5) +
+  geom_sf(data=patch_sf, aes(color=factor(treatment_rank)), fill=NA, linewidth = 3) +
   geom_sf(data=availability_sf, fill=NA, color='white', lty=3) +
   scale_fill_gradientn(colors=sf.colors(10))
