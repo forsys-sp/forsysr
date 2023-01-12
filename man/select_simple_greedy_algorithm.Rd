@@ -4,12 +4,7 @@
 \alias{select_simple_greedy_algorithm}
 \title{Select subunits to treat based on a given priority.}
 \usage{
-select_simple_greedy_algorithm(
-  dt = NULL,
-  grouped_by = "PA_ID",
-  prioritize_by = "TVMBF_SPM",
-  constrain_by = c("apply", "AREA_HA", "AREA_PA10P")
-)
+select_simple_greedy_algorithm(dt, grouped_by, prioritize_by, constrain_by)
 }
 \arguments{
 \item{dt}{A data table with all the subunits and attributes.}
