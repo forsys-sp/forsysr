@@ -56,17 +56,14 @@ load_dataset <- function(path_to_file) {
 #'   and selected until the sum of \code{tally_by} is as close to
 #'   \code{group_target} as possible.
 #'
-#' @importFrom data.table :=
+#' @importFrom data.table := setDT
 #'
-select_simple_greedy_algorithm <- function(dt = NULL,
-                                           grouped_by = 'PA_ID',
-                                           prioritize_by = 'TVMBF_SPM',
-                                           constrain_by = c('apply', 'AREA_HA', 'AREA_PA10P')) {
+select_simple_greedy_algorithm <- function(dt, grouped_by, prioritize_by, constrain_by) {
   # For each grouped_by: Remove subunits that don't meet threshold; Order by
   # priority; Select stands up to treatment target; The operator in the line
   # below determines the direction and whether the threshold is inclusive or
   # not.
-  dt <- data.table(dt)
+  dt <- setDT(dt)
   dt[, considerForTreatment := 1]
   dt[, current_target := 0]
   dt[, cumulative_tally_by := 0]
@@ -97,48 +94,6 @@ select_simple_greedy_algorithm <- function(dt = NULL,
   return(dt)
 }
 
-#' Produce a set of stands that can be treated under a given criteria.
-#' @param dt A data table with all stand information necessary to determine
-#'   availability for a specific treatment type.
-#' @param filters A list of strings that are used to filter the stands for
-#'   treatment availability.
-#' @return The final data table with stands available for treatment.
-#'
-stand_filter <- function(dt, filters) {
-  for(f in 1:nrow(filters)){
-    filter <- paste0(filters[f,2], " ", filters[f,3], " ", filters[f,4])
-    filter <- stringr::str_remove(filter, "'")
-    filter <- stringr::str_remove(filter, "'")
-    dt <- subset(dt, eval(parse(text = filter)))
-  }
-  ## Hard-coded manageable/undisturbed.
-  #dt <- subset(dt, man_alldis == 1)
-  return(dt)
-}
-
-#' Create a new field in a stand table that flags all stands that include a
-#' given set of criteria
-#'
-#' @param dt A data table with all stand information necessary to determine
-#'   availability for a specific treatment type.
-#' @param filters A list of strings that are used to filter the stands for
-#'   treatment availability.
-#' @param field The name of a new field
-#' @return The final data table with stands available for treatment.
-#'
-#' @importFrom data.table :=
-#'
-stand_flag <- function(dt, filters, field) {
-  dt[, (field) := 0]
-  for(f in 1:nrow(filters)){
-    filter <- paste0(filters[f,2], " ", filters[f,3], " ", filters[f,4])
-    filter <- stringr::str_remove(filter, "'")
-    filter <- stringr::str_remove(filter, "'")
-    dt <- dt[ eval(parse(text = filter)), (field) := 1]
-  }
-  return(dt)
-}
-
 #' Create a dataset by subsetting subunits that were selected in the
 #' selectSubunits function and grouping the data by a larger subunit (usually
 #' planning areas).
@@ -152,10 +107,7 @@ stand_flag <- function(dt, filters, field) {
 #'   and selected until the sum of \code{priority_STND} is as close to
 #'   \code{treat_target} as possible.
 #'
-create_grouped_dataset <- function(dt,
-                                 grouping_vars,
-                                 summing_vars,
-                                 subset_var = NULL) {
+create_grouped_dataset <- function(dt, grouping_vars, summing_vars, subset_var = NULL) {
   ## Create the grouped data.table by grouping the treated subunits from the previous step.
   if(!is.null(subset_var)){
     dt <- subset(dt[get(subset_var)==1])
@@ -170,8 +122,7 @@ create_grouped_dataset <- function(dt,
 #'
 #' @param numPriorities TODO
 #' @param weights TODO
-#' @return A datatable with the weighted values for the priorities in the
-#'   \code{priorityList}.
+#' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
 #'
 weight_priorities <- function(numPriorities, weights = c("1 1 1")){
   if(numPriorities == 1)
@@ -186,8 +137,6 @@ weight_priorities <- function(numPriorities, weights = c("1 1 1")){
 
   return(uniqueWeightCombinations)
 }
-
-
 
 printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_constraint) {
   parameters <- paste0("ForSysR was designed and coded by Cody Evers and Rachel Houtman, run on: ", Sys.Date(), "\n",
@@ -211,13 +160,13 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
 # is working on within a single run instead of wrapped.
 set_up_treatment_types <- function(stands, args=NULL) {
   stands$selected <- 0
-  # stands$treatedPAArea <- 0
   stands$proj_target_treated <- 0
   stands$weightedPriority <- 0
   return(stands)
 }
 
-#' TODO
+#' set_up_priorities_helper
+#' 
 #' @param stands TODO
 #' @param i TODO
 #' @param weight TODO
@@ -232,6 +181,15 @@ set_up_priorities_helper <- function(stands, i, weight, priority) {
   stands[, (priorityName) := weight]
 }
 
+#' Title
+#'
+#' @param stands 
+#' @param w 
+#' @param priorities 
+#' @param weights 
+#'
+#' @return
+
 set_up_priorities <- function(stands, w, priorities, weights) {
   for (i in 1:ncol(weights)) {
     curr_weight = weights[[i]][w]
@@ -239,28 +197,6 @@ set_up_priorities <- function(stands, w, priorities, weights) {
     stands <- set_up_priorities_helper(stands, i, curr_weight, curr_priority)
   }
   return(stands)
-}
-
-#' Threshold string statement parser
-#' @param txt Vector of Boolean string statements to parse
-#'
-#' @importFrom dplyr rename
-#'
-make_thresholds <- function(txt) {
-  # txt <- 'RxFire: FRG %in% 1:3 & Manage == 0; RxReburn: RxFire == 1'
-  # txt <- 'RxReburn RxFire == 1
-  # txt <- 'RxFire: threshold1 == 1; RxReburn: priority3 > 0.5'
-  # txt <- NULL
-  # txt <- ''
-  if(is.null(txt)) txt <- ''
-
-  out <- txt %>%
-    stringr::str_replace_all(' ','') %>%
-    stringr::str_split(';', simplify = T) %>% # split treatments at ;
-    stringr::str_split(':', simplify = T, n=2) %>% # split name from thesholds
-    as.data.frame() %>%
-    rename(type = 1, threshold = 2)
-  return(out)
 }
 
 #' Wrapper for building projects using predetermined project areas
@@ -518,7 +454,8 @@ write_stand_outputs_to_file <- function(selected_stands, dir, name, write_fields
     data.table::fwrite(selected_stands %>% dplyr::select(write_fields), stand_output_file)
 }
 
-#' TODO
+#' compile_planning_areas_and_stands
+#' 
 #' TODO this should go in _results
 #'
 #' @param stands TODO
@@ -535,7 +472,8 @@ compile_planning_areas_and_stands <- function(stands, unique_weights, group_by, 
   return (planning_areas)
 }
 
-
+#' weight_values_to_string
+#' 
 #' Takes discrete minimum, maximum, and step values and turns them into
 #' the string that forsys expects
 #'
@@ -544,6 +482,8 @@ compile_planning_areas_and_stands <- function(stands, unique_weights, group_by, 
 #' @param step Increment value
 #' @return String of step values
 #' @export
+#' 
+
 weight_values_to_string <- function(min = 0, max = 5, step = 1) {
   paste0(min, ' ', max, ' ', step)
 }
