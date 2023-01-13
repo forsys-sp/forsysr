@@ -55,7 +55,11 @@ load_dataset <- function(path_to_file) {
 #'  
 #' @importFrom dplyr group_by_at vars summarize_at
 
-create_grouped_dataset <- function(dt, grouping_vars, summing_vars, subset_var = NULL) {
+create_grouped_dataset <- function(
+    dt, 
+    grouping_vars, 
+    summing_vars, 
+    subset_var = NULL) {
   ## Create the grouped data.table by grouping the treated subunits from the previous step.
   if(!is.null(subset_var)){
     dt <- subset(dt[get(subset_var)==1])
@@ -66,6 +70,65 @@ create_grouped_dataset <- function(dt, grouping_vars, summing_vars, subset_var =
   return(dt)
 }
 
+
+summarize_projects <- function(
+    selected_stands,
+    stands_data,
+    stand_id_field,
+    proj_id_field,
+    scenario_output_grouping_fields,
+    scenario_output_fields
+){
+  # summarize selected stands by grouping fields and tag with ETrt_ prefix
+  projects_etrt_out_w <- selected_stands  %>%
+    select(stand_id_field, proj_id_field, ETrt_YR) %>%
+    left_join(stands_data %>% select(
+      !!stand_id_field, 
+      any_of(scenario_output_grouping_fields), 
+      any_of(scenario_output_fields),
+      weightedPriority),
+      by = stand_id_field, suffix = c("", ".dup")
+    ) %>%
+    create_grouped_dataset(
+      grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
+      summing_vars = c(scenario_output_fields, 'weightedPriority')
+    ) %>%
+    arrange(ETrt_YR, -weightedPriority) %>%
+    rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields) %>%
+    replace(is.na(.), 0)
+  
+  # rank projects
+  projects_rank <- projects_etrt_out_w %>%
+    group_by(!!proj_id_field := get(proj_id_field)) %>%
+    summarize_at(vars(weightedPriority), sum) %>%
+    arrange(-weightedPriority) %>%
+    mutate(treatment_rank = rank(-weightedPriority)) %>%
+    select(!!proj_id_field, treatment_rank)
+  
+  # summarize available stands by grouping fields and tag with ESum_ prefix
+  projects_esum_out_w <- selected_stands %>%
+    select(stand_id_field, proj_id_field) %>%
+    left_join(stands_data %>% select(
+      !!stand_id_field, 
+      any_of(scenario_output_grouping_fields), 
+      any_of(scenario_output_fields), 
+      weightedPriority),
+      by = stand_id_field, suffix = c("", ".dup")
+    ) %>%
+    compile_planning_areas_and_stands(
+      unique_weights = uniqueWeights,
+      group_by = c(proj_id_field, scenario_output_grouping_fields),
+      output_fields = scenario_output_fields)
+  
+  # join etrt w/ esum outputs
+  projects_etrt_esum_out_w <- projects_etrt_out_w %>%
+    inner_join(projects_esum_out_w, by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
+    left_join(projects_rank, by = proj_id_field) %>%
+    replace(is.na(.), 0)
+  
+  return(projects_etrt_esum_out_w)
+  
+}
 
 #' compile_planning_areas_and_stands
 #' 

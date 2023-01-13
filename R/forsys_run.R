@@ -400,68 +400,30 @@ run <- function(
       # assign weight scenario values to stand out out
       stands_out_w[,paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[w,]
 
-      # summarize selected stands by grouping fields and tag with ETrt_ prefix
-      projects_etrt_out_w <- stands_out_w  %>%
-        select(stand_id_field, proj_id_field, ETrt_YR) %>%
-        left_join(stands %>% select(
-          stand_id_field, 
-          scenario_output_grouping_fields, 
-          scenario_output_fields, 
-          weightedPriority),
-          by = stand_id_field, suffix = c("", ".dup")
-          ) %>%
-        create_grouped_dataset(
-          grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
-          summing_vars = c(scenario_output_fields, 'weightedPriority')
-          ) %>%
-        arrange(ETrt_YR, -weightedPriority) %>%
-        dplyr::rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields) %>%
-        base::replace(is.na(.), 0)
-
-      # summarize available stands by grouping fields and tag with ESum_ prefix
-      projects_esum_out_w <- stands_selected %>%
-        select(stand_id_field, proj_id_field) %>%
-        left_join(stands %>% select(
-          stand_id_field, 
-          scenario_output_grouping_fields, 
-          scenario_output_fields, 
-          weightedPriority),
-          by = stand_id_field, suffix = c("", ".dup")
-          ) %>%
-        compile_planning_areas_and_stands(
-          unique_weights = uniqueWeights,
-          group_by = c(proj_id_field, scenario_output_grouping_fields),
-          output_fields = scenario_output_fields)
-
-      # join etrt w/ esum outputs
-      projects_etrt_esum_out_w <- projects_etrt_out_w %>%
-        inner_join(projects_esum_out_w, by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
-        base::replace(is.na(.), 0)
-
-      # rank projects
-      projects_rank <- projects_etrt_out_w %>%
-        group_by(!!proj_id_field := get(proj_id_field)) %>%
-        summarize_at('weightedPriority', sum) %>%
-        arrange(-weightedPriority) %>%
-        mutate(treatment_rank = rank(-weightedPriority)) %>%
-        select(!!proj_id_field, treatment_rank)
+      # summarize project data
+      summary_out <- summarize_projects(
+        selected_stands = stands_out_w,
+        stands_data = stands,
+        stand_id_field = stand_id_field,
+        proj_id_field = proj_id_field,
+        scenario_output_grouping_fields = scenario_output_grouping_fields,
+        scenario_output_fields = scenario_output_fields
+      )
 
       # tag weighting scenario
-      priority_write_tags <- weights[w,] %>%
+      priority_write_tags <- as.data.frame(weights[w,]) %>%
         setNames(paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities))
 
       # tag subset output with treatment rank, scenario_write_tags, priority weights
-      subset_out_w <- projects_etrt_esum_out_w %>%
-        left_join(projects_rank, by = proj_id_field) %>%
+      subset_out_w <- summary_out %>%
         arrange(treatment_rank) %>%
         bind_cols(scenario_write_tags) %>%
         bind_cols(priority_write_tags)
 
       # tag project output with treatment rank, scenario_write_tags, priority weights
-      projects_out_w <- projects_etrt_esum_out_w %>%
+      projects_out_w <- summary_out %>%
         group_by(!!proj_id_field := get(proj_id_field), ETrt_YR) %>%
         summarize_if(is.numeric, sum) %>%
-        left_join(projects_rank, by = proj_id_field) %>%
         arrange(treatment_rank) %>%
         bind_cols(scenario_write_tags) %>%
         bind_cols(priority_write_tags)

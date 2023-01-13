@@ -7,7 +7,9 @@
 #' @param weights Numeric vector with weights. Assume equal weighting if NULL
 #' @param new_field Name to assign combined priority
 #' 
-#' @import glue sf
+#' @importFrom glue glue
+#' @importFrom sf st_drop_geometry
+#' @importFrom dplyr select all_of mutate
 #' @export
 #' 
 combine_priorities <- function(
@@ -26,10 +28,10 @@ combine_priorities <- function(
     stop('Function requires >= 2 fields and a vector with weight values of equal length ')
   }
   
-  sp <- stands %>% st_drop_geometry() %>% select(fields)
+  sp <- stands %>% st_drop_geometry() %>% select(all_of(fields))
   cp <- apply(t(sp) * weights, 2, sum)
   stands <- stands %>% mutate(!!new_field := cp)
-  message(glue('Combined priority assigned to: ', new_field))
+  message(glue::glue('Combined priority assigned to: ', new_field))
   
   if(append_weights){
     for(i in 1:length(fields)){

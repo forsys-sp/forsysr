@@ -179,6 +179,7 @@ set_variable_target <- function(stands, group_by, target_field, multiplier){
 #' @param proj_objective TODO
 #' @param proj_target_field TODO
 #' @param proj_target TODO
+#' @param treatment_name TODO
 #'
 #' @return TODO
 #'
@@ -197,7 +198,7 @@ apply_treatment <- function(
   
   # select stands for treatment
   stands_treated <- stands %>%
-    select_stands(
+    select_stands_by_group(
       grouped_by = proj_id_field,
       prioritize_by = proj_objective,
       constrain_by = proj_target_field,
@@ -227,8 +228,8 @@ apply_treatment <- function(
 #'   \code{group_target} as possible.
 #'
 #' @importFrom data.table := setDT
-
-select_stands <- function(
+#'
+select_stands_by_group <- function(
     dt, 
     grouped_by, 
     prioritize_by, 
@@ -294,6 +295,8 @@ select_stands <- function(
 #' @param numPriorities TODO
 #' @param weights TODO
 #' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
+#' 
+#' @importFrom gtools permutations 
 #'
 weight_priorities <- function(numPriorities, weights = c("1 1 1")){
   
@@ -306,11 +309,19 @@ weight_priorities <- function(numPriorities, weights = c("1 1 1")){
   weights <- seq(weights[1], weights[2], weights[3])
   
   # Updates by Luke Wilkerson to incorporate multiple priorities.
-  weightPermute <- (gtools::permutations(length(weights), numPriorities, weights, repeats.allowed=TRUE))
+  weightPermute <- permutations(length(weights), numPriorities, weights, repeats.allowed=TRUE)
   weightprops <- proportions(weightPermute, 1)
   weightPermute <- data.frame(weightPermute)
   uniqueWeightCombinations <- weightPermute[!duplicated(weightprops) & rowSums(weightPermute) != 0, ]
 
   return(uniqueWeightCombinations)
+  
+  # DRAFT FUNCTION FOR PERMUTING WEIGHTS
+  # func <- function(x, s=3) log10(x/(1-x))/s
+  # func(seq(0,1,.01), 2) %>% plot(type='l')
+  # 10^func(seq(0.1,.99,.1), 2)
+  # func(seq(0,1,.01), 1.33) %>% points(type='l')
+  # func(seq(0,1,.01), 5) %>% points(type='l')
+  
 }
 

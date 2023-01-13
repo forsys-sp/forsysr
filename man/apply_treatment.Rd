@@ -27,6 +27,8 @@ apply_treatment(
 \item{proj_target_field}{TODO}
 
 \item{proj_target}{TODO}
+
+\item{treatment_name}{TODO}
 }
 \value{
 TODO
