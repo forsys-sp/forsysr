@@ -113,7 +113,7 @@ run(
 
 \item{patchmax_proj_size}{Target area for each patchmax project. <\emph{integer}>}
 
-\item{patchmax_proj_size_min}{Minimum valid project size when using patchmax. <\emph{numeric 0-1}>}
+\item{patchmax_proj_size_min}{Minimum valid project size when using patchmax. <\emph{numeric}>}
 
 \item{patchmax_sample_frac}{Percent of stands to search. <\emph{numeric 0-1}>}
 
