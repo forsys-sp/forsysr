@@ -15,7 +15,7 @@ select_stands(dt, grouped_by, prioritize_by, constrain_by, constraint_limit)
 
 \item{constrain_by}{field name of constraint (e.g., are)}
 
-\item{constraint_limit}{value of constraint not be exceeded}
+\item{constraint_limit}{field name containing cumulative constraint not to be exceeded}
 }
 \value{
 The selected stands from \code{df}, ordered by \code{prioritize_by},

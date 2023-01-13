@@ -9,7 +9,7 @@ combine_priorities(
   fields = NULL,
   weights = NULL,
   new_field = "combined_priority",
-  record_weights = FALSE
+  append_weights = FALSE
 )
 }
 \arguments{

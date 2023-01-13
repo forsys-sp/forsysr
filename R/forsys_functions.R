@@ -220,7 +220,7 @@ apply_treatment <- function(
 #' @param grouped_by field name with project or planning area ids 
 #' @param prioritize_by field name of priority to be maximized
 #' @param constrain_by field name of constraint (e.g., are)
-#' @param constraint_limit value of constraint not be exceeded
+#' @param constraint_limit field name containing cumulative constraint not to be exceeded
 #' 
 #' @return The selected stands from \code{df}, ordered by \code{prioritize_by},
 #'   and selected until the sum of \code{tally_by} is as close to
@@ -297,12 +297,11 @@ select_stands <- function(
 #'
 weight_priorities <- function(numPriorities, weights = c("1 1 1")){
   
-  
   if(numPriorities == 1){
-    # return(data.table::data.table(1))
     return(data.frame(1))
   }
   
+  # process weights string
   weights <- strtoi(unlist(strsplit(weights, " ")))
   weights <- seq(weights[1], weights[2], weights[3])
   
@@ -313,25 +312,5 @@ weight_priorities <- function(numPriorities, weights = c("1 1 1")){
   uniqueWeightCombinations <- weightPermute[!duplicated(weightprops) & rowSums(weightPermute) != 0, ]
 
   return(uniqueWeightCombinations)
-}
-
-#' Title
-#'
-#' @param stands 
-#' @param w 
-#' @param priorities 
-#' @param weights 
-#' 
-#' @importFrom data.table :=
-
-set_up_priorities <- function(stands, w, priorities, weights) {
-  for (i in 1:ncol(weights)) {
-    curr_weight = weights[[i]][w]
-    curr_priority = priorities[[i]][1]
-    stands$weightedPriority <- stands$weightedPriority + curr_weight * stands[,get(curr_priority)]
-    priorityName <- paste0("Pr_", i, "_", curr_priority)
-    stands[, (priorityName) := curr_weight]
-  }
-  return(stands)
 }
 

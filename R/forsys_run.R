@@ -207,7 +207,7 @@ run <- function(
           fields = scenario_priorities,
           weights = unlist(weights[w,]),
           new_field = 'weightedPriority',
-          record_weights = TRUE
+          append_weights = TRUE
         )
       
       # manually add proj_id field if running with patchmax

@@ -15,7 +15,7 @@ combine_priorities <- function(
     fields = NULL, 
     weights = NULL, 
     new_field = 'combined_priority',
-    record_weights = FALSE
+    append_weights = FALSE
     ){
   
   if(is.null(weights) | length(weights) == 1){
@@ -27,11 +27,11 @@ combine_priorities <- function(
   }
   
   sp <- stands %>% st_drop_geometry() %>% select(fields)
-  cp <- apply(sp * weights, 1, sum)
+  cp <- apply(t(sp) * weights, 2, sum)
   stands <- stands %>% mutate(!!new_field := cp)
   message(glue('Combined priority assigned to: ', new_field))
   
-  if(record_weights){
+  if(append_weights){
     for(i in 1:length(fields)){
       weight_i <- weights[i]
       name_i <- paste0("Pr_", i , "_", fields[i])
