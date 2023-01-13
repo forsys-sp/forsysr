@@ -14,14 +14,15 @@ combine_priorities <- function(
     stands, 
     fields = NULL, 
     weights = NULL, 
-    new_field = 'combined_priority'
+    new_field = 'combined_priority',
+    record_weights = FALSE
     ){
   
   if(is.null(weights) | length(weights) == 1){
     weights = rep(1, length(fields))
   }
   
-  if(is.null(fields) | length(fields) < 2 | length(fields) != length(weights)){
+  if(is.null(fields) | length(fields) != length(weights)){
     stop('Function requires >= 2 fields and a vector with weight values of equal length ')
   }
   
@@ -29,6 +30,15 @@ combine_priorities <- function(
   cp <- apply(sp * weights, 1, sum)
   stands <- stands %>% mutate(!!new_field := cp)
   message(glue('Combined priority assigned to: ', new_field))
+  
+  if(record_weights){
+    for(i in 1:length(fields)){
+      weight_i <- weights[i]
+      name_i <- paste0("Pr_", i , "_", fields[i])
+      stands <- stands %>% mutate(!!name_i := weight_i)
+    }
+  }
+  
   return(stands)
 }
 

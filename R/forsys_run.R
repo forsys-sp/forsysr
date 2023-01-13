@@ -37,7 +37,7 @@
 #' @param fire_random_projects Whether project prioritization is randomly shuffled. <\emph{logical}> 
 #' @param patchmax_proj_number Number of projects to build with patchmax. <\emph{integer}> 
 #' @param patchmax_proj_size Target area for each patchmax project. <\emph{integer}> 
-#' @param patchmax_proj_size_min Minimum valid project size when using patchmax. <\emph{numeric 0-1}> 
+#' @param patchmax_proj_size_min Minimum valid project size when using patchmax. <\emph{numeric}> 
 #' @param patchmax_sample_frac Percent of stands to search. <\emph{numeric 0-1}> 
 #' @param patchmax_st_seed Specific stand IDs to search. <\emph{numeric/character vector}> 
 #' @param patchmax_SDW Stand distance weight parameter. Default is 0.5. <\emph{numeric 0-1}> 
@@ -155,12 +155,10 @@ run <- function(
       message("Forsys Shiny data detected.")
       stands <- stand_data 
       stands <- stands %>% mutate(!!stand_id_field := as.character(get(stand_id_field)))
-      data.table::setDT(stands)
     } else if(!is.null(stand_data_filename)) {
       message("Loading stand data from file")
       stands <- load_dataset(path_to_file = stand_data_filename)
       stands <- stands %>% mutate(!!stand_id_field := as.character(get(stand_id_field)))
-      data.table::setDT(stands)
     } else {
       stop("No stand data provided")
     }
@@ -200,12 +198,18 @@ run <- function(
 
       # prep stand data
       stands <- stands %>%
-        set_up_treatment_types() %>%
-        set_up_priorities(
-          w = w,
-          priorities = scenario_priorities,
-          weights = weights)
-
+        mutate(
+          selected = 0,
+          proj_target_treated = 0,
+          weightedPriority = 0
+        ) %>%
+        combine_priorities(
+          fields = scenario_priorities,
+          weights = unlist(weights[w,]),
+          new_field = 'weightedPriority',
+          record_weights = TRUE
+        )
+      
       # manually add proj_id field if running with patchmax
       if(run_with_patchmax){
         stands <- stands %>% mutate(!!proj_id_field := NA)
@@ -331,7 +335,8 @@ run <- function(
         # report yearly work
         s_n = stands_treated %>% filter(ETrt_YR == y) %>% pull(stand_id_field) %>% n_distinct()
         p_n = stands_treated %>% filter(ETrt_YR == y) %>% pull(treatment_rank) %>% n_distinct()
-        message(paste0(s_n, ' stands (', round(s_n/nrow(stands) * 100, 2), '% of total) treated in ', p_n, ' projects'))
+        message(paste0(s_n, ' stands (', round(s_n/nrow(stands) * 100, 2), '% of total) treated in ', 
+                       p_n, ' projects (total objective: ', round(sum(stands_treated$weightedPriority),2), ')'))
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # 5. BEGIN ANNUAL FIRES !!!!!!!!!!!
@@ -344,7 +349,15 @@ run <- function(
             left_join(projects_scheduled, by=proj_id_field) %>%
             left_join(stands_treated %>% select(stand_id_field), by=stand_id_field) %>%
             left_join(fires %>% select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field) %>%
-            select(stand_id_field, proj_id_field, ETrt_YR, FIRE_YR, FIRE_NUMBER, treatment_rank, weightedPriority) %>%
+            select(
+              stand_id_field, 
+              proj_id_field, 
+              ETrt_YR, 
+              FIRE_YR, 
+              FIRE_NUMBER, 
+              treatment_rank, 
+              weightedPriority
+            ) %>%
             filter(FIRE_YR == !!y) %>%
             bind_rows(stands_burned)
 
@@ -354,7 +367,8 @@ run <- function(
 
           # remove burnt stands from future selection only if fire_dynamic_forsys is TRUE
           if(fire_dynamic_forsys == TRUE) {
-            stands_available <- stands_available %>% filter(.data[[stand_id_field]] %in% stands_burned[[stand_id_field]] == FALSE)
+            stands_available <- stands_available %>% 
+              filter(.data[[stand_id_field]] %in% stands_burned[[stand_id_field]] == FALSE)
           }
 
         } # END FIRE LOOP
@@ -394,7 +408,8 @@ run <- function(
           scenario_output_grouping_fields, 
           scenario_output_fields, 
           weightedPriority),
-          by = stand_id_field, suffix = c("", ".dup")) %>%
+          by = stand_id_field, suffix = c("", ".dup")
+          ) %>%
         create_grouped_dataset(
           grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
           summing_vars = c(scenario_output_fields, 'weightedPriority')
@@ -411,7 +426,8 @@ run <- function(
           scenario_output_grouping_fields, 
           scenario_output_fields, 
           weightedPriority),
-          by = stand_id_field, suffix = c("", ".dup")) %>%
+          by = stand_id_field, suffix = c("", ".dup")
+          ) %>%
         compile_planning_areas_and_stands(
           unique_weights = uniqueWeights,
           group_by = c(proj_id_field, scenario_output_grouping_fields),

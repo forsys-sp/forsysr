@@ -8,7 +8,8 @@ combine_priorities(
   stands,
   fields = NULL,
   weights = NULL,
-  new_field = "combined_priority"
+  new_field = "combined_priority",
+  record_weights = FALSE
 )
 }
 \arguments{

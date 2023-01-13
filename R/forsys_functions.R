@@ -31,7 +31,6 @@ build_static_projects <- function(
   
   # stand selection based on predetermined projects
   stands <- stands %>%
-    # set treatment target
     set_treatment_target( 
       proj_id_field = proj_id_field,
       proj_fixed_target = proj_fixed_target,
@@ -58,7 +57,12 @@ build_static_projects <- function(
   
   # clean up output
   stands_selected <- stands %>%
-    select(stand_id_field, proj_id_field, stand_area_field, 'weightedPriority') %>%
+    select(
+      stand_id_field, 
+      proj_id_field, 
+      stand_area_field, 
+      'weightedPriority'
+    ) %>%
     mutate(treated = 1)
   
   # group selected stands by project, summarize, and rank
@@ -66,7 +70,7 @@ build_static_projects <- function(
     create_grouped_dataset(
       grouping_vars = proj_id_field,
       summing_vars = c(stand_area_field, 'weightedPriority')) %>%
-    base::replace(is.na(.), 0) %>%
+    replace(is.na(.), 0) %>%
     arrange(-weightedPriority) %>%
     mutate(treatment_rank = ifelse(weightedPriority > 0, 1:dplyr::n(), NA)) %>%
     drop_na(treatment_rank)
@@ -81,7 +85,7 @@ build_static_projects <- function(
   # create stand level output by joining with output projects
   join_y = stands_selected %>% 
     inner_join(
-      y = projects_selected_out %>% select(proj_id_field, 'treatment_rank'), 
+      projects_selected_out %>% select(proj_id_field, 'treatment_rank'), 
       by = proj_id_field) %>% 
     select(stand_id_field, treated)
   
@@ -92,7 +96,7 @@ build_static_projects <- function(
   
   stands_selected_out <- stands_selected_out %>%
     inner_join(
-      y = projects_selected_out %>% select(proj_id_field, 'treatment_rank'), 
+      projects_selected_out %>% select(proj_id_field, 'treatment_rank'), 
       by = proj_id_field) %>%
     arrange(treatment_rank, stand_id_field)
   
@@ -146,7 +150,8 @@ set_treatment_target <- function(
 #' @importFrom data.table :=
 #'
 set_fixed_target <- function(stands, target_value) {
-  stands[, master_target := {{ target_value }}]
+  stands <- stands %>% mutate(master_target = target_value)
+  # stands[, master_target := {{ target_value }}]
 }
 
 #' TODO
@@ -156,11 +161,13 @@ set_fixed_target <- function(stands, target_value) {
 #' @param multiplier TODO
 #' @return TODO
 #'
-#' @importFrom data.table :=
-#'
+#' @importFrom data.table := setDT setDF
+
 set_variable_target <- function(stands, group_by, target_field, multiplier){
+  setDT(stands)
   stands[, ':='(proj_target, sum(get(target_field))), by = list(get(group_by))]
   stands[, master_target :=  proj_target * multiplier]
+  setDF(stands)
 }
 
 #' Select stands for treatment based on project stand thresholds and
@@ -190,10 +197,11 @@ apply_treatment <- function(
   
   # select stands for treatment
   stands_treated <- stands %>%
-    select_simple_greedy_algorithm(
+    select_stands(
       grouped_by = proj_id_field,
       prioritize_by = proj_objective,
-      constrain_by = c(1, proj_target_field, proj_target)) %>%
+      constrain_by = proj_target_field,
+      constraint_limit = proj_target) %>%
     mutate(treatment_name = !!treatment_name)
   
   # update the total area available for activities.
@@ -208,30 +216,28 @@ apply_treatment <- function(
 
 #' Select subunits to treat based on a given priority.
 #'
-#' @param dt A data table with all the subunits and attributes.
-#' @param grouped_by The management objective that is being prioritized.
-#' @param prioritize_by The stand value for the priority that is used to
-#'   constrain the results. Typically Area or Volume.
-#' @param constrain_by This is a list of lists that includes three fields for
-#'   each constraint. The first item in each list, default 'apply', is the name
-#'   of a binary field in which 1 = apply the constraint and 0 = do not apply
-#'   the constraint to a given stand. The second item in each list is the name
-#'   of the field that is summed to reach the constraint. The third item in each
-#'   list is the name of the constraining field.
+#' @param dt data with all the subunits and attributes.
+#' @param grouped_by field name with project or planning area ids 
+#' @param prioritize_by field name of priority to be maximized
+#' @param constrain_by field name of constraint (e.g., are)
+#' @param constraint_limit value of constraint not be exceeded
+#' 
 #' @return The selected stands from \code{df}, ordered by \code{prioritize_by},
 #'   and selected until the sum of \code{tally_by} is as close to
 #'   \code{group_target} as possible.
 #'
 #' @importFrom data.table := setDT
 
-select_simple_greedy_algorithm <- function(dt, grouped_by, prioritize_by, constrain_by) {
-  # For each grouped_by: Remove subunits that don't meet threshold; Order by
-  # priority; Select stands up to treatment target; The operator in the line
-  # below determines the direction and whether the threshold is inclusive or
-  # not.
-  dt <- setDT(dt)
+select_stands <- function(
+    dt, 
+    grouped_by, 
+    prioritize_by, 
+    constrain_by,
+    constraint_limit) {
   
-  # define default values
+  setDT(dt)
+  
+  # assign default values for required fields
   dt[, considerForTreatment := 1]
   dt[, current_target := 0]
   dt[, cumulative_tally_by := 0]
@@ -240,28 +246,46 @@ select_simple_greedy_algorithm <- function(dt, grouped_by, prioritize_by, constr
   # order by group and descending priority
   dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
 
-  # Common issue: if the dataset has na values in the priority field, this will fail.
-  while(sum(dt[,considerForTreatment==1 & selected == 0], na.rm=T) != 0){
-    # Order the data table by the priority.
+  # while unselected stands consider for treatment remain...
+  while(sum(dt[,considerForTreatment == 1 & selected == 0], na.rm=T) != 0){
+    
+    # order stands by priority within groups
     dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
-    # Determine the current target
+    
+    # set current target to 0s
     dt[, current_target := 0]
-    # Sum the treated tally by group
-    dt[selected == 1, current_target := sum(get(constrain_by[2]), na.rm=T), by=list(get(grouped_by))]
-    # The current target is the target value less the value of the already treated stands, by group.
-    dt[, current_target := get(constrain_by[3]) - max(current_target, na.rm=T), by=list(get(grouped_by))]
-    # Compute the cumulative sum for the constrained variable and select subunits
-    dt[considerForTreatment == 1 & selected == 0, cumulative_tally_by := cumsum(get(constrain_by[2])), by=list(get(grouped_by))]
-    dt[considerForTreatment == 1 & selected == 0 & cumulative_tally_by <= current_target, selected := 1 ]
-    # Determine the remaining target
-    dt[, current_target := 0]
-    dt[selected == 1, current_target := sum(get(constrain_by[2]), na.rm=T), by=list(get(grouped_by))]
-    dt[, current_target := get(constrain_by[3]) - max(current_target, na.rm=T), by=list(get(grouped_by))]
-    # Remove from treatment consideration if subunit value is greater than total target.
-    dt[considerForTreatment == 1 & selected == 0, considerForTreatment := ifelse(get(constrain_by[2]) > current_target, 0, 1 )]
+    
+    # sum selected stands by group
+    dt[selected == 1, 
+       current_target := sum(get(constrain_by), na.rm=T), 
+       by = list(get(grouped_by))]
+    
+    # within each group, set current target to constraint target minus current target
+    dt[, current_target := get(constraint_limit) - max(current_target, na.rm=T), by=list(get(grouped_by))]
+    
+    # calculate the cumulative sum for the constrained variable for considered by unselected stands
+    dt[considerForTreatment == 1 & selected == 0, 
+       cumulative_tally_by := cumsum(get(constrain_by)), 
+       by=list(get(grouped_by))]
+    
+    # select stands for unselected stands where the cumulative tally is less than the current target
+    dt[considerForTreatment == 1 & selected == 0 & cumulative_tally_by <= current_target, selected := 1]
+   
+    # recalculate the current target within each group
+    dt[selected == 1, current_target := sum(get(constrain_by), na.rm=T), by=list(get(grouped_by))]
+    
+    # calculate current target
+    dt[, current_target := get(constraint_limit) - max(current_target, na.rm=T), by=list(get(grouped_by))]
+    
+    # set consideration to 0 constraint is greater than the current target
+    dt[considerForTreatment == 1 & selected == 0, 
+       considerForTreatment := ifelse(get(constrain_by) > current_target, 0, 1 )]
   }
-  dt <- dt[selected == 1,]
-  return(dt)
+  
+  # select and return selected stands
+  dt_out <- dt[selected == 1,]
+  
+  return(setDF(dt_out))
 }
 
 
@@ -272,30 +296,24 @@ select_simple_greedy_algorithm <- function(dt, grouped_by, prioritize_by, constr
 #' @return A datatable with the weighted values for the priorities in the \code{priorityList}.
 #'
 weight_priorities <- function(numPriorities, weights = c("1 1 1")){
-  if(numPriorities == 1)
-    return(data.table::data.table(1))
+  
+  
+  if(numPriorities == 1){
+    # return(data.table::data.table(1))
+    return(data.frame(1))
+  }
+  
   weights <- strtoi(unlist(strsplit(weights, " ")))
   weights <- seq(weights[1], weights[2], weights[3])
+  
   # Updates by Luke Wilkerson to incorporate multiple priorities.
   weightPermute <- (gtools::permutations(length(weights), numPriorities, weights, repeats.allowed=TRUE))
   weightprops <- proportions(weightPermute, 1)
-  weightPermute <- data.table::data.table(weightPermute)
+  weightPermute <- data.frame(weightPermute)
   uniqueWeightCombinations <- weightPermute[!duplicated(weightprops) & rowSums(weightPermute) != 0, ]
 
   return(uniqueWeightCombinations)
 }
-
-# Hack the area target - can be set in the shapefile. This code may be updated
-# for looping multiple treatment types. It should do the same thing that Pedro
-# is working on within a single run instead of wrapped.
-
-set_up_treatment_types <- function(stands, args=NULL) {
-  stands$selected <- 0
-  stands$proj_target_treated <- 0
-  stands$weightedPriority <- 0
-  return(stands)
-}
-
 
 #' Title
 #'
@@ -305,8 +323,6 @@ set_up_treatment_types <- function(stands, args=NULL) {
 #' @param weights 
 #' 
 #' @importFrom data.table :=
-#'
-#' @return
 
 set_up_priorities <- function(stands, w, priorities, weights) {
   for (i in 1:ncol(weights)) {

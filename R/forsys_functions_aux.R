@@ -66,39 +66,6 @@ create_grouped_dataset <- function(dt, grouping_vars, summing_vars, subset_var =
   return(dt)
 }
 
-printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_constraint) {
-  parameters <- paste0("ForSysR was designed and coded by Cody Evers and Rachel Houtman, run on: ", Sys.Date(), "\n",
-                       "This code creates attainment graphs for to explore both WUI exposure (HUIDW) and merchantable timber volume\n",
-                       "with the following ForSys settings:\n",
-                       "1) Subunit = PA_ID_New\n",
-                       "2) treated area = 15% of manageable planning area, field = man_alldis\n",
-                       "3) project number = NA\n",
-                       "4) prioritize by potential merchantable volume AND WUI exposure\n",
-                       "5) Timber threshold > 0\n",
-                       "6) No forest volume constraint\n",
-                       "7) Running on ForSys\n",
-                       "\n",
-                       "Required files:\n",
-                       "1) ForSys output - proj_all.csv")
-  writeLines(parameters, file("README.txt"))
-}
-
-
-#' Write individual stand output to file
-#' TODO this should go in _results
-#'
-#' @param selected_stands TODO
-#' @param dir TODO
-#' @param name TODO
-#' @param write_fields TODO
-#' @return Undefined
-#'
-#' @importFrom dplyr %>%
-#'
-write_stand_outputs_to_file <- function(selected_stands, dir, name, write_fields) {
-  stand_output_file <- paste0(dir, "/stnd_",  name, ".csv")
-  data.table::fwrite(selected_stands %>% dplyr::select(write_fields), stand_output_file)
-}
 
 #' compile_planning_areas_and_stands
 #' 
@@ -125,6 +92,23 @@ compile_planning_areas_and_stands <- function(
   
   return (setDT(planning_areas))
 }
+
+#' Write individual stand output to file
+#' TODO this should go in _results
+#'
+#' @param selected_stands TODO
+#' @param dir TODO
+#' @param name TODO
+#' @param write_fields TODO
+#' @return Undefined
+#'
+#' @importFrom dplyr %>%
+#'
+write_stand_outputs_to_file <- function(selected_stands, dir, name, write_fields) {
+  stand_output_file <- paste0(dir, "/stnd_",  name, ".csv")
+  data.table::fwrite(selected_stands %>% dplyr::select(write_fields), stand_output_file)
+}
+
 
 #' weight_values_to_string
 #' 
@@ -158,4 +142,21 @@ weight_string_to_values <- function(weight_str) {
 #' @export
 version <- function() {ver <- paste('forsys version: ', utils::packageVersion('forsys'))}
   
+
+printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_constraint) {
+  parameters <- paste0("ForSysR was designed and coded by Cody Evers and Rachel Houtman, run on: ", Sys.Date(), "\n",
+                       "This code creates attainment graphs for to explore both WUI exposure (HUIDW) and merchantable timber volume\n",
+                       "with the following ForSys settings:\n",
+                       "1) Subunit = PA_ID_New\n",
+                       "2) treated area = 15% of manageable planning area, field = man_alldis\n",
+                       "3) project number = NA\n",
+                       "4) prioritize by potential merchantable volume AND WUI exposure\n",
+                       "5) Timber threshold > 0\n",
+                       "6) No forest volume constraint\n",
+                       "7) Running on ForSys\n",
+                       "\n",
+                       "Required files:\n",
+                       "1) ForSys output - proj_all.csv")
+  writeLines(parameters, file("README.txt"))
+}
   
