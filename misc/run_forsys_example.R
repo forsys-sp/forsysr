@@ -62,30 +62,6 @@ outputs = forsys::run(
 
 outputs$project_output %>% filter(Pr_1_priority1 == 3, Pr_2_priority2 == 2)
 
-new_data <- combine_priorities(
-  stands = test_forest, 
-  fields = c('priority1','priority2'), 
-  weights = c(3,2), 
-  new_field = 'new_priority')
-
-outputs2 = forsys::run(
-  return_outputs = TRUE,
-  write_outputs = FALSE,
-  stand_data = new_data,
-  scenario_name = "run_static_test_2",
-  stand_id_field = "stand_id",
-  proj_id_field = "proj_id",
-  stand_area_field = "area_ha",
-  scenario_priorities = "new_priority",
-  stand_threshold = "threshold1 == 1",
-  scenario_output_fields = c("area_ha", "priority1", "priority2", "priority3", "priority4"),
-  scenario_output_grouping_fields = "mosaic2",
-  proj_fixed_target =  FALSE,
-  proj_target_field = "area_ha",
-  proj_target_value = 0.2
-)
-
-
 # GRAPH OUTPUT ------------------------
 
 theme_toggle('light')
@@ -179,7 +155,7 @@ plan(multisession, workers=8)
 # run patchmax by specifying parameters
 outputs = forsys::run(
   return_outputs = TRUE,
-  write_outputs = TRUE,
+  write_outputs = FALSE,
   stand_data = stands,
   scenario_name = "patchmax_test",
   stand_id_field = "stand_id",

@@ -99,7 +99,6 @@ run <- function(
   
     # source config file if provided
     if (length(config_file) > 0) {
-      # setwd(dirname(config_file))
       if (stringr::str_detect(config_file, '[.]R$'))
         source(config_file, local = TRUE)
       if(stringr::str_detect(config_file, '[.]json$'))
@@ -107,7 +106,7 @@ run <- function(
     }
 
     # collapse write tags into string if provided as data.frame
-    if(length(scenario_write_tags) > 1 & is.null(names(scenario_write_tags)) == FALSE){
+    if(length(scenario_write_tags) > 1 & !is.null(names(scenario_write_tags))){
       scenario_write_tags_txt <- paste(
         names(scenario_write_tags), 
         scenario_write_tags, 
@@ -145,10 +144,8 @@ run <- function(
       }
     }
 
-
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
     # 1. PREP STANDS !!!!!!!!!!!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     # Load stand data
     if (!is.null(stand_data)) {
@@ -187,7 +184,6 @@ run <- function(
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
     # 2. LOOP THROUGH WEIGHTS !!!
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     for (w in 1:nrow(weights)) { # START WEIGHT LOOP
 
@@ -223,7 +219,6 @@ run <- function(
 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
       # 2. SELECT STANDS !!!!!!!!!!
-      # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       for (y in 1:fire_planning_years) { # BEGIN YEAR LOOP
 
@@ -261,8 +256,7 @@ run <- function(
           )
 
           projects_selected_y <- patchmax_out[[1]] %>%
-            rename(treatment_rank = Project,
-                          weightedPriority = Objective) %>%
+            rename(treatment_rank = Project, weightedPriority = Objective) %>%
             mutate(!!proj_id_field := treatment_rank)
 
           stands_selected_y <- patchmax_out[[2]] %>%
@@ -294,7 +288,6 @@ run <- function(
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # 4. UPDATE AVAILABILITY !!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         # set annual target
         fire_annual_target_i = fire_annual_target[y]
@@ -340,7 +333,6 @@ run <- function(
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # 5. BEGIN ANNUAL FIRES !!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         if(run_with_fire & is.null(fire_intersect_table) == FALSE) { # BEGIN FIRE LOOP
 
@@ -377,7 +369,6 @@ run <- function(
 
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
       # 5. SUMMARIZE DATA !!!!!!!!!
-      # !!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       # tag stands with specific scenario attributes
       stands_out_w <- stands_treated %>% select(!!stand_id_field, !!proj_id_field, ETrt_YR)
