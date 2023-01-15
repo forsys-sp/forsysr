@@ -90,7 +90,7 @@ build_static_projects <- function(
     select(stand_id_field, treated)
   
   stands_selected_out <- stands %>%
-    select(stand_id_field, proj_id_field, stand_area_field, weightedPriority) %>%
+    select(stand_id_field, proj_id_field, stand_area_field, 'weightedPriority') %>%
     left_join(join_y, stand_id_field) %>%
     mutate(treated = ifelse(treated %>% is.na, 0, 1))
   
@@ -99,6 +99,9 @@ build_static_projects <- function(
       projects_selected_out %>% select(proj_id_field, 'treatment_rank'), 
       by = proj_id_field) %>%
     arrange(treatment_rank, stand_id_field)
+  
+  stands_selected_out <- stands_selected_out %>%
+    mutate(DoTreat = 1, selected = 1)
   
   return(list(
     projects_selected_out,

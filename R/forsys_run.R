@@ -97,57 +97,43 @@ run <- function(
     patchmax_EPW = 0.5
     ) {
   
-    # source config file if provided
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # 0. SETUP !!!!!!!!!!!!!!!!!!
+  
+    options(scipen = 9999)
+  
+    browser()
+    # source function parameters from config file if provided
     if (length(config_file) > 0) {
-      if (stringr::str_detect(config_file, '[.]R$'))
+      if (stringr::str_detect(config_file, '[.]R$')){
         source(config_file, local = TRUE)
-      if(stringr::str_detect(config_file, '[.]json$'))
+      }
+      if(stringr::str_detect(config_file, '[.]json$')){
         load_json_config(config_file)
+      }
     }
-
+  
     # collapse write tags into string if provided as data.frame
     if(length(scenario_write_tags) > 1 & !is.null(names(scenario_write_tags))){
-      scenario_write_tags_txt <- paste(
-        names(scenario_write_tags), 
-        scenario_write_tags, 
-        sep='_', 
-        collapse = '_')
+      scenario_write_tags_txt <- paste(names(scenario_write_tags), scenario_write_tags, sep='_', collapse = '_')
     } else {
       scenario_write_tags_txt <- scenario_write_tags
     }
 
-    options(scipen = 9999)
-    
     if(write_outputs){
+      # create output directory
       relative_output_path = paste0('output/', scenario_name, '/', scenario_write_tags_txt)
+      create_output_directory(file.path(getwd(), relative_output_path), run_with_shiny, overwrite_output)
       
-      # Check if output directory exists
-      absolute_output_path = file.path(getwd(), relative_output_path)
-      if (!dir.exists(absolute_output_path)) {
-        if (run_with_shiny) {
-          # ???
-        } else {
-          message(paste0("Making output directory: ", absolute_output_path))
-        }
-        dir.create(absolute_output_path, recursive=TRUE)
-      } else {
-        if (run_with_shiny) {
-          message(paste0("Output directory, ", absolute_output_path, ", already exists"))
-          list.files(absolute_output_path, full.names = T) %>% file.remove()
-        } else {
-          message(paste0("Output directory, ", absolute_output_path, ", already exists"))
-          if (overwrite_output) {
-            list.files(absolute_output_path, full.names = T) %>% file.remove()
-            message('...Overwriting previous files')
-          }
-        }
-      }
+      # save input parameters to file
+      input_params <- sapply(ls(), function(x){tryCatch(get(x), error = function(e) return(0))})
+      writeLines(jsonlite::toJSON(input_params, pretty = TRUE), paste0(relative_output_path, '/input_params.txt'))
     }
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
     # 1. PREP STANDS !!!!!!!!!!!!
 
-    # Load stand data
+    # Load stand data 
     if (!is.null(stand_data)) {
       message("Forsys Shiny data detected.")
       stands <- stand_data 
@@ -263,8 +249,9 @@ run <- function(
             select(!!stand_id_field := Stands,
                    !!proj_id_field := Project,
                    treatment_rank := Project,
-                   treated := DoTreat,
-                   weightedPriority = Objective)
+                   DoTreat := DoTreat,
+                   weightedPriority = Objective) %>%
+            mutate(selected = 1)
 
         } else { # run with preassigned (static) projects
 
@@ -276,7 +263,7 @@ run <- function(
             proj_target_field = proj_target_field,
             proj_fixed_target = proj_fixed_target,
             proj_target_value = proj_target_value,
-            proj_target_min_value = proj_target_min_value, # TODO Need to update apply_treatment to recognize this.
+            proj_target_min_value = proj_target_min_value,
             stand_threshold = stand_threshold,
             proj_number = NULL,
             proj_area_ceiling = fire_annual_target
@@ -314,7 +301,7 @@ run <- function(
 
         # record stands scheduled for treatment in current year
         stands_treated <- stands_selected_y %>%
-          filter(treated == 1) %>%
+          filter(DoTreat == 1) %>%
           mutate(weighting_combo = w) %>%
           bind_rows(stands_treated)
 
@@ -322,12 +309,12 @@ run <- function(
         stands_selected <- stands_selected_y %>% bind_rows(stands_selected)
 
         # remove stands or project areas that were treated from available stands
-        x1 = unique(stands_selected_y[[stand_id_field]])
+        x1 <- unique(stands_selected_y[[stand_id_field]])
         stands_available <- stands_available %>% filter(.data[[stand_id_field]] %in% x1 == FALSE)
 
         # report yearly work
-        s_n = stands_treated %>% filter(ETrt_YR == y) %>% pull(stand_id_field) %>% n_distinct()
-        p_n = stands_treated %>% filter(ETrt_YR == y) %>% pull(treatment_rank) %>% n_distinct()
+        s_n <- stands_treated %>% filter(ETrt_YR == y) %>% pull(stand_id_field) %>% n_distinct()
+        p_n <- stands_treated %>% filter(ETrt_YR == y) %>% pull(treatment_rank) %>% n_distinct()
         message(paste0(s_n, ' stands (', round(s_n/nrow(stands) * 100, 2), '% of total) treated in ', 
                        p_n, ' projects (total objective: ', round(sum(stands_treated$weightedPriority),2), ')'))
 
@@ -336,25 +323,20 @@ run <- function(
 
         if(run_with_fire & is.null(fire_intersect_table) == FALSE) { # BEGIN FIRE LOOP
 
+          select_fields <- c(stand_id_field, proj_id_field, ETrt_YR, FIRE_YR, 
+                             FIRE_NUMBER, treatment_rank, weightedPriority)
+          
           # record stands that burned this year
           stands_burned <- stands %>%
             left_join(projects_scheduled, by=proj_id_field) %>%
             left_join(stands_treated %>% select(stand_id_field), by=stand_id_field) %>%
             left_join(fires %>% select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field) %>%
-            select(
-              stand_id_field, 
-              proj_id_field, 
-              ETrt_YR, 
-              FIRE_YR, 
-              FIRE_NUMBER, 
-              treatment_rank, 
-              weightedPriority
-            ) %>%
+            select(any_of(select_fields)) %>% 
             filter(FIRE_YR == !!y) %>%
             bind_rows(stands_burned)
 
           # report yearly fire
-          b_n = stands_burned %>% filter(FIRE_YR == y) %>% pull(stand_id_field) %>% n_distinct()
+          b_n <- stands_burned %>% filter(FIRE_YR == y) %>% pull(stand_id_field) %>% n_distinct()
           message(paste0(b_n, ' (', round(b_n/nrow(stands) * 100, 2), '%) stands burned'))
 
           # remove burnt stands from future selection only if fire_dynamic_forsys is TRUE
@@ -371,7 +353,7 @@ run <- function(
       # 5. SUMMARIZE DATA !!!!!!!!!
 
       # tag stands with specific scenario attributes
-      stands_out_w <- stands_treated %>% select(!!stand_id_field, !!proj_id_field, ETrt_YR)
+      stands_out_w <- stands_treated %>% select(!!stand_id_field, !!proj_id_field, ETrt_YR, treated)
 
       # record fire information if provided
       if(run_with_fire & !is.null(fire_intersect_table)){

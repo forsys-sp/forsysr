@@ -10,7 +10,7 @@ load_dataset(path_to_file)
 \item{path_to_file}{Path to an input dataset}
 }
 \value{
-Loaded data.table from the input dataset
+Stand data
 }
 \description{
 Load the input dataset. Supports both CSV and DBF.

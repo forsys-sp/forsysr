@@ -35,8 +35,9 @@ test_forest$combined_priority
 stands <- test_forest %>% st_drop_geometry()
 
 # example running forsys from json config file
-jsonlite::fromJSON('misc/test_static_config.json')
+jsonlite::fromJSON('misc/test_static_config_2.json')
 forsys::run(config_file = 'misc/test_static_config.json', stand_data = stands)
+forsys::run(config_file = 'misc/test_static_config_2.json')
 
 # run forsys using specified parameters (see help for complete list)
 # prioritize priority1 AND priority2 within predefined boundaries (proj_id)
@@ -44,7 +45,7 @@ forsys::run(config_file = 'misc/test_static_config.json', stand_data = stands)
 # treat 20% of the area within each predefined boundary (proj_id)
 outputs = forsys::run(
   return_outputs = TRUE,
-  write_outputs = FALSE,
+  write_outputs = TRUE,
   stand_data = stands,
   scenario_name = "run_static_test_2",
   stand_id_field = "stand_id",
@@ -108,9 +109,6 @@ forsys::stacked_barchart(
 # MAP OUTPUT ------------------------
 
 # plot project where only priority1 is prioritized
-# to see priority2 flip argument: (Pr_1_priority1 == 0 & Pr_2_priority2 == 1)
-# t0 see where the two priorities are equally weighted replace with this argument:
-#  (Pr_1_priority1 == 1 & Pr_2_priority2 == 1)
 proj_output <- outputs$project_output %>% 
   dplyr::filter(Pr_1_priority1 == 1 & Pr_2_priority2 == 0)
 

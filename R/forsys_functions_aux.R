@@ -20,8 +20,10 @@ load_json_config <- function(json_filename){
 #'
 #' @param path_to_file Path to an input dataset
 #'
-#' @return Loaded data.table from the input dataset
+#' @return Stand data
 #'
+#' @importFrom stringr str_sub
+#' @importFrom foregin read.dbf
 #' @importFrom data.table data.table
 #'
 #' @export
@@ -29,15 +31,15 @@ load_dataset <- function(path_to_file) {
   file_type <- stringr::str_sub(path_to_file, start= -3)
   message("Loading Dataset")
   if (file_type == "dbf") {
-    standDT <- data.table(foreign::read.dbf(path_to_file))
+    stand_data <- foreign::read.dbf(path_to_file)
     message("Read stand file from DBF")
   } else if (file_type == "csv") {
-    standDT <- data.table(data.table::fread(path_to_file, header = TRUE))
+    stand_data <- data.table::fread(path_to_file, header = TRUE, data.table = FALSE)
     message("Read stand file from CSV")
   } else {
     message('Input format not recognized')
   }
-  return(standDT)
+  return(stand_data)
 }
 
 #' Create a dataset by subsetting subunits that were selected in the
@@ -221,5 +223,34 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
                        "Required files:\n",
                        "1) ForSys output - proj_all.csv")
   writeLines(parameters, file("README.txt"))
+}
+
+
+create_output_directory <- function(
+    absolute_output_path, 
+    run_with_shiny, 
+    overwrite_output
+){
+  
+  # Check if output directory exists
+  if (!dir.exists(absolute_output_path)) {
+    if (run_with_shiny) {
+      # ???
+    } else {
+      message(paste0("Making output directory: ", absolute_output_path))
+    }
+    dir.create(absolute_output_path, recursive=TRUE)
+  } else {
+    if (run_with_shiny) {
+      message(paste0("Output directory, ", absolute_output_path, ", already exists"))
+      list.files(absolute_output_path, full.names = T) %>% file.remove()
+    } else {
+      message(paste0("Output directory, ", absolute_output_path, ", already exists"))
+      if (overwrite_output) {
+        list.files(absolute_output_path, full.names = T) %>% file.remove()
+        message('...Overwriting previous files')
+      }
+    }
+  }
 }
   
