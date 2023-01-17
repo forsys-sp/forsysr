@@ -72,14 +72,13 @@ create_output_directory <- function(
     }
     dir.create(absolute_output_path, recursive=TRUE)
   } else {
+    message(paste0("Output directory, ", absolute_output_path, ", already exists..."))
     if (run_with_shiny) {
-      message(paste0("Output directory, ", absolute_output_path, ", already exists"))
       list.files(absolute_output_path, full.names = T) %>% file.remove()
     } else {
-      message(paste0("Output directory, ", absolute_output_path, ", already exists"))
       if (overwrite_output) {
         list.files(absolute_output_path, full.names = T) %>% file.remove()
-        message('...Overwriting previous files')
+        message('...Deleting previous files')
       }
     }
   }
@@ -136,17 +135,15 @@ summarize_projects <- function(
     filter(DoTreat == 1) %>%
     create_grouped_dataset(
       grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
-      summing_vars = c(scenario_output_fields, 'weightedPriority')
-    ) %>%
-    arrange(ETrt_YR, -weightedPriority) %>%
-    rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields) %>%
-    replace(is.na(.), 0)
-  
+      summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
+    rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields)
+
   # summarize available stands by grouping fields and tag with ESum_ prefix
   projects_esum_out_w <- selected_stands %>%
-    compile_planning_areas_and_stands(
-      group_by = c(proj_id_field, scenario_output_grouping_fields),
-      output_fields = scenario_output_fields)
+    create_grouped_dataset(
+      grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
+      summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
+    rename_with(.fn = ~ paste0("ESum_", .x), .cols = scenario_output_fields)
   
   # rank projects
   projects_rank <- projects_etrt_out_w %>%
@@ -161,34 +158,11 @@ summarize_projects <- function(
     inner_join(projects_esum_out_w, 
                by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
     left_join(projects_rank, by = proj_id_field) %>%
+    arrange(ETrt_YR, -weightedPriority) %>%
     replace(is.na(.), 0)
   
   return(projects_etrt_esum_out_w)
   
-}
-
-#' compile_planning_areas_and_stands
-#' 
-#' TODO this should go in _results
-#'
-#' @param stands TODO
-#' @param group_by TODO
-#' @param output_fields TODO
-#' @return TODO
-#'
-#' @importFrom dplyr %>% across summarize group_by_at
-#' @importFrom data.table setDT
-#'
-compile_planning_areas_and_stands <- function(
-    stands, 
-    group_by, 
-    output_fields) {
-  
-  planning_areas <- stands %>% 
-    group_by_at(group_by) %>%
-    summarize(across(output_fields, sum, .names = "ESum_{.col}"))
-  
-  return (setDT(planning_areas))
 }
 
 #' Write individual stand output to file

@@ -38,8 +38,10 @@ stands <- test_forest %>% st_drop_geometry()
 jsonlite::fromJSON('misc/test_static_config_2.json')
 jsonlite::fromJSON('configs/patchmax_config.json')
 
-forsys::run(config_file = 'misc/test_static_config.json', stand_data = stands)
-forsys::run(config_file = 'configs/patchmax_config.json', stand_data = stands)
+file.edit("configs/patchmax_config.json")
+
+forsys::run(config_file = 'configs/static_config.json', stand_data = stands)
+plan(multisession, workers=8); forsys::run(config_file = 'configs/patchmax_config.json', stand_data = stands)
 
 forsys::run(config_file = 'misc/test_static_config_2.json')
 

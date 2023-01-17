@@ -12,7 +12,7 @@ build_static_projects(
   proj_target_field,
   proj_fixed_target,
   proj_target_value,
-  proj_target_min_value = NULL,
+  proj_target_min_value = -Inf,
   stand_threshold,
   proj_number,
   proj_area_ceiling
@@ -35,7 +35,7 @@ build_static_projects(
 
 \item{proj_target_min_value}{TODO ???}
 
-\item{stand_threshold}{Boolean state on whether stand is available for treatment. <emph{character}>}
+\item{stand_threshold}{Boolean statement on stand availablility for treatment. <emph{character}>}
 
 \item{proj_number}{TODO ???}
 

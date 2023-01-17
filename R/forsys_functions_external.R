@@ -69,7 +69,7 @@ filter_stands <- function(stands, filter_txt = NULL, verbose = TRUE){
     n0 <- nrow(stands)
     n1 <- nrow(out)
     if(verbose)
-      message(glue("----------\nFiltering stands where: {filter_txt} ({round((n0-n1)/n0*100,2)}% excluded)\n-----------"))
+      message(glue("Filtering stands where: {filter_txt} ({round((n0-n1)/n0*100,2)}% excluded)"))
   }, error = function(e){
     message(paste0('!! Filter failed; proceeding with unfiltered data. Error message:\n', print(e)))
   })

@@ -6,17 +6,15 @@
 selectSubunits function and grouping the data by a larger subunit (usually
 planning areas).}
 \usage{
-create_grouped_dataset(dt, grouping_vars, summing_vars, subset_var = NULL)
+create_grouped_dataset(data, grouping_vars, summing_vars)
 }
 \arguments{
-\item{dt}{A data table with all the subunits and attributes.}
+\item{data}{data with all the subunits and attributes.}
 
 \item{grouping_vars}{The variable names by which the data will be grouped.}
 
 \item{summing_vars}{The variables in the original dataset that need to be
 summed over each subunit.}
-
-\item{subset_var}{TODO}
 }
 \value{
 The selected stands from \code{df}, ordered by \code{priority_SPM},

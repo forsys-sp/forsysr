@@ -70,7 +70,7 @@ run <- function(
     # scenario variables
     scenario_name = NULL,
     scenario_priorities = NULL,
-    scenario_weighting_values = "1 1 1", # TODO separate to 3 parameters? 
+    scenario_weighting_values = "1 1 1", # TODO separate to 3 parameters
     scenario_output_fields = NULL,
     scenario_output_grouping_fields = NULL,
     scenario_write_tags = NULL,
@@ -135,7 +135,6 @@ run <- function(
 
     # Load stand data 
     if (!is.null(stand_data)) {
-      message("Forsys Shiny data detected.")
       stands <- stand_data 
       stands <- stands %>% mutate(!!stand_id_field := as.character(get(stand_id_field)))
     } else if(!is.null(stand_data_filename)) {
@@ -143,12 +142,11 @@ run <- function(
       stands <- load_dataset(path_to_file = stand_data_filename)
       stands <- stands %>% mutate(!!stand_id_field := as.character(get(stand_id_field)))
     } else {
-      stop("No stand data provided")
+      stop("Stand data required")
     }
 
     # Load fire data
     if (run_with_fire & !is.null(fire_intersect_table)) {
-      message("Forsys fire data detected")
       fires <- fire_intersect_table
       } else if(run_with_fire & !is.null(fire_intersect_table_filename)) {
       message("Loading fire data from file")
@@ -174,9 +172,7 @@ run <- function(
     for (w in 1:nrow(weights)) { # START WEIGHT LOOP
 
       ## create the weighted priorities.
-      message(paste0("\n---------------\nWeighting scenario ",  w,
-                     " of ", nrow(weights),
-                     ": ", paste0(weights[w,], collapse = '-')))
+      message(paste0("Weighting scenario ", w, " of ", nrow(weights), ": ", paste0(weights[w,], collapse = '-')))
 
       # prep stand data
       stands <- stands %>%
@@ -356,7 +352,7 @@ run <- function(
       
       # tag stands with specific scenario attributes
       stands_out_w <- stands_selected %>% 
-        filter(DoTreat == 1) %>%
+        # filter(DoTreat == 1) %>%
         select(!!stand_id_field, !!proj_id_field, ETrt_YR, DoTreat, selected)
 
       # record fire information if provided
@@ -430,7 +426,7 @@ run <- function(
       stands_out <- stands_out %>% select(!tidyselect::where(is.list))
       
       # write stand data data
-      message(paste0('\nScenario output data written to: ', relative_output_path))
+      message(paste0('Scenario output data written to: ', relative_output_path))
       data.table::fwrite(stands_out, stand_fn, row.names = FALSE)
       data.table::fwrite(projects_out, file = project_fn, sep = ",", row.names = FALSE)
       data.table::fwrite(subset_out, file = subset_fn, sep = ",", row.names = FALSE)

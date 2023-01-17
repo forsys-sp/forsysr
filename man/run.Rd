@@ -10,18 +10,17 @@ run(
   write_outputs = TRUE,
   overwrite_output = TRUE,
   stand_data = NULL,
-  stand_data_filename = "",
-  stand_id_field = "",
+  stand_data_filename = NULL,
+  stand_id_field = NULL,
   stand_area_field = NULL,
   stand_threshold = NULL,
   global_threshold = NULL,
-  normalize_values = TRUE,
-  proj_id_field = "proj_id",
+  proj_id_field = NULL,
   proj_fixed_target = TRUE,
   proj_target_field = NULL,
   proj_target_value = NULL,
   proj_target_min_value = -Inf,
-  scenario_name = "",
+  scenario_name = NULL,
   scenario_priorities = NULL,
   scenario_weighting_values = "1 1 1",
   scenario_output_fields = NULL,
@@ -81,7 +80,7 @@ run(
 
 \item{scenario_priorities}{Scenario priorities. <\emph{character vector}>}
 
-\item{scenario_weighting_values}{String of 3 integers separated by a space defining weighting min, max, and step. <\emph{character}>}
+\item{scenario_weighting_values}{String of 3 integers separated by spaces defining weighting min, max, and step. <\emph{character}>}
 
 \item{scenario_output_fields}{Field names to write out. <\emph{character vector}>}
 
