@@ -36,7 +36,11 @@ stands <- test_forest %>% st_drop_geometry()
 
 # example running forsys from json config file
 jsonlite::fromJSON('misc/test_static_config_2.json')
+jsonlite::fromJSON('configs/patchmax_config.json')
+
 forsys::run(config_file = 'misc/test_static_config.json', stand_data = stands)
+forsys::run(config_file = 'configs/patchmax_config.json', stand_data = stands)
+
 forsys::run(config_file = 'misc/test_static_config_2.json')
 
 # run forsys using specified parameters (see help for complete list)
@@ -153,7 +157,7 @@ plan(multisession, workers=8)
 # run patchmax by specifying parameters
 outputs = forsys::run(
   return_outputs = TRUE,
-  write_outputs = FALSE,
+  write_outputs = TRUE,
   stand_data = stands,
   scenario_name = "patchmax_test",
   stand_id_field = "stand_id",

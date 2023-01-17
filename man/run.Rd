@@ -47,13 +47,13 @@ run(
 )
 }
 \arguments{
-\item{config_file}{Relative path to a config file that defines needed parameters. <\emph{character}>}
+\item{config_file}{Config file that defines \code{forsys::run} parameters. <\emph{character}>}
 
 \item{return_outputs}{Return project and stand directly. <\emph{logical}>}
 
 \item{write_outputs}{Write project and stand data to file. <\emph{logical}>}
 
-\item{overwrite_output}{Whether to overwrite any existing output of the same name. <\emph{logical}>}
+\item{overwrite_output}{Overwrites existing output of the same name. <\emph{logical}>}
 
 \item{stand_data}{Stand dataset. <\emph{data.frame, data.table, sf}>}
 
@@ -63,7 +63,7 @@ run(
 
 \item{stand_area_field}{Field name containing stand area. <\emph{character}>}
 
-\item{stand_threshold}{Boolean statement for whether stands are counted towards project objective <\emph{character}>}
+\item{stand_threshold}{Boolean statement defining stands counted towards project objective <\emph{character}>}
 
 \item{global_threshold}{Boolean statement used to specify which stands are within the scenario. <\emph{character}>}
 

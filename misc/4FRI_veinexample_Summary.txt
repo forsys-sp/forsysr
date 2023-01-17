@@ -1,0 +1,26 @@
+ForSysX run generated: Friday, October 07, 2022 at 10:20:13
+Objectives: (1)
+	RVal_SPM  1.00
+
+Thresholds: (0)
+
+Constraints: (1)
+	Area_AC  1000.00 - 1000.00
+
+Objective Direction:		Maximize
+Check Excluded Stands:		No
+Check Availability:		No
+Spatial Optimization:		Yes
+Inverse Distance Power:		0.500000
+Patch Buster:			No
+Max Number Projects:		3
+Max Project Diameter (meters):	-1
+
+
+Results
+Iteration   Max Objective Value   Constraint Field   Constraint Max   Constraint Max Treat   Validity
+        1        1520587.584320            Area_AC       999.996316             999.996316      Valid
+        2        1485152.291260            Area_AC       998.946766             998.946766      Valid
+        3        1331218.675781            Area_AC       995.736649             995.736649      Valid
+
+1 seconds calculation time

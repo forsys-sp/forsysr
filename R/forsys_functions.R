@@ -8,7 +8,7 @@
 #' @param proj_fixed_target Whether project target is fixed or relative. <emph{logical}>
 #' @param proj_target_value Either absolute value for target or relative percent (0-1) of project area sum.
 #' @param proj_target_min_value TODO ???
-#' @param stand_threshold Boolean state on whether stand is available for treatment. <emph{character}>
+#' @param stand_threshold Boolean statement on stand availablility for treatment. <emph{character}>
 #' @param proj_number TODO ???
 #' @param proj_area_ceiling TODO ???
 #'
@@ -23,7 +23,7 @@ build_static_projects <- function(
     proj_target_field,
     proj_fixed_target,
     proj_target_value,
-    proj_target_min_value = NULL,
+    proj_target_min_value = -Inf,
     stand_threshold,
     proj_number,
     proj_area_ceiling
@@ -57,12 +57,7 @@ build_static_projects <- function(
   
   # clean up output
   stands_selected <- stands %>%
-    select(
-      stand_id_field, 
-      proj_id_field, 
-      stand_area_field, 
-      'weightedPriority'
-    ) %>%
+    select(stand_id_field, proj_id_field, stand_area_field, 'weightedPriority') %>%
     mutate(treated = 1)
   
   # group selected stands by project, summarize, and rank

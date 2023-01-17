@@ -23,7 +23,7 @@ load_json_config <- function(json_filename){
 #' @return Stand data
 #'
 #' @importFrom stringr str_sub
-#' @importFrom foregin read.dbf
+#' @importFrom foreign read.dbf
 #' @importFrom data.table data.table
 #'
 #' @export
@@ -36,40 +36,79 @@ load_dataset <- function(path_to_file) {
   } else if (file_type == "csv") {
     stand_data <- data.table::fread(path_to_file, header = TRUE, data.table = FALSE)
     message("Read stand file from CSV")
+  } else if (file_type == "shp") {
+    stand_data <- sf::st_read(path_to_file)
+    message("Read stand file from SHP")
   } else {
     message('Input format not recognized')
   }
   return(stand_data)
 }
 
+
+#' Create directory saving forsys output data
+#'
+#' @param relative relative path where new directory is placed
+#' @param run_with_shiny ???
+#' @param overwrite_output logical. Whether to first delete existing data in directory
+#'
+#' @return
+#' @export
+
+create_output_directory <- function(
+    relative_output_path, 
+    run_with_shiny, 
+    overwrite_output
+){
+  
+  absolute_output_path <- file.path(getwd(), relative_output_path)
+  
+  # Check if output directory exists
+  if (!dir.exists(absolute_output_path)) {
+    if (run_with_shiny) {
+      # ???
+    } else {
+      message(paste0("Making output directory: ", absolute_output_path))
+    }
+    dir.create(absolute_output_path, recursive=TRUE)
+  } else {
+    if (run_with_shiny) {
+      message(paste0("Output directory, ", absolute_output_path, ", already exists"))
+      list.files(absolute_output_path, full.names = T) %>% file.remove()
+    } else {
+      message(paste0("Output directory, ", absolute_output_path, ", already exists"))
+      if (overwrite_output) {
+        list.files(absolute_output_path, full.names = T) %>% file.remove()
+        message('...Overwriting previous files')
+      }
+    }
+  }
+}
+
 #' Create a dataset by subsetting subunits that were selected in the
 #' selectSubunits function and grouping the data by a larger subunit (usually
 #' planning areas).
 #'
-#' @param dt A data table with all the subunits and attributes.
+#' @param data data with all the subunits and attributes.
 #' @param grouping_vars The variable names by which the data will be grouped.
 #' @param summing_vars The variables in the original dataset that need to be
 #'   summed over each subunit.
-#' @param subset_var TODO
 #' @return The selected stands from \code{df}, ordered by \code{priority_SPM},
 #'   and selected until the sum of \code{priority_STND} is as close to
 #'   \code{treat_target} as possible.
 #'  
 #' @importFrom dplyr group_by_at vars summarize_at
 
-create_grouped_dataset <- function(
-    dt, 
-    grouping_vars, 
-    summing_vars, 
-    subset_var = NULL) {
-  ## Create the grouped data.table by grouping the treated subunits from the previous step.
-  if(!is.null(subset_var)){
-    dt <- subset(dt[get(subset_var)==1])
-  }
-  dt <- group_by_at(dt, vars(grouping_vars))
-  dt <- data.table::data.table(summarize_at(dt, .vars = vars(summing_vars), .funs = c(sum="sum")))
-  names(dt) <- gsub(x = names(dt), pattern = "_sum", replacement = "")
-  return(dt)
+create_grouped_dataset <- function(data, grouping_vars, summing_vars) {
+  
+  grouping_vars <- unique(grouping_vars)
+  summing_vars <- unique(summing_vars)
+  
+  data <- data %>% 
+    group_by_at(vars(grouping_vars)) %>%
+    summarize_at(vars(summing_vars), sum)
+  
+  return(data)
 }
 
 
@@ -81,16 +120,20 @@ summarize_projects <- function(
     scenario_output_grouping_fields,
     scenario_output_fields
 ){
-  # summarize selected stands by grouping fields and tag with ETrt_ prefix
-  projects_etrt_out_w <- selected_stands  %>%
-    select(stand_id_field, proj_id_field, ETrt_YR) %>%
+  
+  # append specified output attributes to selected stands
+  selected_stands <- selected_stands  %>%
+    select(stand_id_field, proj_id_field, DoTreat, ETrt_YR) %>%
     left_join(stands_data %>% select(
       !!stand_id_field, 
       any_of(scenario_output_grouping_fields), 
       any_of(scenario_output_fields),
       weightedPriority),
-      by = stand_id_field, suffix = c("", ".dup")
-    ) %>%
+      by = stand_id_field, suffix = c("", ".dup"))
+  
+  # summarize selected stands by grouping fields and tag with ETrt_ prefix
+  projects_etrt_out_w <- selected_stands %>%
+    filter(DoTreat == 1) %>%
     create_grouped_dataset(
       grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
       summing_vars = c(scenario_output_fields, 'weightedPriority')
@@ -98,6 +141,12 @@ summarize_projects <- function(
     arrange(ETrt_YR, -weightedPriority) %>%
     rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields) %>%
     replace(is.na(.), 0)
+  
+  # summarize available stands by grouping fields and tag with ESum_ prefix
+  projects_esum_out_w <- selected_stands %>%
+    compile_planning_areas_and_stands(
+      group_by = c(proj_id_field, scenario_output_grouping_fields),
+      output_fields = scenario_output_fields)
   
   # rank projects
   projects_rank <- projects_etrt_out_w %>%
@@ -107,24 +156,10 @@ summarize_projects <- function(
     mutate(treatment_rank = rank(-weightedPriority)) %>%
     select(!!proj_id_field, treatment_rank)
   
-  # summarize available stands by grouping fields and tag with ESum_ prefix
-  projects_esum_out_w <- selected_stands %>%
-    select(stand_id_field, proj_id_field) %>%
-    left_join(stands_data %>% select(
-      !!stand_id_field, 
-      any_of(scenario_output_grouping_fields), 
-      any_of(scenario_output_fields), 
-      weightedPriority),
-      by = stand_id_field, suffix = c("", ".dup")
-    ) %>%
-    compile_planning_areas_and_stands(
-      unique_weights = uniqueWeights,
-      group_by = c(proj_id_field, scenario_output_grouping_fields),
-      output_fields = scenario_output_fields)
-  
   # join etrt w/ esum outputs
   projects_etrt_esum_out_w <- projects_etrt_out_w %>%
-    inner_join(projects_esum_out_w, by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
+    inner_join(projects_esum_out_w, 
+               by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
     left_join(projects_rank, by = proj_id_field) %>%
     replace(is.na(.), 0)
   
@@ -137,7 +172,6 @@ summarize_projects <- function(
 #' TODO this should go in _results
 #'
 #' @param stands TODO
-#' @param unique_weights TODO
 #' @param group_by TODO
 #' @param output_fields TODO
 #' @return TODO
@@ -147,7 +181,6 @@ summarize_projects <- function(
 #'
 compile_planning_areas_and_stands <- function(
     stands, 
-    unique_weights, 
     group_by, 
     output_fields) {
   
@@ -226,31 +259,3 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
 }
 
 
-create_output_directory <- function(
-    absolute_output_path, 
-    run_with_shiny, 
-    overwrite_output
-){
-  
-  # Check if output directory exists
-  if (!dir.exists(absolute_output_path)) {
-    if (run_with_shiny) {
-      # ???
-    } else {
-      message(paste0("Making output directory: ", absolute_output_path))
-    }
-    dir.create(absolute_output_path, recursive=TRUE)
-  } else {
-    if (run_with_shiny) {
-      message(paste0("Output directory, ", absolute_output_path, ", already exists"))
-      list.files(absolute_output_path, full.names = T) %>% file.remove()
-    } else {
-      message(paste0("Output directory, ", absolute_output_path, ", already exists"))
-      if (overwrite_output) {
-        list.files(absolute_output_path, full.names = T) %>% file.remove()
-        message('...Overwriting previous files')
-      }
-    }
-  }
-}
-  
