@@ -62,7 +62,7 @@ run <- function(
     stand_threshold = NULL,
     global_threshold = NULL,
     # project variables
-    proj_id_field = NULL,
+    proj_id_field = "proj_id",
     proj_fixed_target = TRUE,
     proj_target_field = NULL,
     proj_target_value = NULL,
