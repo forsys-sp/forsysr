@@ -22,6 +22,9 @@
 #' @param proj_target_field Field name used as target constraint. <\emph{character}>
 #' @param proj_target_value Target constraint: fixed value if `proj_fixed_target` is TRUE or 0 and 1 if FALSE. <\emph{numeric}> 
 #' @param proj_target_min_value Minimum valid target constraint. Only used if `run_with_patchmax` is TRUE.
+#' @param planning_years Number of years to run forsys. <\emph{integer}> 
+#' @param annual_target_field Field name to use for calculating annual target. <\emph{character}> 
+#' @param annual_target Value of annual cumulative target. <\emph{numeric}> 
 #' @param scenario_name Name for this scenario. <\emph{character}> 
 #' @param scenario_priorities Scenario priorities. <\emph{character vector}> 
 #' @param scenario_weighting_values String of 3 integers separated by spaces defining weighting min, max, and step. <\emph{character}> 
@@ -30,9 +33,6 @@
 #' @param scenario_write_tags String appended to output used to describe scenario. <\emph{optional character}> 
 #' @param fire_intersect_table Stands affected by fire by year. <\emph{data.frame}> 
 #' @param fire_intersect_table_filename File name of csv listing stands affected by fire by year. <\emph{character}> 
-#' @param fire_planning_years Number of years to run forsys. <\emph{integer}> 
-#' @param fire_annual_target_field Field name to use for calculating annual target. <\emph{character}> 
-#' @param fire_annual_target Value of annual cumulative target. <\emph{numeric}> 
 #' @param fire_dynamic_forsys Whether burnt stands are prevented from being selected. <\emph{logical}> 
 #' @param fire_random_projects Whether project prioritization is randomly shuffled. <\emph{logical}> 
 #' @param patchmax_proj_number Number of projects to build with patchmax. <\emph{integer}> 
@@ -67,6 +67,10 @@ run <- function(
     proj_target_field = NULL,
     proj_target_value = NULL,
     proj_target_min_value = -Inf,
+    # annual targets
+    planning_years = 1,
+    annual_target_field = NULL,
+    annual_target = NA,
     # scenario variables
     scenario_name = NULL,
     scenario_priorities = NULL,
@@ -81,9 +85,6 @@ run <- function(
     # fire arguments
     fire_intersect_table = NULL,
     fire_intersect_table_filename = NULL,
-    fire_planning_years = 1,
-    fire_annual_target_field = NULL,
-    fire_annual_target = NA,
     fire_dynamic_forsys = FALSE,
     fire_random_projects = FALSE,
     # patchmax arguments
@@ -103,22 +104,22 @@ run <- function(
   
     # source function parameters from config file if provided
     if (length(config_file) > 0) {
-      if (stringr::str_detect(config_file, '[.]R$')){
+      if (stringr::str_detect(config_file, '[.]R$')) {
         source(config_file, local = TRUE)
       }
-      if(stringr::str_detect(config_file, '[.]json$')){
+      if (stringr::str_detect(config_file, '[.]json$')) {
         load_json_config(config_file)
       }
     }
   
     # collapse write tags into string if provided as data.frame
-    if(length(scenario_write_tags) > 1 & !is.null(names(scenario_write_tags))){
+    if (length(scenario_write_tags) > 1 & !is.null(names(scenario_write_tags))) {
       scenario_write_tags_txt <- paste(names(scenario_write_tags), scenario_write_tags, sep='_', collapse = '_')
     } else {
       scenario_write_tags_txt <- scenario_write_tags
     }
 
-    if(write_outputs){
+    if (write_outputs) {
       # create output directory
       relative_output_path = paste0('output/', scenario_name, '/', scenario_write_tags_txt)
       create_output_directory(relative_output_path, run_with_shiny, overwrite_output)
@@ -137,7 +138,7 @@ run <- function(
     if (!is.null(stand_data)) {
       stands <- stand_data 
       stands <- stands %>% mutate(!!stand_id_field := as.character(get(stand_id_field)))
-    } else if(!is.null(stand_data_filename)) {
+    } else if (!is.null(stand_data_filename)) {
       message("Loading stand data from file")
       stands <- load_dataset(path_to_file = stand_data_filename)
       stands <- stands %>% mutate(!!stand_id_field := as.character(get(stand_id_field)))
@@ -148,7 +149,7 @@ run <- function(
     # Load fire data
     if (run_with_fire & !is.null(fire_intersect_table)) {
       fires <- fire_intersect_table
-      } else if(run_with_fire & !is.null(fire_intersect_table_filename)) {
+      } else if (run_with_fire & !is.null(fire_intersect_table_filename)) {
       message("Loading fire data from file")
       fires <- data.table(foreign::read.dbf(fire_intersect_table_filename))
     }
@@ -190,7 +191,7 @@ run <- function(
         )
       
       # manually add proj_id field if running with patchmax
-      if(run_with_patchmax){
+      if (run_with_patchmax) {
         stands <- stands %>% mutate(!!proj_id_field := NA)
       }
 
@@ -202,18 +203,18 @@ run <- function(
       # !!!!!!!!!!!!!!!!!!!!!!!!!!!
       # 2. SELECT STANDS !!!!!!!!!!
 
-      for (y in 1:fire_planning_years) { # BEGIN YEAR LOOP
+      for (y in 1:planning_years) { # BEGIN YEAR LOOP
 
-        if (fire_planning_years > 1){
+        if (planning_years > 1) {
           message(paste('\nYear', y, '\n---------------'))
         }
 
-        if(run_with_patchmax == TRUE){
+        if (run_with_patchmax == TRUE) {
 
           suppressMessages(suppressWarnings(require(Patchmax)))
           geom <- sf::st_as_sf(stands_available)
           
-          if(!is.null(proj_target_field)){ 
+          if (!is.null(proj_target_field)) { 
             P_constraint = pull(geom, !!proj_target_field)
           } else {
             P_constraint = NULL
@@ -265,7 +266,7 @@ run <- function(
             proj_target_min_value = proj_target_min_value,
             stand_threshold = stand_threshold,
             proj_number = NULL,
-            proj_area_ceiling = fire_annual_target
+            proj_area_ceiling = annual_target
           )
 
           projects_selected_y <- patchstat_out[[1]]
@@ -276,22 +277,22 @@ run <- function(
         # 4. UPDATE AVAILABILITY !!!!!!!!!!
 
         # set annual target
-        fire_annual_target_i = fire_annual_target[y]
-        if(is.na(fire_annual_target_i)) {
+        annual_target_i = annual_target[y]
+        if (is.na(annual_target_i)) {
           message("Assuming unlimited annual target")
-          fire_annual_target_i = Inf
+          annual_target_i = Inf
         }
         
         # assign all projects to year one if annual target is NULL
-        if(is.null(fire_annual_target_field) == TRUE){ 
+        if (is.null(annual_target_field) == TRUE) { 
           projects_scheduled <- projects_selected_y %>% mutate(ETrt_YR = 1)
           stands_selected_y <- stands_selected_y %>% mutate(ETrt_YR = 1)
         } 
         
         # assign project year based on annual target(s)
-        if(is.null(fire_annual_target_field) == FALSE) { 
+        if (is.null(annual_target_field) == FALSE) { 
           projects_scheduled <- projects_selected_y %>%
-            mutate(ETrt_YR = cumsum(get(fire_annual_target_field)) %/% !!fire_annual_target_i + 1) %>%
+            mutate(ETrt_YR = cumsum(get(annual_target_field)) %/% !!annual_target_i + 1) %>%
             mutate(ETrt_YR = ifelse(weightedPriority == 0, NA, ETrt_YR)) %>%
             filter(ETrt_YR == 1) %>%
             mutate(ETrt_YR = !!y)
@@ -316,7 +317,7 @@ run <- function(
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # 5. BEGIN ANNUAL FIRES !!!!!!!!!!!
 
-        if(run_with_fire & is.null(fire_intersect_table) == FALSE) { # BEGIN FIRE LOOP
+        if (run_with_fire & is.null(fire_intersect_table) == FALSE) { # BEGIN FIRE LOOP
 
           select_fields <- c(stand_id_field, proj_id_field, ETrt_YR, FIRE_YR, 
                              FIRE_NUMBER, treatment_rank, weightedPriority)
@@ -335,7 +336,7 @@ run <- function(
           message(paste0(b_n, ' (', round(b_n/nrow(stands) * 100, 2), '%) stands burned'))
 
           # remove burnt stands from future selection only if fire_dynamic_forsys is TRUE
-          if(fire_dynamic_forsys == TRUE) {
+          if (fire_dynamic_forsys == TRUE) {
             stands_available <- stands_available %>% 
               filter(.data[[stand_id_field]] %in% stands_burned[[stand_id_field]] == FALSE)
           }
@@ -356,7 +357,7 @@ run <- function(
         select(!!stand_id_field, !!proj_id_field, ETrt_YR, DoTreat, selected)
 
       # record fire information if provided
-      if(run_with_fire & !is.null(fire_intersect_table)){
+      if (run_with_fire & !is.null(fire_intersect_table)) {
         stands_out_w <- stands_out_w %>%
           left_join(fires %>% select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field)
       }
@@ -409,7 +410,7 @@ run <- function(
     # 6. WRITE DATA !!!!!!!!!!!!!
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
     
-    if(write_outputs){
+    if (write_outputs) {
         
       # create output filename
       if (length(scenario_write_tags_txt) > 1) {
@@ -432,7 +433,7 @@ run <- function(
       data.table::fwrite(subset_out, file = subset_fn, sep = ",", row.names = FALSE)
     }
 
-    if(return_outputs){
+    if (return_outputs) {
       return(list(
         stand_output = stands_out,
         project_output = projects_out,

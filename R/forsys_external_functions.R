@@ -18,13 +18,13 @@ combine_priorities <- function(
     weights = NULL, 
     new_field = 'combined_priority',
     append_weights = FALSE
-    ){
+    ) {
   
-  if(is.null(weights) | length(weights) == 1){
+  if (is.null(weights) | length(weights) == 1) {
     weights = rep(1, length(fields))
   }
   
-  if(is.null(fields) | length(fields) != length(weights)){
+  if (is.null(fields) | length(fields) != length(weights)) {
     stop('Function requires >= 2 fields and a vector with weight values of equal length ')
   }
   
@@ -33,8 +33,8 @@ combine_priorities <- function(
   stands <- stands %>% mutate(!!new_field := cp)
   message(glue::glue('Combined priority assigned to: ', new_field))
   
-  if(append_weights){
-    for(i in 1:length(fields)){
+  if (append_weights) {
+    for(i in 1:length(fields)) {
       weight_i <- weights[i]
       name_i <- paste0("Pr_", i , "_", fields[i])
       stands <- stands %>% mutate(!!name_i := weight_i)
@@ -59,8 +59,8 @@ combine_priorities <- function(
 #' @import glue
 #' @export
 #' 
-filter_stands <- function(stands, filter_txt = NULL, verbose = TRUE){
-  if(is.null(filter_txt)){
+filter_stands <- function(stands, filter_txt = NULL, verbose = TRUE) {
+  if (is.null(filter_txt)) {
     return(stands)
   }
   tryCatch({
@@ -68,9 +68,9 @@ filter_stands <- function(stands, filter_txt = NULL, verbose = TRUE){
     out <- subset(stands, eval(parse(text = filter_txt)))
     n0 <- nrow(stands)
     n1 <- nrow(out)
-    if(verbose)
+    if (verbose)
       message(glue("Filtering stands where: {filter_txt} ({round((n0-n1)/n0*100,2)}% excluded)"))
-  }, error = function(e){
+  }, error = function(e) {
     message(paste0('!! Filter failed; proceeding with unfiltered data. Error message:\n', print(e)))
   })
   return(stands)
@@ -91,11 +91,11 @@ filter_stands <- function(stands, filter_txt = NULL, verbose = TRUE){
 #' @importFrom dplyr pull mutate
 #' @export
 #' 
-calculate_spm <- function(stands, fields=NULL, area_field=NULL, availability_txt=NULL){
+calculate_spm <- function(stands, fields=NULL, area_field=NULL, availability_txt=NULL) {
 
   # filter for availability
   include = TRUE
-  if(!is.null(availability_txt)){
+  if (!is.null(availability_txt)) {
     eval_txt <- paste0(
       "stands %>% mutate(out = ifelse(", 
       availability_txt,
@@ -104,7 +104,7 @@ calculate_spm <- function(stands, fields=NULL, area_field=NULL, availability_txt
   }
   
   # default to calculating spm for all numeric fields if fields is null 
-  if(is.null(fields)){
+  if (is.null(fields)) {
     x <- stands %>% lapply(is.numeric) %>% unlist()
     fields <- names(x)[x == TRUE]
   }
@@ -136,13 +136,13 @@ calculate_pcp <- function(stands, fields=NULL, availability_txt=NULL){
   
   # filter for availability
   include = TRUE
-  if(!is.null(availability_txt)){
+  if (!is.null(availability_txt)) {
     eval_txt <- paste0("stands %>% mutate(out = ifelse(", availability_txt,", TRUE, FALSE)) %>% pull(out)")
     include = eval(parse(text = eval_txt))
   }
   
   # default to calculating spm for all numeric fields if fields is null 
-  if(is.null(fields)){
+  if (is.null(fields)) {
     x <- stands %>% lapply(is.numeric) %>% unlist()
     fields <- names(x)[x == TRUE]
   }

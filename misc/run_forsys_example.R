@@ -26,8 +26,6 @@ test_forest <- forsys::test_forest %>%
   calculate_pcp(fields = c("priority1","priority2"), availability_txt = 'mosaic1 == 3') %>%
   combine_priorities(fields = c("priority1_SPM","priority2_SPM"))
 
-test_forest$combined_priority
-
 # plot the treatment units
 # plot(test_forest, border=NA, max.plot=16)
 
@@ -35,7 +33,6 @@ test_forest$combined_priority
 stands <- test_forest %>% st_drop_geometry()
 
 # example running forsys from json config file
-jsonlite::fromJSON('misc/test_static_config_2.json')
 jsonlite::fromJSON('configs/patchmax_config.json')
 
 file.edit("configs/patchmax_config.json")

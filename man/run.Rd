@@ -20,6 +20,9 @@ run(
   proj_target_field = NULL,
   proj_target_value = NULL,
   proj_target_min_value = -Inf,
+  planning_years = 1,
+  annual_target_field = NULL,
+  annual_target = NA,
   scenario_name = NULL,
   scenario_priorities = NULL,
   scenario_weighting_values = "1 1 1",
@@ -31,9 +34,6 @@ run(
   run_with_fire = FALSE,
   fire_intersect_table = NULL,
   fire_intersect_table_filename = NULL,
-  fire_planning_years = 1,
-  fire_annual_target_field = NULL,
-  fire_annual_target = NA,
   fire_dynamic_forsys = FALSE,
   fire_random_projects = FALSE,
   patchmax_proj_number = 1,
@@ -76,6 +76,12 @@ run(
 
 \item{proj_target_min_value}{Minimum valid target constraint. Only used if \code{run_with_patchmax} is TRUE.}
 
+\item{planning_years}{Number of years to run forsys. <\emph{integer}>}
+
+\item{annual_target_field}{Field name to use for calculating annual target. <\emph{character}>}
+
+\item{annual_target}{Value of annual cumulative target. <\emph{numeric}>}
+
 \item{scenario_name}{Name for this scenario. <\emph{character}>}
 
 \item{scenario_priorities}{Scenario priorities. <\emph{character vector}>}
@@ -97,12 +103,6 @@ run(
 \item{fire_intersect_table}{Stands affected by fire by year. <\emph{data.frame}>}
 
 \item{fire_intersect_table_filename}{File name of csv listing stands affected by fire by year. <\emph{character}>}
-
-\item{fire_planning_years}{Number of years to run forsys. <\emph{integer}>}
-
-\item{fire_annual_target_field}{Field name to use for calculating annual target. <\emph{character}>}
-
-\item{fire_annual_target}{Value of annual cumulative target. <\emph{numeric}>}
 
 \item{fire_dynamic_forsys}{Whether burnt stands are prevented from being selected. <\emph{logical}>}
 

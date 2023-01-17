@@ -1,6 +1,6 @@
 load_R_config <- function(config_file){
   source(config_file, local = TRUE)
-  for(i in ls()){
+  for (i in ls()) {
     exists(i, envir = parent.frame)
   }
 }
@@ -8,10 +8,10 @@ load_R_config <- function(config_file){
 #'
 #' @param json_filename character string of forsys json config
 #'
-load_json_config <- function(json_filename){
+load_json_config <- function(json_filename) {
   json_data = readLines(json_filename) %>%
     jsonlite::fromJSON()
-  for(i in names(json_data)){
+  for (i in names(json_data)) {
     assign(i, json_data[[i]], env = parent.frame())
   }
 }
@@ -59,7 +59,7 @@ create_output_directory <- function(
     relative_output_path, 
     run_with_shiny, 
     overwrite_output
-){
+) {
   
   absolute_output_path <- file.path(getwd(), relative_output_path)
   
@@ -120,6 +120,8 @@ summarize_projects <- function(
     scenario_output_fields
 ){
   
+  scenario_output_fields <- c(scenario_output_fields, 'weightedPriority')
+  
   # append specified output attributes to selected stands
   selected_stands <- selected_stands  %>%
     select(stand_id_field, proj_id_field, DoTreat, ETrt_YR) %>%
@@ -135,22 +137,22 @@ summarize_projects <- function(
     filter(DoTreat == 1) %>%
     create_grouped_dataset(
       grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
-      summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
+      summing_vars = scenario_output_fields) %>%
     rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields)
 
   # summarize available stands by grouping fields and tag with ESum_ prefix
   projects_esum_out_w <- selected_stands %>%
     create_grouped_dataset(
-      grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
+      grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields)),
       summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
     rename_with(.fn = ~ paste0("ESum_", .x), .cols = scenario_output_fields)
   
   # rank projects
   projects_rank <- projects_etrt_out_w %>%
     group_by(!!proj_id_field := get(proj_id_field)) %>%
-    summarize_at(vars(weightedPriority), sum) %>%
-    arrange(-weightedPriority) %>%
-    mutate(treatment_rank = rank(-weightedPriority)) %>%
+    summarize_at(vars(ETrt_weightedPriority), sum) %>%
+    arrange(-ETrt_weightedPriority) %>%
+    mutate(treatment_rank = rank(-ETrt_weightedPriority)) %>%
     select(!!proj_id_field, treatment_rank)
   
   # join etrt w/ esum outputs
@@ -158,7 +160,7 @@ summarize_projects <- function(
     inner_join(projects_esum_out_w, 
                by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
     left_join(projects_rank, by = proj_id_field) %>%
-    arrange(ETrt_YR, -weightedPriority) %>%
+    arrange(ETrt_YR, -ETrt_weightedPriority) %>%
     replace(is.na(.), 0)
   
   return(projects_etrt_esum_out_w)
