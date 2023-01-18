@@ -125,9 +125,9 @@ run <- function(
       create_output_directory(relative_output_path, run_with_shiny, overwrite_output)
       
       # save input parameters to file
-      params <- ls()[grepl('stand_data', ls()) == FALSE]
-      input_params <- sapply(params, function(x){tryCatch(get(x), error = function(e) return(0))})
-      writeLines(jsonlite::toJSON(input_params, pretty = TRUE), 
+      params <- ls()[grepl('stand_data', ls()) == FALSE] %>%
+        sapply(function(x){tryCatch(get(x), error = function(e) return(0))})
+      writeLines(jsonlite::toJSON(params, pretty = TRUE), 
                  paste0(relative_output_path, '/', scenario_name, '.json'))
     }
 
@@ -139,7 +139,6 @@ run <- function(
       stands <- stand_data 
       stands <- stands %>% mutate(!!stand_id_field := as.character(get(stand_id_field)))
     } else if (!is.null(stand_data_filename)) {
-      message("Loading stand data from file")
       stands <- load_dataset(path_to_file = stand_data_filename)
       stands <- stands %>% mutate(!!stand_id_field := as.character(get(stand_id_field)))
     } else {
@@ -150,7 +149,6 @@ run <- function(
     if (run_with_fire & !is.null(fire_intersect_table)) {
       fires <- fire_intersect_table
       } else if (run_with_fire & !is.null(fire_intersect_table_filename)) {
-      message("Loading fire data from file")
       fires <- data.table(foreign::read.dbf(fire_intersect_table_filename))
     }
 

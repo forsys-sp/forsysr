@@ -1,12 +1,12 @@
 #' Wrapper for building projects using predetermined project areas
 #'
-#' @param stands 
+#' @param stands Data frame containing stand data
 #' @param stand_id_field Field name containing unique stand id.  <emph{character}>
 #' @param stand_area_field Field name containing stand area.  <emph{character}>
 #' @param proj_id_field Field name containing unique project area id.  <emph{character}>
 #' @param proj_target_field Field name used as primary constraint.  <emph{character}>
 #' @param proj_fixed_target Whether project target is fixed or relative. <emph{logical}>
-#' @param proj_target_value Either absolute value for target or relative percent (0-1) of project area sum.
+#' @param proj_target_value Absolute value or relative percent (0-1) of project area sum.
 #' @param proj_target_min_value TODO ???
 #' @param stand_threshold Boolean statement on stand availablility for treatment. <emph{character}>
 #' @param proj_number TODO ???
@@ -28,6 +28,9 @@ build_static_projects <- function(
     proj_number,
     proj_area_ceiling
 ){
+  
+  # define global variables
+  weightedPriority <- treatment_rank <- DoTreat <- NULL
   
   # stand selection based on predetermined projects
   stands <- stands %>%
@@ -106,11 +109,11 @@ build_static_projects <- function(
 
 #' Threshold string statement parser
 #'
-#' @param stands TODO
-#' @param proj_id_field TODO
-#' @param proj_fixed_target TODO
-#' @param proj_target_field TODO
-#' @param proj_target_value TODO
+#' @param stands Dataframe containing stand data
+#' @param proj_id_field Field name containing project id
+#' @param proj_fixed_target Logical whether target is fixed or relative
+#' @param proj_target_field Field name containing target value to be summed
+#' @param proj_target_value Numeric or percent (0 - 1) depending on `proj_fixed_target`
 #'
 set_treatment_target <- function(
     stands,
@@ -120,52 +123,23 @@ set_treatment_target <- function(
     proj_target_value=NULL
 ) {
   
-  # target based on fixed total
   if(length(proj_fixed_target > 0)){
+    
+    # target based on fixed total
     if (proj_fixed_target == TRUE) {
       stands <- stands %>%
-        set_fixed_target(
-          target_value = proj_target_value
-        )
+        mutate(master_target = proj_target_value)
+    } 
+    
     # target based on percent total of field
-    } else if (proj_fixed_target == FALSE) {
-      stands <- stands %>%
-        set_variable_target(
-          group_by = proj_id_field,
-          target_field = proj_target_field,
-          multiplier = proj_target_value
-        )
+    if (proj_fixed_target == FALSE) {
+      setDT(stands)
+      stands[, ':='(proj_target, sum(get(proj_target_field))), by = list(get(proj_id_field))]
+      stands[, master_target :=  proj_target * proj_target_value]
+      setDF(stands)
     }
   }
   return(stands)
-}
-
-#' TODO
-#' @param stands TODO
-#' @param target_value TODO
-#' @return TODO
-#'
-#' @importFrom data.table :=
-#'
-set_fixed_target <- function(stands, target_value) {
-  stands <- stands %>% mutate(master_target = target_value)
-  # stands[, master_target := {{ target_value }}]
-}
-
-#' TODO
-#' @param stands TODO
-#' @param group_by TODO
-#' @param target_field TODO
-#' @param multiplier TODO
-#' @return TODO
-#'
-#' @importFrom data.table := setDT setDF
-
-set_variable_target <- function(stands, group_by, target_field, multiplier){
-  setDT(stands)
-  stands[, ':='(proj_target, sum(get(target_field))), by = list(get(group_by))]
-  stands[, master_target :=  proj_target * multiplier]
-  setDF(stands)
 }
 
 #' Select stands for treatment based on project stand thresholds and
@@ -482,7 +456,7 @@ combine_priorities <- function(
 #' @import glue
 #' @export
 #' 
-filter_stands <- function(stands, filter_txt = NULL, verbose = TRUE) {
+filter_stands <- function(stands, filter_txt = NULL, drop = FALSE, verbose = TRUE) {
   if (is.null(filter_txt)) {
     return(stands)
   }

@@ -19,7 +19,7 @@ build_static_projects(
 )
 }
 \arguments{
-\item{stands}{}
+\item{stands}{Data frame containing stand data}
 
 \item{stand_id_field}{Field name containing unique stand id.  <emph{character}>}
 
@@ -31,7 +31,7 @@ build_static_projects(
 
 \item{proj_fixed_target}{Whether project target is fixed or relative. <emph{logical}>}
 
-\item{proj_target_value}{Either absolute value for target or relative percent (0-1) of project area sum.}
+\item{proj_target_value}{Absolute value or relative percent (0-1) of project area sum.}
 
 \item{proj_target_min_value}{TODO ???}
 

@@ -13,15 +13,15 @@ set_treatment_target(
 )
 }
 \arguments{
-\item{stands}{TODO}
+\item{stands}{Dataframe containing stand data}
 
-\item{proj_id_field}{TODO}
+\item{proj_id_field}{Field name containing project id}
 
-\item{proj_fixed_target}{TODO}
+\item{proj_fixed_target}{Logical whether target is fixed or relative}
 
-\item{proj_target_field}{TODO}
+\item{proj_target_field}{Field name containing target value to be summed}
 
-\item{proj_target_value}{TODO}
+\item{proj_target_value}{Numeric or percent (0 - 1) depending on \code{proj_fixed_target}}
 }
 \description{
 Threshold string statement parser
