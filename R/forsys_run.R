@@ -349,7 +349,7 @@ run <- function(
       # 5. SUMMARIZE DATA !!!!!!!!!
 
       # append area to output fields if available
-      scenario_output_fields <- unique(stand_area_field, scenario_output_fields)
+      scenario_output_fields <- unique(c(stand_area_field, scenario_output_fields))
       
       # tag stands with specific scenario attributes
       stands_out_w <- stands_selected %>% 

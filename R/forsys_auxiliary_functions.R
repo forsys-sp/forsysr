@@ -1,3 +1,86 @@
+#' Calculate spm for specified fields
+#'
+#' Used to normalize stands attributes by dividing each field by its maximum
+#' value and multiplying by 100. Values are first divided by area if the
+#' `area_field` is provides.
+#'
+#' @param stands stand data
+#' @param fields vector of character field names to calculate spm values
+#' @param availability_txt Boolean statement describing stand availability
+#'
+#' @details Unavailable stands are given a value of zero.
+#' 
+#' @importFrom dplyr pull mutate
+#' @export
+#' 
+calculate_spm <- function(stands, fields=NULL, area_field=NULL, availability_txt=NULL) {
+  
+  # filter for availability
+  include = TRUE
+  if (!is.null(availability_txt)) {
+    eval_txt <- paste0(
+      "stands %>% mutate(out = ifelse(", 
+      availability_txt,
+      ", TRUE, FALSE)) %>% pull(out)")
+    include = eval(parse(text = eval_txt))
+  }
+  
+  # default to calculating spm for all numeric fields if fields is null 
+  if (is.null(fields)) {
+    x <- stands %>% lapply(is.numeric) %>% unlist()
+    fields <- names(x)[x == TRUE]
+  }
+  
+  for (f in fields) {
+    values <- pull(stands, f)
+    values[include == FALSE] <- 0
+    maximum <- max(values, na.rm=T)
+    spm_values <- (100 * values / maximum)
+    cn <- paste0(f, "_SPM")
+    stands <- stands %>% mutate(!!cn := spm_values)
+  }
+  
+  return(stands)
+}
+
+#' Calculate pcp for specified fields
+#'
+#' @param stands stand data
+#' @param fields vector of character field names to calculate spm values
+#' @param availability_txt Boolean statement describing stand availability
+#' 
+#' @details Unavailable stands are given a value of zero.
+#' 
+#' @importFrom dplyr pull mutate
+#' @export
+#'
+calculate_pcp <- function(stands, fields=NULL, availability_txt=NULL){
+  
+  # filter for availability
+  include = TRUE
+  if (!is.null(availability_txt)) {
+    eval_txt <- paste0("stands %>% mutate(out = ifelse(", availability_txt,", TRUE, FALSE)) %>% pull(out)")
+    include = eval(parse(text = eval_txt))
+  }
+  
+  # default to calculating spm for all numeric fields if fields is null 
+  if (is.null(fields)) {
+    x <- stands %>% lapply(is.numeric) %>% unlist()
+    fields <- names(x)[x == TRUE]
+  }
+  
+  for (f in fields) {
+    # calculate percent of total and multiple by 100
+    cn <- paste0(f, "_PCP")
+    values <- as.numeric(pull(stands, f))
+    values[include == FALSE] <- 0
+    sum.total <- sum(values, na.rm=T)
+    stands <- stands %>% mutate(!!cn := (100 * values / sum.total))
+  }
+  
+  return(stands)
+}
+
 load_R_config <- function(config_file){
   source(config_file, local = TRUE)
   for (i in ls()) {
@@ -62,109 +145,24 @@ create_output_directory <- function(
 ) {
   
   absolute_output_path <- file.path(getwd(), relative_output_path)
+  message(paste0("Writing data to ", absolute_output_path))
   
   # Check if output directory exists
   if (!dir.exists(absolute_output_path)) {
     if (run_with_shiny) {
       # ???
     } else {
-      message(paste0("Making output directory: ", absolute_output_path))
     }
     dir.create(absolute_output_path, recursive=TRUE)
   } else {
-    message(paste0("Output directory, ", absolute_output_path, ", already exists..."))
     if (run_with_shiny) {
       list.files(absolute_output_path, full.names = T) %>% file.remove()
     } else {
       if (overwrite_output) {
         list.files(absolute_output_path, full.names = T) %>% file.remove()
-        message('...Deleting previous files')
       }
     }
   }
-}
-
-#' Create a dataset by subsetting subunits that were selected in the
-#' selectSubunits function and grouping the data by a larger subunit (usually
-#' planning areas).
-#'
-#' @param data data with all the subunits and attributes.
-#' @param grouping_vars The variable names by which the data will be grouped.
-#' @param summing_vars The variables in the original dataset that need to be
-#'   summed over each subunit.
-#' @return The selected stands from \code{df}, ordered by \code{priority_SPM},
-#'   and selected until the sum of \code{priority_STND} is as close to
-#'   \code{treat_target} as possible.
-#'  
-#' @importFrom dplyr group_by_at vars summarize_at
-
-create_grouped_dataset <- function(data, grouping_vars, summing_vars) {
-  
-  grouping_vars <- unique(grouping_vars)
-  summing_vars <- unique(summing_vars)
-  
-  data <- data %>% 
-    group_by_at(vars(grouping_vars)) %>%
-    summarize_at(vars(summing_vars), sum)
-  
-  return(data)
-}
-
-
-summarize_projects <- function(
-    selected_stands,
-    stands_data,
-    stand_id_field,
-    proj_id_field,
-    scenario_output_grouping_fields,
-    scenario_output_fields
-){
-  
-  scenario_output_fields <- c(scenario_output_fields, 'weightedPriority')
-  
-  # append specified output attributes to selected stands
-  selected_stands <- selected_stands  %>%
-    select(stand_id_field, proj_id_field, DoTreat, ETrt_YR) %>%
-    left_join(stands_data %>% select(
-      !!stand_id_field, 
-      any_of(scenario_output_grouping_fields), 
-      any_of(scenario_output_fields),
-      weightedPriority),
-      by = stand_id_field, suffix = c("", ".dup"))
-  
-  # summarize selected stands by grouping fields and tag with ETrt_ prefix
-  projects_etrt_out_w <- selected_stands %>%
-    filter(DoTreat == 1) %>%
-    create_grouped_dataset(
-      grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
-      summing_vars = scenario_output_fields) %>%
-    rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields)
-
-  # summarize available stands by grouping fields and tag with ESum_ prefix
-  projects_esum_out_w <- selected_stands %>%
-    create_grouped_dataset(
-      grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields)),
-      summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
-    rename_with(.fn = ~ paste0("ESum_", .x), .cols = scenario_output_fields)
-  
-  # rank projects
-  projects_rank <- projects_etrt_out_w %>%
-    group_by(!!proj_id_field := get(proj_id_field)) %>%
-    summarize_at(vars(ETrt_weightedPriority), sum) %>%
-    arrange(-ETrt_weightedPriority) %>%
-    mutate(treatment_rank = rank(-ETrt_weightedPriority)) %>%
-    select(!!proj_id_field, treatment_rank)
-  
-  # join etrt w/ esum outputs
-  projects_etrt_esum_out_w <- projects_etrt_out_w %>%
-    inner_join(projects_esum_out_w, 
-               by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
-    left_join(projects_rank, by = proj_id_field) %>%
-    arrange(ETrt_YR, -ETrt_weightedPriority) %>%
-    replace(is.na(.), 0)
-  
-  return(projects_etrt_esum_out_w)
-  
 }
 
 #' Write individual stand output to file

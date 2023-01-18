@@ -323,3 +323,178 @@ weight_priorities <- function(numPriorities, weights = c("1 1 1")){
   
 }
 
+
+
+#' Create a dataset by subsetting subunits that were selected in the
+#' selectSubunits function and grouping the data by a larger subunit (usually
+#' planning areas).
+#'
+#' @param data data with all the subunits and attributes.
+#' @param grouping_vars The variable names by which the data will be grouped.
+#' @param summing_vars The variables in the original dataset that need to be
+#'   summed over each subunit.
+#' @return The selected stands from \code{df}, ordered by \code{priority_SPM},
+#'   and selected until the sum of \code{priority_STND} is as close to
+#'   \code{treat_target} as possible.
+#'  
+#' @importFrom dplyr group_by_at vars summarize_at
+
+create_grouped_dataset <- function(data, grouping_vars, summing_vars) {
+  
+  grouping_vars <- unique(grouping_vars)
+  summing_vars <- unique(summing_vars)
+  
+  data <- data %>% 
+    group_by_at(vars(grouping_vars)) %>%
+    summarize_at(vars(summing_vars), sum)
+  
+  return(data)
+}
+
+
+#' Summarize project data
+#'
+#' @param selected_stands 
+#' @param stands_data 
+#' @param stand_id_field 
+#' @param proj_id_field 
+#' @param scenario_output_grouping_fields 
+#' @param scenario_output_fields 
+#'
+#' @return
+#' @export
+
+summarize_projects <- function(
+    selected_stands,
+    stands_data,
+    stand_id_field,
+    proj_id_field,
+    scenario_output_grouping_fields,
+    scenario_output_fields
+){
+  
+  # append weighted priorities to output
+  scenario_output_fields <- c(scenario_output_fields, 'weightedPriority')
+  
+  # append specified output attributes to selected stands
+  selected_stands <- selected_stands  %>%
+    select(stand_id_field, proj_id_field, DoTreat, ETrt_YR) %>%
+    left_join(stands_data %>% select(
+      !!stand_id_field, 
+      any_of(scenario_output_grouping_fields), 
+      any_of(scenario_output_fields),
+      weightedPriority),
+      by = stand_id_field, suffix = c("", ".dup"))
+  
+  # summarize selected stands by grouping fields and tag with ETrt_ prefix
+  projects_etrt_out_w <- selected_stands %>%
+    filter(DoTreat == 1) %>%
+    create_grouped_dataset(
+      grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
+      summing_vars = scenario_output_fields) %>%
+    rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields)
+  
+  # summarize available stands by grouping fields and tag with ESum_ prefix
+  projects_esum_out_w <- selected_stands %>%
+    create_grouped_dataset(
+      grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields)),
+      summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
+    rename_with(.fn = ~ paste0("ESum_", .x), .cols = scenario_output_fields)
+  
+  # rank projects
+  projects_rank <- projects_etrt_out_w %>%
+    group_by(!!proj_id_field := get(proj_id_field)) %>%
+    summarize_at(vars(ETrt_weightedPriority), sum) %>%
+    arrange(-ETrt_weightedPriority) %>%
+    mutate(treatment_rank = rank(-ETrt_weightedPriority)) %>%
+    select(!!proj_id_field, treatment_rank)
+  
+  # join etrt w/ esum outputs
+  projects_etrt_esum_out_w <- projects_etrt_out_w %>%
+    inner_join(projects_esum_out_w, 
+               by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
+    left_join(projects_rank, by = proj_id_field) %>%
+    arrange(ETrt_YR, -ETrt_weightedPriority) %>%
+    replace(is.na(.), 0)
+  
+  return(projects_etrt_esum_out_w)
+  
+}
+
+#' Combine priorities
+#'
+#' Combines 2 or more priorities into a new field.
+#'
+#' @param stands Data frame containing stand data
+#' @param fields Field names (2 or more) to combine
+#' @param weights Numeric vector with weights. Assume equal weighting if NULL
+#' @param new_field Name to assign combined priority
+#' 
+#' @importFrom glue glue
+#' @importFrom sf st_drop_geometry
+#' @importFrom dplyr select all_of mutate
+#' @export
+#' 
+combine_priorities <- function(
+    stands, 
+    fields = NULL, 
+    weights = NULL, 
+    new_field = 'combined_priority',
+    append_weights = FALSE
+) {
+  
+  if (is.null(weights) | length(weights) == 1) {
+    weights = rep(1, length(fields))
+  }
+  
+  if (is.null(fields) | length(fields) != length(weights)) {
+    stop('Function requires >= 2 fields and a vector with weight values of equal length ')
+  }
+  
+  sp <- stands %>% st_drop_geometry() %>% select(all_of(fields))
+  cp <- apply(t(sp) * weights, 2, sum)
+  stands <- stands %>% mutate(!!new_field := cp)
+  message(glue::glue('Combined priority assigned to ', new_field))
+  
+  if (append_weights) {
+    for(i in 1:length(fields)) {
+      weight_i <- weights[i]
+      name_i <- paste0("Pr_", i , "_", fields[i])
+      stands <- stands %>% mutate(!!name_i := weight_i)
+    }
+  }
+  
+  return(stands)
+}
+
+
+#' Filter data
+#'
+#' Used to filter stands to a specific criteria, often because certain stands
+#' are considered outside the study area or otherwise excluded (e.g., wilderness
+#' area, private lands, etc.)
+#'
+#' @param stands Data table to filter
+#' @param filter_txt Boolean statement as character string
+#' @param verbose Boolean statement to report filtered results
+#'
+#' @importFrom rlang .data
+#' @import glue
+#' @export
+#' 
+filter_stands <- function(stands, filter_txt = NULL, verbose = TRUE) {
+  if (is.null(filter_txt)) {
+    return(stands)
+  }
+  tryCatch({
+    out <- NULL # helps devtools::check()
+    out <- subset(stands, eval(parse(text = filter_txt)))
+    n0 <- nrow(stands)
+    n1 <- nrow(out)
+    if (verbose)
+      message(glue("Subsetting stands where {filter_txt} ({round((n0-n1)/n0*100,2)}% excluded)"))
+  }, error = function(e) {
+    message(paste0('!! Filter failed; proceeding with unfiltered data. Error message:\n', print(e)))
+  })
+  return(stands)
+}
