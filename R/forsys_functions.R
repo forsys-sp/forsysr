@@ -199,7 +199,7 @@ apply_treatment <- function(
 #'   and selected until the sum of \code{tally_by} is as close to
 #'   \code{group_target} as possible.
 #'
-#' @importFrom data.table := setDT
+#' @importFrom data.table := setDT setDF
 #'
 select_stands_by_group <- function(
     dt, 
