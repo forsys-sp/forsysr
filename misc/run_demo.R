@@ -39,7 +39,7 @@ jsonlite::fromJSON('configs/patchmax_config.json')
 file.edit("configs/patchmax_config.json")
 
 forsys::run(config_file = 'configs/static_config.json', stand_data = st_drop_geometry(test_forest))
-plan(multisession, workers=8); forsys::run(config_file = 'configs/patchmax_config.json', stand_data = test_forest)
+plan(multisession, workers=8); forsys::run(config_file = 'configs/patchmax_config.json', stand_data = test_forest, patchmax_sample_seed = 123)
 
 forsys::run(config_file = 'misc/test_static_config_2.json')
 

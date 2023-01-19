@@ -40,7 +40,7 @@ run(
   patchmax_proj_size = Inf,
   patchmax_proj_size_min = -Inf,
   patchmax_sample_frac = 0.1,
-  patchmax_st_seed = NULL,
+  patchmax_sample_seed = NULL,
   patchmax_SDW = 0.5,
   patchmax_EPW = 0.5
 )
@@ -116,7 +116,7 @@ run(
 
 \item{patchmax_sample_frac}{Percent of stands to search. <\emph{numeric 0-1}>}
 
-\item{patchmax_st_seed}{Specific stand IDs to search. <\emph{numeric/character vector}>}
+\item{patchmax_sample_seed}{RNG seed used for random sampling <\emph{numeric or NULL}>}
 
 \item{patchmax_SDW}{Stand distance weight parameter. Default is 0.5. <\emph{numeric 0-1}>}
 

@@ -39,7 +39,7 @@
 #' @param patchmax_proj_size Target area for each patchmax project. <\emph{integer}> 
 #' @param patchmax_proj_size_min Minimum valid project size when using patchmax. <\emph{numeric}> 
 #' @param patchmax_sample_frac Percent of stands to search. <\emph{numeric 0-1}> 
-#' @param patchmax_st_seed Specific stand IDs to search. <\emph{numeric/character vector}> 
+#' @param patchmax_sample_seed RNG seed used for random sampling <\emph{numeric or NULL}> 
 #' @param patchmax_SDW Stand distance weight parameter. Default is 0.5. <\emph{numeric 0-1}> 
 #' @param patchmax_EPW Stand exclusion weight parameter. Default is 0.5. <\emph{numeric 0-1}> 
 #'
@@ -92,7 +92,7 @@ run <- function(
     patchmax_proj_size = Inf,
     patchmax_proj_size_min = -Inf,
     patchmax_sample_frac = 0.1,
-    patchmax_st_seed = NULL,
+    patchmax_sample_seed = NULL,
     patchmax_SDW = 0.5,
     patchmax_EPW = 0.5
     ) {
@@ -234,7 +234,8 @@ run <- function(
             P_constraint = P_constraint,
             P_constraint_max_value = proj_target_value,
             P_constraint_min_value = proj_target_min_value,
-            sample_frac = patchmax_sample_frac
+            sample_frac = patchmax_sample_frac,
+            sample_seed = patchmax_sample_seed
           )
 
           projects_selected_y <- patchmax_out[[1]] %>%
