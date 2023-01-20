@@ -265,8 +265,13 @@ write_config_file <- function(...) {
 #' @param json_filename character string of forsys json config
 
 load_json_config <- function(json_filename){
-  json_data = readLines(json_filename) %>%
-    jsonlite::fromJSON()
+  
+  # ignore spurious warning about incomplete final line in json file
+  suppressWarnings({
+    json_data = readLines(json_filename) %>% jsonlite::fromJSON()
+  })
+  
+  # assign each json item to its respective paramter in the parent environment
   for(i in names(json_data)){
     assign(i, json_data[[i]], envir = parent.frame())
   }
