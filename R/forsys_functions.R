@@ -217,7 +217,7 @@ select_stands_by_group <- function(
   dt[, selected := 0]
   
   # order by group and descending priority
-  dt <- dt[order(dt[,get(grouped_by)], -dt[,get(prioritize_by)])]
+  dt <- dt[order(dt[, get(grouped_by)], -dt[, get(prioritize_by)])]
 
   # while unselected stands consider for treatment remain...
   while(sum(dt[,considerForTreatment == 1 & selected == 0], na.rm=T) != 0){
@@ -229,17 +229,13 @@ select_stands_by_group <- function(
     dt[, current_target := 0]
     
     # sum selected stands by group
-    dt[selected == 1, 
-       current_target := sum(get(constrain_by), na.rm=T), 
-       by = list(get(grouped_by))]
+    dt[selected == 1, current_target := sum(get(constrain_by), na.rm=T), by = list(get(grouped_by))]
     
     # within each group, set current target to constraint target minus current target
     dt[, current_target := get(constraint_limit) - max(current_target, na.rm=T), by=list(get(grouped_by))]
     
     # calculate the cumulative sum for the constrained variable for considered by unselected stands
-    dt[considerForTreatment == 1 & selected == 0, 
-       cumulative_tally_by := cumsum(get(constrain_by)), 
-       by=list(get(grouped_by))]
+    dt[considerForTreatment == 1 & selected == 0, cumulative_tally_by := cumsum(get(constrain_by)), by=list(get(grouped_by))]
     
     # select stands for unselected stands where the cumulative tally is less than the current target
     dt[considerForTreatment == 1 & selected == 0 & cumulative_tally_by <= current_target, selected := 1]
@@ -251,8 +247,7 @@ select_stands_by_group <- function(
     dt[, current_target := get(constraint_limit) - max(current_target, na.rm=T), by=list(get(grouped_by))]
     
     # set consideration to 0 constraint is greater than the current target
-    dt[considerForTreatment == 1 & selected == 0, 
-       considerForTreatment := ifelse(get(constrain_by) > current_target, 0, 1 )]
+    dt[considerForTreatment == 1 & selected == 0, considerForTreatment := ifelse(get(constrain_by) > current_target, 0, 1 )]
   }
   
   # select and return selected stands
