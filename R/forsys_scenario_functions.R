@@ -163,20 +163,6 @@ write_save_file <- function(
 write_save_file_helper <- function(input, r_data) {
   weight_values <- forsys::weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
 
-  # if (input$use_au) {
-  #   nesting = TRUE
-  #   nesting_group_by = input$au_id_field
-  #   nesting_target = input$au_target_field
-  #   nesting_unit = input$au_unit_field
-  #   au_target_multiplier = input$au_target_multiplier
-  # } else {
-  #   nesting = FALSE
-  #   nesting_group_by = NULL
-  #   nesting_target = NULL
-  #   nesting_unit = NULL
-  #   au_target_multiplier = 1.0
-  # }
-
   nesting <- FALSE
   nesting_group_by <- NULL
   nesting_target <- NULL
@@ -194,16 +180,6 @@ write_save_file_helper <- function(input, r_data) {
   } else {
     stand_threshold <- NULL
   }
-
-  # WIP: alternative specification for writing scenario config to JSON
-  # vector_data <- NULL
-  # for (i in 1:length(names(input))) {
-  #   print(i)
-  #   nm = names(input)[i]
-  #   val = input[[nm]]
-  #   vector_data[[i]] <- ifelse(is.null(val), NULL, val)
-  #   names(vector_data)[[i]] <- nm
-  # }
 
   json <- write_save_file(
     scenario_name = input$scenario_name,
@@ -276,34 +252,3 @@ load_json_config <- function(json_filename){
     assign(i, json_data[[i]], envir = parent.frame())
   }
 }
-
-# #' Process JSON within ForSys
-# #'
-# #' @param json_filename TODO
-# #'
-# process_json_config <- function(json_filename){
-
-#   load_json_config(json_filename)
-
-#   # prepare forsys fields not otherwise saved in json
-#   weight_values <- forsys::weight_values_to_string(input$weight_min, input$weight_max, input$weight_step)
-#   project_filter <- forsys::parse_thresholds(proj_threshold_field, proj_threshold_op, proj_threshold_value)
-
-#   forsys::run(stand_id)
-#   # scenario_name = input$scenario_name
-#   # stand_data_filename = r_data$data_path
-#   # scenario_priorities = input$priorities_fields
-#   # scenario_weighting_values = weight_values
-#   # scenario_output_fields = input$outputs_select
-#   # scenario_output_grouping_fields = input$output_grouping_fields
-#   # stand_id_field = input$stand_id_field
-#   stand_pcp_spm = input$priorities_fields
-#   stand_filter = stand_filter
-#   # proj_id_field = input$planning_unit_id_field
-#   proj_thresholds = project_filter
-#   # proj_fixed_target = input$proj_fixed_target
-#   # proj_target_field = input$proj_target_field
-#   # proj_target_value = input$proj_target_value
-#   # overwrite_output = input$overwrite_output_chk
-#   run_with_shiny = TRUE
-# }

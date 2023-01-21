@@ -107,6 +107,70 @@ build_static_projects <- function(
   ))
 }
 
+build_dynamic_projects <- function(
+    stands, 
+    proj_target_field, 
+    stand_id_field, 
+    proj_id_field,
+    stand_area_field, 
+    stand_threshold,
+    patchmax_proj_size, 
+    patchmax_proj_size_min,
+    patchmax_proj_number,
+    proj_target_value, 
+    proj_target_min_value, 
+    patchmax_SDW, 
+    patchmax_EPW, 
+    patchmax_sample_frac, 
+    patchmax_sample_seed
+  ){
+  
+  library(patchmax)
+  geom <- sf::st_as_sf(stands)
+  
+  if (!is.null(proj_target_field)) { 
+    P_constraint = pull(geom, !!proj_target_field)
+  } else {
+    P_constraint = NULL
+    proj_target_value = Inf
+  }
+  
+  patchmax_out <- patchmax::simulate_projects(
+    geom = geom,
+    St_id = pull(geom, !!stand_id_field), 
+    St_area = pull(geom, !!stand_area_field), 
+    St_objective = pull(geom, weightedPriority), 
+    P_size = patchmax_proj_size, 
+    P_size_min  = patchmax_proj_size_min, 
+    P_number = patchmax_proj_number,
+    St_threshold = stand_threshold,
+    SDW = patchmax_SDW,
+    EPW = patchmax_EPW,
+    P_constraint = P_constraint,
+    P_constraint_max_value = proj_target_value,
+    P_constraint_min_value = proj_target_min_value,
+    sample_frac = patchmax_sample_frac,
+    sample_seed = patchmax_sample_seed
+  )
+  
+  projects_selected <- patchmax_out[[1]] %>%
+    rename(treatment_rank = Project, weightedPriority = Objective) %>%
+    mutate(!!proj_id_field := treatment_rank)
+  
+  stands_selected <- patchmax_out[[2]] %>%
+    select(!!stand_id_field := Stands,
+           !!proj_id_field := Project,
+           treatment_rank := Project,
+           DoTreat := DoTreat,
+           weightedPriority = Objective) %>%
+    mutate(selected = 1)
+  
+  return(list(
+    projects_selected, 
+    stands_selected
+    ))
+} 
+
 #' Threshold string statement parser
 #'
 #' @param stands Dataframe containing stand data
@@ -292,8 +356,6 @@ weight_priorities <- function(numPriorities, weights = c("1 1 1")){
   
 }
 
-
-
 #' Create a dataset by subsetting subunits that were selected in the
 #' selectSubunits function and grouping the data by a larger subunit (usually
 #' planning areas).
@@ -319,7 +381,6 @@ create_grouped_dataset <- function(data, grouping_vars, summing_vars) {
   
   return(data)
 }
-
 
 #' Summarize project data
 #'
@@ -356,7 +417,7 @@ summarize_projects <- function(
       by = stand_id_field, suffix = c("", ".dup"))
   
   # summarize selected stands by grouping fields and tag with ETrt_ prefix
-  projects_etrt_out_w <- selected_stands %>%
+  projects_etrt_out <- selected_stands %>%
     filter(DoTreat == 1) %>%
     create_grouped_dataset(
       grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
@@ -364,14 +425,14 @@ summarize_projects <- function(
     rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields)
   
   # summarize available stands by grouping fields and tag with ESum_ prefix
-  projects_esum_out_w <- selected_stands %>%
+  projects_esum_out <- selected_stands %>%
     create_grouped_dataset(
       grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields)),
       summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
     rename_with(.fn = ~ paste0("ESum_", .x), .cols = scenario_output_fields)
   
   # rank projects
-  projects_rank <- projects_etrt_out_w %>%
+  projects_rank <- projects_etrt_out %>%
     group_by(!!proj_id_field := get(proj_id_field)) %>%
     summarize_at(vars(ETrt_weightedPriority), sum) %>%
     arrange(-ETrt_weightedPriority) %>%
@@ -379,15 +440,13 @@ summarize_projects <- function(
     select(!!proj_id_field, treatment_rank)
   
   # join etrt w/ esum outputs
-  projects_etrt_esum_out_w <- projects_etrt_out_w %>%
-    inner_join(projects_esum_out_w, 
-               by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
+  projects_etrt_esum_out <- projects_etrt_out %>%
+    inner_join(projects_esum_out, by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
     left_join(projects_rank, by = proj_id_field) %>%
     arrange(ETrt_YR, -ETrt_weightedPriority) %>%
     replace(is.na(.), 0)
   
-  return(projects_etrt_esum_out_w)
-  
+  return(projects_etrt_esum_out)
 }
 
 #' Combine priorities
