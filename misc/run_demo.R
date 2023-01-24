@@ -13,6 +13,16 @@ library(future)
 test_forest <- forsys::test_forest
 head(test_forest)
 
+# example running forsys from json config file
+jsonlite::fromJSON('configs/patchmax_config.json')
+# file.edit("configs/patchmax_config.json")
+
+forsys::run(config_file = 'configs/testconfig.json', stand_data = st_drop_geometry(test_forest))
+forsys::run(config_file = 'configs/static_config.json', stand_data = st_drop_geometry(test_forest))
+
+future::plan(future::multisession, workers=8)
+forsys::run(config_file = 'configs/patchmax_config.json', stand_data = test_forest, patchmax_sample_seed = 123)
+
 combine_priorities(
   stands = test_forest, 
   fields = c('priority1','priority2','priority3'), 
@@ -27,22 +37,6 @@ test_forest <- forsys::test_forest %>%
   calculate_pcp(fields = c("priority1","priority2"), availability_txt = 'mosaic1 == 3') %>%
   combine_priorities(fields = c("priority1_SPM","priority2_SPM"))
 
-# plot the treatment units
-# plot(test_forest, border=NA, max.plot=16)
-
-# example for exploring two priorities
-stands <- test_forest %>% st_drop_geometry()
-
-# example running forsys from json config file
-jsonlite::fromJSON('configs/patchmax_config.json')
-
-file.edit("configs/patchmax_config.json")
-
-forsys::run(config_file = 'configs/static_config.json', stand_data = st_drop_geometry(test_forest))
-plan(multisession, workers=8)
-forsys::run(config_file = 'configs/patchmax_config.json', stand_data = test_forest, patchmax_sample_seed = 123)
-
-forsys::run(config_file = 'misc/test_static_config_2.json')
 
 # run forsys using specified parameters (see help for complete list)
 # prioritize priority1 AND priority2 within predefined boundaries (proj_id)
@@ -51,7 +45,7 @@ forsys::run(config_file = 'misc/test_static_config_2.json')
 outputs = forsys::run(
   return_outputs = TRUE,
   write_outputs = TRUE,
-  stand_data = stands,
+  stand_data = st_drop_geometry(test_forest),
   scenario_name = "run_static_test_2",
   stand_id_field = "stand_id",
   proj_id_field = "proj_id",

@@ -70,7 +70,7 @@ run <- function(
     # annual targets
     planning_years = 1,
     annual_target_field = NULL,
-    annual_target = NA,
+    annual_target = NULL,
     # scenario variables
     scenario_name = NULL,
     scenario_priorities = NULL,
@@ -170,18 +170,6 @@ run <- function(
       ## create the weighted priorities.
       message(paste0("Weighting scenario ", w, " of ", nrow(weights), ": ", paste0(weights[w,], collapse = '-')))
 
-      # **REQ DATA** stands **REQ PARAMS** proj_id_field, scenario_priorities,
-      # weights **REQ_VARS** w
-      
-      # reset key fields
-      stands <- stands %>%
-        mutate(
-          DoTreat = 0,
-          selected = 0,
-          proj_target_treated = 0,
-          weightedPriority = 0
-        ) 
-      
       # calculate objective by weighting priorities
       stands <- stands %>%
         combine_priorities(
@@ -200,7 +188,6 @@ run <- function(
       stands_available <- stands
       stands_selected <- NULL
       stands_burned <- NULL
-
       
       # 2. SELECT STANDS -------------------------------------------------------
 
@@ -224,6 +211,8 @@ run <- function(
             patchmax_proj_number = patchmax_proj_number,
             proj_target_value = proj_target_value, 
             proj_target_min_value = proj_target_min_value, 
+            proj_ceiling_field = annual_target_field,
+            proj_ceiling = annual_target,
             patchmax_SDW = patchmax_SDW, 
             patchmax_EPW = patchmax_EPW, 
             patchmax_sample_frac = patchmax_sample_frac, 
@@ -248,55 +237,28 @@ run <- function(
             proj_target_min_value = proj_target_min_value,
             stand_threshold = stand_threshold,
             proj_number = NULL,
-            proj_area_ceiling = annual_target
+            proj_ceiling_field = annual_target_field,
+            proj_ceiling = annual_target
           )
 
           projects_selected_y <- patchstat_out[[1]]
           stands_selected_y <- patchstat_out[[2]]
         }
-
-        
-        # 4. REDUCE SELECTION BASED ON ANNUAL LIMIT ----------------------------
-        
-        if(is.na(annual_target)){
-          
-          # assign all projects to year one if annual target is NULL
-          stands_selected_y <- stands_selected_y %>% mutate(ETrt_YR = 1)
-          projects_scheduled_y <- projects_selected_y %>% mutate(ETrt_YR = 1)
-          
-        } else {
-          
-          # set annual target
-          annual_target_i = annual_target[y]
-          if (is.na(annual_target_i)) {
-            message("Assuming unlimited annual target")
-            annual_target_i = Inf
-          }
-          
-          # assign project year based on annual target(s)
-          stands_selected_y <- stands_selected_y %>% inner_join(stand_id_field, ETrt_YR)
-          projects_scheduled_y <- projects_selected_y %>%
-            mutate(ETrt_YR = cumsum(get(annual_target_field)) %/% !!annual_target_i + 1) %>%
-            mutate(ETrt_YR = ifelse(weightedPriority == 0, NA, ETrt_YR)) %>%
-            filter(ETrt_YR == 1) %>%
-            mutate(ETrt_YR = !!y)
-        }
-        
-        # accumulate stands selected (and treated) in current year
-        stands_selected <- stands_selected_y %>% bind_rows(stands_selected)
         
         # 5. UPDATE AVAILABILITY BASED ON SELECTION ----------------------------
         
-        # remove stands or project areas that were treated from available stands
-        x1 <- unique(stands_selected_y[[stand_id_field]])
-        stands_available <- stands_available %>% filter(.data[[stand_id_field]] %in% x1 == FALSE)
-
         # print yearly treatment
-        s_n <- stands_selected_y %>% filter(ETrt_YR == y, DoTreat == 1) %>% pull(stand_id_field) %>% n_distinct()
-        p_n <- stands_selected_y %>% filter(ETrt_YR == y, DoTreat == 1) %>% pull(treatment_rank) %>% n_distinct()
+        s_n <- stands_selected_y %>% filter(DoTreat == 1) %>% pull(stand_id_field) %>% n_distinct()
+        p_n <- stands_selected_y %>% filter(DoTreat == 1) %>% pull(treatment_rank) %>% n_distinct()
         message(paste0(s_n, ' stands (', round(s_n/nrow(stands) * 100, 2), '% of total) treated in ',
                        p_n, ' projects (total objective: ', round(sum(stands_selected_y$weightedPriority),2), ')'))
-
+        
+        # accumulate stands selected (and treated) in current year
+        stands_selected <- bind_rows(stands_selected, stands_selected_y)
+        
+        # remove stands or project areas that were treated from available stands
+        stands_available <- stands_available %>% 
+          filter(get(stand_id_field) %in% unique(stands_selected_y[[stand_id_field]]) == FALSE)
         
         # 6. BEGIN ANNUAL FIRES ------------------------------------------------
 
@@ -336,7 +298,7 @@ run <- function(
       
       # tag stands with specific scenario attributes
       stands_out_w <- stands_selected %>% 
-        select(!!stand_id_field, !!proj_id_field, ETrt_YR, DoTreat, selected)
+        select(!!stand_id_field, !!proj_id_field, DoTreat, selected)
 
       # record fire information if provided
       if (run_with_fire & !is.null(fire_intersect_table)) {
@@ -379,7 +341,7 @@ run <- function(
 
       # tag project output with treatment rank, scenario_write_tags, priority weights
       projects_out_w <- summary_out %>%
-        group_by(!!proj_id_field := get(proj_id_field), ETrt_YR) %>%
+        group_by(!!proj_id_field := get(proj_id_field)) %>%
         summarize_if(is.numeric, sum) %>%
         arrange(treatment_rank) %>%
         bind_cols(scenario_write_tags) %>%
