@@ -11,17 +11,22 @@ library(dplyr)
 library(future)
 
 test_forest <- forsys::test_forest
-head(test_forest)
+data(test_fire)
+year_df <- data.frame(year = unique(fire_intersect$year))
+year_df$new_year <- sample(1:100, nrow(year_df), T)
+fire_intersect$year <- year_df$new_year[match(fire_intersect$year, year_df$year)]
 
 # example running forsys from json config file
 jsonlite::fromJSON('configs/patchmax_config.json')
 # file.edit("configs/patchmax_config.json")
 
-forsys::run(config_file = 'configs/testconfig.json', stand_data = st_drop_geometry(test_forest))
 forsys::run(config_file = 'configs/static_config.json', stand_data = st_drop_geometry(test_forest))
+forsys::run(config_file = 'configs/static_fire_config.json', 
+            stand_data = st_drop_geometry(test_forest),
+            fire_intersect_table = fire_intersect)
 
 future::plan(future::multisession, workers=8)
-forsys::run(config_file = 'configs/patchmax_config.json', stand_data = test_forest, patchmax_sample_seed = 123)
+forsys::run(config_file = 'configs/patchmax_config.json', stand_data = test_forest)
 
 combine_priorities(
   stands = test_forest, 

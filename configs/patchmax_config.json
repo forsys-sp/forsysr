@@ -10,12 +10,14 @@
   "scenario_weighting_values": ["1 1 1"],
   "scenario_output_fields": ["priority1", "priority2",  "priority3"],
   "scenario_output_grouping_fields": ["proj_id"],
-  "patchmax_proj_number": [2],
+  "patchmax_proj_number": [3],
   "patchmax_proj_size": [25000],
   "proj_fixed_target": [true],
   "proj_target_field": ["priority4"],
-  "proj_target_value": [10],
+  "proj_target_value": [100],
   "patchmax_sample_frac": [0.1],
   "patchmax_SDW": [0.5],
-  "patchmax_EPW": [0.5]
+  "patchmax_EPW": [0.5],
+  "annual_target_field": ["area_ha"],
+  "annual_target": [100000]
 }

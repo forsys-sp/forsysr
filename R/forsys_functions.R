@@ -16,7 +16,7 @@
 #' @importFrom dplyr rename select mutate arrange left_join inner_join
 #' @importFrom tidyr drop_na
 #'
-build_static_projects <- function(
+build_preset_projects <- function(
     stands,
     stand_id_field,
     stand_area_field,
@@ -136,6 +136,7 @@ build_dynamic_projects <- function(
     proj_ceiling,
     patchmax_SDW, 
     patchmax_EPW, 
+    patchmax_exclusion_limit,
     patchmax_sample_frac, 
     patchmax_sample_seed
   ){
@@ -163,6 +164,7 @@ build_dynamic_projects <- function(
     P_ceiling_max = proj_ceiling,
     SDW = patchmax_SDW,
     EPW = patchmax_EPW,
+    exclusion_limit = patchmax_exclusion_limit,
     P_constraint = P_constraint,
     P_constraint_max_value = proj_target_value,
     P_constraint_min_value = proj_target_min_value,
@@ -364,12 +366,14 @@ weight_priorities <- function(numPriorities, weights = c("1 1 1")){
 
   return(uniqueWeightCombinations)
   
-  # DRAFT FUNCTION FOR PERMUTING WEIGHTS
+  # # DRAFT FUNCTION FOR PERMUTING WEIGHTS
   # func <- function(x, s=3) log10(x/(1-x))/s
-  # func(seq(0,1,.01), 2) %>% plot(type='l')
-  # 10^func(seq(0.1,.99,.1), 2)
-  # func(seq(0,1,.01), 1.33) %>% points(type='l')
-  # func(seq(0,1,.01), 5) %>% points(type='l')
+  # 
+  # # plot differences in S
+  # num_seq <- seq(0,1,.01)
+  # plot(func(num_seq, s=2), type='l', col='red')
+  # points(func(num_seq, s=1.33), type='l', col='green')
+  # points(func(num_seq, s=5), type='l', col='blue')
   
 }
 
@@ -543,3 +547,24 @@ filter_stands <- function(stands, filter_txt = NULL, drop = FALSE, verbose = TRU
   })
   return(stands)
 }
+
+
+# ---------------------------
+
+shuffle_projects <- function(projects){
+  message('!! Randomizing projects')
+  
+  shuffled_weights <- projects_selected_y %>%
+    filter(treatment_rank %>% is.na == FALSE) %>%
+    mutate(weightedPriority = sample(weightedPriority)) %>%
+    select(proj_id_field, weightedPriority)
+  
+  projects_selected_y <- projects_selected_y %>% select(-weightedPriority) %>%
+    left_join(shuffled_weights, by = proj_id_field) %>%
+    arrange(-weightedPriority) %>%
+    mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA)) %>%
+    tidyr::drop_na(treatment_rank)
+  
+  return(projects_selected_y)
+}
+

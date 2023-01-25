@@ -10,5 +10,7 @@
   "scenario_output_grouping_fields": ["mosaic2"],
   "proj_fixed_target": [false],
   "proj_target_field": ["area_ha"],
-  "proj_target_value": [0.2]
+  "proj_target_value": [0.2],
+  "annual_target_field": ["area_ha"],
+  "annual_target": [10000]
 }

@@ -1,15 +1,20 @@
 {
   "scenario_name": ["json_static_test"],
   "stand_id_field": ["stand_id"],
-  "stand_data_filename": ["data/test_forest.csv"],
   "proj_id_field": ["proj_id"],
   "stand_area_field": ["area_ha"],
   "scenario_priorities": ["priority3"],
   "stand_threshold": ["threshold1 == 1"],
   "global_threshold": ["mosaic2 %in% c(2,3)"],
-  "scenario_output_fields": ["area_ha", "priority1", "priority2", "priority3", "priority4"],
+  "scenario_output_fields": ["area_ha", "priority1", "priority2"],
   "scenario_output_grouping_fields": ["mosaic2"],
   "proj_fixed_target": [false],
   "proj_target_field": ["area_ha"],
-  "proj_target_value": [0.2]
+  "run_with_fire": [true],
+  "proj_target_value": [0.2],
+  "planning_years": [10],
+  "annual_target_field": ["area_ha"],
+  "annual_target": [10000],
+  "fire_stand_id_field": ["stand_id"],
+  "fire_year_field": ["year"]
 }

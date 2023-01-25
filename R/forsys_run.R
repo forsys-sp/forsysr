@@ -42,6 +42,7 @@
 #' @param patchmax_sample_seed RNG seed used for random sampling <\emph{numeric or NULL}> 
 #' @param patchmax_SDW Stand distance weight parameter. Default is 0.5. <\emph{numeric 0-1}> 
 #' @param patchmax_EPW Stand exclusion weight parameter. Default is 0.5. <\emph{numeric 0-1}> 
+#' @param patchmax_exclusion_limit Max percent of excluded stands in valid patch. <\emph{numeric 0-1}>
 #'
 #' @return list with selected stands, project summary, project summary by subgroup
 #'
@@ -85,8 +86,10 @@ run <- function(
     # fire arguments
     fire_intersect_table = NULL,
     fire_intersect_table_filename = NULL,
-    fire_dynamic_forsys = FALSE,
+    fire_stand_id_field = NULL,
+    fire_year_field = NULL,
     fire_random_projects = FALSE,
+    fire_dynamic_forsys = FALSE,
     # patchmax arguments
     patchmax_proj_number = 1,
     patchmax_proj_size = Inf,
@@ -94,7 +97,8 @@ run <- function(
     patchmax_sample_frac = 0.1,
     patchmax_sample_seed = NULL,
     patchmax_SDW = 0.5,
-    patchmax_EPW = 0.5
+    patchmax_EPW = 0.5,
+    patchmax_exclusion_limit = 0.5
     ) {
   
     # 0. SETUP -----------------------------------------------------------------
@@ -146,8 +150,10 @@ run <- function(
     # Load fire data
     if (run_with_fire & !is.null(fire_intersect_table)) {
       fires <- fire_intersect_table
+      fires <- fires %>% mutate(!!fire_stand_id_field := as.character(get(fire_stand_id_field)))
       } else if (run_with_fire & !is.null(fire_intersect_table_filename)) {
       fires <- data.table(foreign::read.dbf(fire_intersect_table_filename))
+      fires <- fires %>% mutate(!!fire_stand_id_field := as.character(get(fire_stand_id_field)))
     }
 
     # filter stands by availability
@@ -194,7 +200,7 @@ run <- function(
       for (y in 1:planning_years) { # BEGIN YEAR LOOP
 
         # print planning year
-        message(paste('Starting year', y))
+        message(paste('\nStarting year', y,'\n----------------'))
 
         # run with dynamic planning areas
         if (run_with_patchmax == TRUE) {
@@ -215,6 +221,7 @@ run <- function(
             proj_ceiling = annual_target,
             patchmax_SDW = patchmax_SDW, 
             patchmax_EPW = patchmax_EPW, 
+            patchmax_exclusion_limit = patchmax_exclusion_limit,
             patchmax_sample_frac = patchmax_sample_frac, 
             patchmax_sample_seed = patchmax_sample_seed
           )
@@ -226,7 +233,7 @@ run <- function(
         # run with predetermined planning areas
         if (run_with_patchmax == FALSE) {
 
-          patchstat_out <- build_static_projects(
+          patchstat_out <- build_preset_projects(
             stands = stands_available,
             stand_id_field = stand_id_field,
             stand_area_field = stand_area_field,
@@ -250,8 +257,9 @@ run <- function(
         # print yearly treatment
         s_n <- stands_selected_y %>% filter(DoTreat == 1) %>% pull(stand_id_field) %>% n_distinct()
         p_n <- stands_selected_y %>% filter(DoTreat == 1) %>% pull(treatment_rank) %>% n_distinct()
-        message(paste0(s_n, ' stands (', round(s_n/nrow(stands) * 100, 2), '% of total) treated in ',
-                       p_n, ' projects (total objective: ', round(sum(stands_selected_y$weightedPriority),2), ')'))
+        o_s <- sum(stands_selected_y$weightedPriority)
+        message(paste0('Treating ', s_n, ' stands (', round(s_n/nrow(stands) * 100, 2), '% of total) treated; ',
+                       p_n, ' projects (total obj: ', round(o_s, 2), ', avg/prj: ', round(o_s/p_n, 2), ')'))
         
         # accumulate stands selected (and treated) in current year
         stands_selected <- bind_rows(stands_selected, stands_selected_y)
@@ -262,32 +270,27 @@ run <- function(
         
         # 6. BEGIN ANNUAL FIRES ------------------------------------------------
 
-        if (run_with_fire == TRUE) { # BEGIN FIRE LOOP
+        if (run_with_fire) { # BEGIN FIRE LOOP
           
-          # fields to retain in burned_stands data
-          fire_select_fields <- c(stand_id_field, proj_id_field, ETrt_YR, FIRE_YR, 
-                             FIRE_NUMBER, treatment_rank, weightedPriority)
+          # FIRE: randomize project rank if desired (research specific task)
+          if(fire_random_projects){
+            projects_selected_y <- shuffle_projects(projects_selected_y)
+          }
           
           # record stands that burned this year
-          stands_burned_y <- stands %>%
-            left_join(projects_scheduled_y, by=proj_id_field) %>%
-            left_join(stands_selected %>% filter(DoTreat == 1) %>% select(stand_id_field), by=stand_id_field) %>%
-            left_join(fires %>% select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field) %>%
-            select(any_of(fire_select_fields)) %>% 
-            filter(FIRE_YR == !!y)
-        
-          # 7. UPDATE AVAILABILITY BASED ON FIRE -------------------------------
+          stands_burned_y <- fires %>% filter(get(fire_year_field) == y)
           
           # report yearly fire
-          b_n <- stands_burned_y %>% filter(FIRE_YR == y) %>% pull(stand_id_field) %>% n_distinct()
-          message(paste0(b_n, ' (', round(b_n/nrow(stands) * 100, 2), '%) stands burned'))
+          b_n <- stands_burned_y %>% pull(stand_id_field) %>% n_distinct()
+          message(paste0('Burning ', b_n, ' (', round(b_n/nrow(stands) * 100, 2), '%) stands burned in year ', y))
 
           # accumulate stands burned during year
-          stands_burned <- stands_burned_y %>% bind_rows(stands_burned)
+          stands_burned <- bind_rows(stands_burned, stands_burned_y)
           
           # remove burnt stands from future selection only if fire_dynamic_forsys is TRUE
-          if (fire_dynamic_forsys == TRUE) {
-            stands_available <- stands_available %>% filter(.data[[stand_id_field]] %in% stands_burned[[stand_id_field]] == FALSE)
+          if (fire_dynamic_forsys) {
+            stands_available <- stands_available %>% 
+              filter(get(stand_id_field) %in% pull(stands_burned, get(stand_id_field)) == FALSE)
           }
 
         } # END FIRE LOOP
@@ -301,20 +304,18 @@ run <- function(
         select(!!stand_id_field, !!proj_id_field, DoTreat, selected)
 
       # record fire information if provided
-      if (run_with_fire & !is.null(fire_intersect_table)) {
-        stands_out_w <- stands_out_w %>%
-          left_join(fires %>% select(stand_id_field, FIRE_YR, FIRE_NUMBER), by=stand_id_field)
+      if (run_with_fire) {
+        stands_out_w <- stands_out_w %>% left_join(fires %>% select(!!stand_id_field, !!fire_year_field), by=stand_id_field)
       }
-
-      # add scenario tag to output
-      stands_out_w <- stands_out_w %>% bind_cols(scenario_write_tags)
 
       # append area to output fields if available
       scenario_output_fields <- unique(c(stand_area_field, scenario_output_fields))
       
       # add scenario output fields to stand output
-      join_y <- stands %>% select(!!stand_id_field, any_of(scenario_output_fields))
-      stands_out_w <- left_join(stands_out_w, join_y, by = stand_id_field)
+      stands_out_w <- left_join(
+        stands_out_w, 
+        select(stands, !!stand_id_field, any_of(scenario_output_fields)), 
+        by = stand_id_field)
 
       # assign weight scenario values to stand out out
       stands_out_w[, paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities)] = weights[w,]
@@ -326,8 +327,7 @@ run <- function(
         stand_id_field = stand_id_field,
         proj_id_field = proj_id_field,
         scenario_output_grouping_fields = scenario_output_grouping_fields,
-        scenario_output_fields = scenario_output_fields
-      )
+        scenario_output_fields = scenario_output_fields)
 
       # tag weighting scenario
       priority_write_tags <- as.data.frame(weights[w,]) %>%
@@ -335,7 +335,6 @@ run <- function(
 
       # tag subset output with treatment rank, scenario_write_tags, priority weights
       subset_out_w <- summary_out %>%
-        arrange(treatment_rank) %>%
         bind_cols(scenario_write_tags) %>%
         bind_cols(priority_write_tags)
 
@@ -343,7 +342,6 @@ run <- function(
       projects_out_w <- summary_out %>%
         group_by(!!proj_id_field := get(proj_id_field)) %>%
         summarize_if(is.numeric, sum) %>%
-        arrange(treatment_rank) %>%
         bind_cols(scenario_write_tags) %>%
         bind_cols(priority_write_tags)
       
