@@ -81,6 +81,7 @@ calculate_pcp <- function(stands, fields=NULL, availability_txt=NULL){
   return(stands)
 }
 
+
 load_R_config <- function(config_file){
   source(config_file, local = TRUE)
   for (i in ls()) {
@@ -99,6 +100,36 @@ load_json_config <- function(json_filename) {
   }
 }
 
+load_stand_data <- function(data, filename, id_field){
+  if (!is.null(data)) {
+    stands <- data 
+    stands <- stands %>% mutate(!!id_field := as.character(get(id_field)))
+  } else if (!is.null(filename)) {
+    stands <- load_dataset(path_to_file = filename)
+    stands <- stands %>% mutate(!!id_field := as.character(get(id_field)))
+  } else {
+    stop("Stand data required")
+  }
+  return(stands)
+}
+
+load_fire_data <- function(data, filename, id_field, year_field){
+  if (!is.null(data)) {
+    fires <- data
+    fires <- fires %>% mutate(!!id_field := as.character(get(id_field)))
+  } else if (!is.null(filename)) {
+    fires <- load_dataset(filename)
+    fires <- fires %>% mutate(!!id_field := as.character(get(id_field)))
+  }
+  # remove reburns from fire data
+  fires_out <- fires %>% 
+    group_by(!!sym(id_field)) %>% 
+    arrange(!!sym(year_field)) %>%
+    slice_head(n = 1)
+  return(fires_out)
+}
+
+
 #' Load the input dataset. Supports both CSV and DBF.
 #'
 #' @param path_to_file Path to an input dataset
@@ -114,18 +145,18 @@ load_dataset <- function(path_to_file) {
   file_type <- stringr::str_sub(path_to_file, start= -3)
   message("Loading Dataset")
   if (file_type == "dbf") {
-    stand_data <- foreign::read.dbf(path_to_file)
+    data <- foreign::read.dbf(path_to_file)
     message("Read stand file from DBF")
   } else if (file_type == "csv") {
-    stand_data <- data.table::fread(path_to_file, header = TRUE, data.table = FALSE)
+    data <- data.table::fread(path_to_file, header = TRUE, data.table = FALSE)
     message("Read stand file from CSV")
   } else if (file_type == "shp") {
-    stand_data <- sf::st_read(path_to_file)
+    data <- sf::st_read(path_to_file)
     message("Read stand file from SHP")
   } else {
     message('Input format not recognized')
   }
-  return(stand_data)
+  return(data)
 }
 
 

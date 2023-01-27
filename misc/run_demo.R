@@ -20,13 +20,27 @@ fire_intersect$year <- year_df$new_year[match(fire_intersect$year, year_df$year)
 jsonlite::fromJSON('configs/patchmax_config.json')
 # file.edit("configs/patchmax_config.json")
 
-forsys::run(config_file = 'configs/static_config.json', stand_data = st_drop_geometry(test_forest))
-forsys::run(config_file = 'configs/static_fire_config.json', 
+a <- forsys::run(config_file = 'configs/static_config.json', 
+                 stand_data = st_drop_geometry(test_forest), 
+                 return_outputs = T)
+a <- forsys::run(config_file = 'configs/static_multi_priority_config.json', 
+                 stand_data = st_drop_geometry(test_forest), 
+                 return_outputs = T)
+a <- forsys::run(config_file = 'configs/static_fire_config.json', 
             stand_data = st_drop_geometry(test_forest),
-            fire_intersect_table = fire_intersect)
-
+            fire_intersect_table = fire_intersect,
+            return_outputs = T, fire_dynamic_forsys = T)
+crit <- a[[1]]$ETrt_YR > a[[1]]$Fire_YR
+crit[is.na(crit)] <- FALSE
+a[[1]][crit,]
 future::plan(future::multisession, workers=8)
-forsys::run(config_file = 'configs/patchmax_config.json', stand_data = test_forest)
+b <- forsys::run(config_file = 'configs/patchmax_config.json', 
+            stand_data = test_forest,
+            fire_intersect_table = fire_intersect, 
+            run_with_fire = T, 
+            planning_years = 3, 
+            fire_year_field = 'year', 
+            return_outputs = T)
 
 combine_priorities(
   stands = test_forest, 

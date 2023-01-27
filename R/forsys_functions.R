@@ -348,14 +348,16 @@ select_stands_by_group <- function(
 #' 
 #' @importFrom gtools permutations 
 #'
-weight_priorities <- function(numPriorities, weights = c("1 1 1")){
+weight_priorities <- function(numPriorities, weights = c(1, 1, 1)){
   
   if(numPriorities == 1){
     return(data.frame(1))
   }
   
   # process weights string
-  weights <- strtoi(unlist(strsplit(weights, " ")))
+  if(is.character(weights)){
+    weights <- strtoi(unlist(strsplit(weights, " ")))
+  }
   weights <- seq(weights[1], weights[2], weights[3])
   
   # Updates by Luke Wilkerson to incorporate multiple priorities.
@@ -374,7 +376,6 @@ weight_priorities <- function(numPriorities, weights = c("1 1 1")){
   # plot(func(num_seq, s=2), type='l', col='red')
   # points(func(num_seq, s=1.33), type='l', col='green')
   # points(func(num_seq, s=5), type='l', col='blue')
-  
 }
 
 #' Create a dataset by subsetting subunits that were selected in the
@@ -445,13 +446,6 @@ summarize_projects <- function(
       summing_vars = scenario_output_fields) %>%
     rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields)
   
-  # summarize available stands by grouping fields and tag with ESum_ prefix
-  projects_esum_out <- selected_stands %>%
-    create_grouped_dataset(
-      grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields)),
-      summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
-    rename_with(.fn = ~ paste0("ESum_", .x), .cols = scenario_output_fields)
-  
   # rank projects
   projects_rank <- projects_etrt_out %>%
     group_by(!!proj_id_field := get(proj_id_field)) %>%
@@ -462,9 +456,8 @@ summarize_projects <- function(
   
   # join etrt w/ esum outputs
   projects_etrt_esum_out <- projects_etrt_out %>%
-    inner_join(projects_esum_out, by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
     left_join(projects_rank, by = proj_id_field) %>%
-    arrange(-ETrt_weightedPriority) %>%
+    arrange(treatment_rank) %>%
     replace(is.na(.), 0)
   
   return(projects_etrt_esum_out)
