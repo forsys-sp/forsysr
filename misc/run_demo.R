@@ -11,7 +11,36 @@ library(dplyr)
 library(future)
 
 test_forest <- forsys::test_forest
-head(test_forest)
+data(test_fire)
+year_df <- data.frame(year = unique(fire_intersect$year))
+year_df$new_year <- sample(1:100, nrow(year_df), T)
+fire_intersect$year <- year_df$new_year[match(fire_intersect$year, year_df$year)]
+
+# example running forsys from json config file
+jsonlite::fromJSON('configs/patchmax_config.json')
+# file.edit("configs/patchmax_config.json")
+
+a <- forsys::run(config_file = 'configs/static_config.json', 
+                 stand_data = st_drop_geometry(test_forest), 
+                 return_outputs = T)
+a <- forsys::run(config_file = 'configs/static_multi_priority_config.json', 
+                 stand_data = st_drop_geometry(test_forest), 
+                 return_outputs = T)
+a <- forsys::run(config_file = 'configs/static_fire_config.json', 
+            stand_data = st_drop_geometry(test_forest),
+            fire_intersect_table = fire_intersect,
+            return_outputs = T, fire_dynamic_forsys = T)
+crit <- a[[1]]$ETrt_YR > a[[1]]$Fire_YR
+crit[is.na(crit)] <- FALSE
+a[[1]][crit,]
+future::plan(future::multisession, workers=8)
+b <- forsys::run(config_file = 'configs/patchmax_config.json', 
+            stand_data = test_forest,
+            fire_intersect_table = fire_intersect, 
+            run_with_fire = T, 
+            planning_years = 3, 
+            fire_year_field = 'year', 
+            return_outputs = T)
 
 combine_priorities(
   stands = test_forest, 
@@ -27,22 +56,6 @@ test_forest <- forsys::test_forest %>%
   calculate_pcp(fields = c("priority1","priority2"), availability_txt = 'mosaic1 == 3') %>%
   combine_priorities(fields = c("priority1_SPM","priority2_SPM"))
 
-# plot the treatment units
-# plot(test_forest, border=NA, max.plot=16)
-
-# example for exploring two priorities
-stands <- test_forest %>% st_drop_geometry()
-
-# example running forsys from json config file
-jsonlite::fromJSON('configs/patchmax_config.json')
-
-file.edit("configs/patchmax_config.json")
-
-forsys::run(config_file = 'configs/static_config.json', stand_data = st_drop_geometry(test_forest))
-plan(multisession, workers=8)
-forsys::run(config_file = 'configs/patchmax_config.json', stand_data = test_forest, patchmax_sample_seed = 123)
-
-forsys::run(config_file = 'misc/test_static_config_2.json')
 
 # run forsys using specified parameters (see help for complete list)
 # prioritize priority1 AND priority2 within predefined boundaries (proj_id)
@@ -51,7 +64,7 @@ forsys::run(config_file = 'misc/test_static_config_2.json')
 outputs = forsys::run(
   return_outputs = TRUE,
   write_outputs = TRUE,
-  stand_data = stands,
+  stand_data = st_drop_geometry(test_forest),
   scenario_name = "run_static_test_2",
   stand_id_field = "stand_id",
   proj_id_field = "proj_id",

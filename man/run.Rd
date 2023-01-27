@@ -22,7 +22,7 @@ run(
   proj_target_min_value = -Inf,
   planning_years = 1,
   annual_target_field = NULL,
-  annual_target = NA,
+  annual_target = NULL,
   scenario_name = NULL,
   scenario_priorities = NULL,
   scenario_weighting_values = "1 1 1",
@@ -34,15 +34,18 @@ run(
   run_with_fire = FALSE,
   fire_intersect_table = NULL,
   fire_intersect_table_filename = NULL,
-  fire_dynamic_forsys = FALSE,
+  fire_stand_id_field = NULL,
+  fire_year_field = NULL,
   fire_random_projects = FALSE,
+  fire_dynamic_forsys = FALSE,
   patchmax_proj_number = 1,
   patchmax_proj_size = Inf,
   patchmax_proj_size_min = -Inf,
   patchmax_sample_frac = 0.1,
   patchmax_sample_seed = NULL,
   patchmax_SDW = 0.5,
-  patchmax_EPW = 0.5
+  patchmax_EPW = 0.5,
+  patchmax_exclusion_limit = 0.5
 )
 }
 \arguments{
@@ -104,9 +107,9 @@ run(
 
 \item{fire_intersect_table_filename}{File name of csv listing stands affected by fire by year. <\emph{character}>}
 
-\item{fire_dynamic_forsys}{Whether burnt stands are prevented from being selected. <\emph{logical}>}
-
 \item{fire_random_projects}{Whether project prioritization is randomly shuffled. <\emph{logical}>}
+
+\item{fire_dynamic_forsys}{Whether burnt stands are prevented from being selected. <\emph{logical}>}
 
 \item{patchmax_proj_number}{Number of projects to build with patchmax. <\emph{integer}>}
 
@@ -121,6 +124,8 @@ run(
 \item{patchmax_SDW}{Stand distance weight parameter. Default is 0.5. <\emph{numeric 0-1}>}
 
 \item{patchmax_EPW}{Stand exclusion weight parameter. Default is 0.5. <\emph{numeric 0-1}>}
+
+\item{patchmax_exclusion_limit}{Max percent of excluded stands in valid patch. <\emph{numeric 0-1}>}
 }
 \value{
 list with selected stands, project summary, project summary by subgroup

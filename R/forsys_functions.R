@@ -9,13 +9,14 @@
 #' @param proj_target_value Absolute value or relative percent (0-1) of project area sum.
 #' @param proj_target_min_value TODO ???
 #' @param stand_threshold Boolean statement on stand availablility for treatment. <emph{character}>
-#' @param proj_number TODO ???
-#' @param proj_area_ceiling TODO ???
+#' @param proj_number Number of projects
+#' @param proj_ceiling_field Ceiling field containing values
+#' @param proj_ceiling Ceiling not be to exceeded across all projects
 #'
 #' @importFrom dplyr rename select mutate arrange left_join inner_join
 #' @importFrom tidyr drop_na
 #'
-build_static_projects <- function(
+build_preset_projects <- function(
     stands,
     stand_id_field,
     stand_area_field,
@@ -25,8 +26,9 @@ build_static_projects <- function(
     proj_target_value,
     proj_target_min_value = -Inf,
     stand_threshold,
-    proj_number,
-    proj_area_ceiling
+    proj_number = NULL,
+    proj_ceiling_field = NULL,
+    proj_ceiling = NULL
 ){
   
   # define global variables
@@ -74,11 +76,11 @@ build_static_projects <- function(
     drop_na(treatment_rank)
   
   # filter project level output by project number or treatment area ceiling
-  proj_number = ifelse(proj_number %>% is.null, Inf, proj_number)
-  proj_area_ceiling = ifelse(proj_area_ceiling %>% is.na, Inf, proj_area_ceiling)
+  proj_number = ifelse(is.null(proj_number), Inf, proj_number)
+  proj_ceiling = ifelse(proj_ceiling %>% is.na, Inf, proj_ceiling)
   projects_selected_out <- projects_selected %>%
     filter(treatment_rank <= proj_number) %>%
-    filter(proj_area_ceiling <= proj_area_ceiling)
+    filter(proj_ceiling <= proj_ceiling)
   
   # create stand level output by joining with output projects
   join_y = stands_selected %>% 
@@ -101,6 +103,17 @@ build_static_projects <- function(
   stands_selected_out <- stands_selected_out %>%
     mutate(DoTreat = 1, selected = 1)
   
+  # limit to project ceiling 
+  if(!is.null(proj_ceiling_field) & !is.null(proj_ceiling)) {
+    
+    # assign project year based on annual target(s)
+    projects_selected_out <- projects_selected_out %>%
+      filter((cumsum(get(proj_ceiling_field)) %/% proj_ceiling + 1) == 1)
+
+    stands_selected_out <- stands_selected_out %>%
+      filter(get(proj_id_field) %in% unique(projects_selected_out %>% pull(!!proj_id_field)))
+  }
+  
   return(list(
     projects_selected_out,
     stands_selected_out
@@ -119,8 +132,11 @@ build_dynamic_projects <- function(
     patchmax_proj_number,
     proj_target_value, 
     proj_target_min_value, 
+    proj_ceiling_field,
+    proj_ceiling,
     patchmax_SDW, 
     patchmax_EPW, 
+    patchmax_exclusion_limit,
     patchmax_sample_frac, 
     patchmax_sample_seed
   ){
@@ -140,12 +156,15 @@ build_dynamic_projects <- function(
     St_id = pull(geom, !!stand_id_field), 
     St_area = pull(geom, !!stand_area_field), 
     St_objective = pull(geom, weightedPriority), 
+    St_threshold = stand_threshold,
     P_size = patchmax_proj_size, 
     P_size_min  = patchmax_proj_size_min, 
     P_number = patchmax_proj_number,
-    St_threshold = stand_threshold,
+    P_ceiling = pull(geom, !!proj_ceiling_field),
+    P_ceiling_max = proj_ceiling,
     SDW = patchmax_SDW,
     EPW = patchmax_EPW,
+    exclusion_limit = patchmax_exclusion_limit,
     P_constraint = P_constraint,
     P_constraint_max_value = proj_target_value,
     P_constraint_min_value = proj_target_min_value,
@@ -329,14 +348,16 @@ select_stands_by_group <- function(
 #' 
 #' @importFrom gtools permutations 
 #'
-weight_priorities <- function(numPriorities, weights = c("1 1 1")){
+weight_priorities <- function(numPriorities, weights = c(1, 1, 1)){
   
   if(numPriorities == 1){
     return(data.frame(1))
   }
   
   # process weights string
-  weights <- strtoi(unlist(strsplit(weights, " ")))
+  if(is.character(weights)){
+    weights <- strtoi(unlist(strsplit(weights, " ")))
+  }
   weights <- seq(weights[1], weights[2], weights[3])
   
   # Updates by Luke Wilkerson to incorporate multiple priorities.
@@ -347,13 +368,14 @@ weight_priorities <- function(numPriorities, weights = c("1 1 1")){
 
   return(uniqueWeightCombinations)
   
-  # DRAFT FUNCTION FOR PERMUTING WEIGHTS
+  # # DRAFT FUNCTION FOR PERMUTING WEIGHTS
   # func <- function(x, s=3) log10(x/(1-x))/s
-  # func(seq(0,1,.01), 2) %>% plot(type='l')
-  # 10^func(seq(0.1,.99,.1), 2)
-  # func(seq(0,1,.01), 1.33) %>% points(type='l')
-  # func(seq(0,1,.01), 5) %>% points(type='l')
-  
+  # 
+  # # plot differences in S
+  # num_seq <- seq(0,1,.01)
+  # plot(func(num_seq, s=2), type='l', col='red')
+  # points(func(num_seq, s=1.33), type='l', col='green')
+  # points(func(num_seq, s=5), type='l', col='blue')
 }
 
 #' Create a dataset by subsetting subunits that were selected in the
@@ -408,7 +430,7 @@ summarize_projects <- function(
   
   # append specified output attributes to selected stands
   selected_stands <- selected_stands  %>%
-    select(stand_id_field, proj_id_field, DoTreat, ETrt_YR) %>%
+    select(stand_id_field, proj_id_field, DoTreat) %>%
     left_join(stands_data %>% select(
       !!stand_id_field, 
       any_of(scenario_output_grouping_fields), 
@@ -420,16 +442,9 @@ summarize_projects <- function(
   projects_etrt_out <- selected_stands %>%
     filter(DoTreat == 1) %>%
     create_grouped_dataset(
-      grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields, 'ETrt_YR')),
+      grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields)),
       summing_vars = scenario_output_fields) %>%
     rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields)
-  
-  # summarize available stands by grouping fields and tag with ESum_ prefix
-  projects_esum_out <- selected_stands %>%
-    create_grouped_dataset(
-      grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields)),
-      summing_vars = c(scenario_output_fields, 'weightedPriority')) %>%
-    rename_with(.fn = ~ paste0("ESum_", .x), .cols = scenario_output_fields)
   
   # rank projects
   projects_rank <- projects_etrt_out %>%
@@ -441,9 +456,8 @@ summarize_projects <- function(
   
   # join etrt w/ esum outputs
   projects_etrt_esum_out <- projects_etrt_out %>%
-    inner_join(projects_esum_out, by=unique(c(proj_id_field, scenario_output_grouping_fields))) %>%
     left_join(projects_rank, by = proj_id_field) %>%
-    arrange(ETrt_YR, -ETrt_weightedPriority) %>%
+    arrange(treatment_rank) %>%
     replace(is.na(.), 0)
   
   return(projects_etrt_esum_out)
@@ -526,3 +540,24 @@ filter_stands <- function(stands, filter_txt = NULL, drop = FALSE, verbose = TRU
   })
   return(stands)
 }
+
+
+# ---------------------------
+
+shuffle_projects <- function(projects){
+  message('!! Randomizing projects')
+  
+  shuffled_weights <- projects_selected_y %>%
+    filter(treatment_rank %>% is.na == FALSE) %>%
+    mutate(weightedPriority = sample(weightedPriority)) %>%
+    select(proj_id_field, weightedPriority)
+  
+  projects_selected_y <- projects_selected_y %>% select(-weightedPriority) %>%
+    left_join(shuffled_weights, by = proj_id_field) %>%
+    arrange(-weightedPriority) %>%
+    mutate(treatment_rank = ifelse(weightedPriority > 0, 1:n(), NA)) %>%
+    tidyr::drop_na(treatment_rank)
+  
+  return(projects_selected_y)
+}
+
