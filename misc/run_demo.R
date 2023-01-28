@@ -10,38 +10,68 @@ library(sf)
 library(dplyr)
 library(future)
 
-test_forest <- forsys::test_forest
+
+data(test_forest)
 data(test_fire)
+test_forest_no_geom <- st_drop_geometry(test_forest)
+
 year_df <- data.frame(year = unique(fire_intersect$year))
 year_df$new_year <- sample(1:100, nrow(year_df), T)
 fire_intersect$year <- year_df$new_year[match(fire_intersect$year, year_df$year)]
 
-# example running forsys from json config file
-jsonlite::fromJSON('configs/patchmax_config.json')
-# file.edit("configs/patchmax_config.json")
 
-a <- forsys::run(config_file = 'configs/static_config.json', 
-                 stand_data = st_drop_geometry(test_forest), 
+# FORSYS test A: single-priority static
+test_a_config <- 'configs/test_a_static_config.json'
+print_json_config(test_a_config)
+# edit_json_config(test_a_config)
+test_a <- forsys::run(config_file = test_a_config, 
+                 stand_data = test_forest_no_geom, 
                  return_outputs = T)
-jsonlite::fromJSON('configs/static_multi_priority_config.json')
-a <- forsys::run(config_file = 'configs/static_multi_priority_config.json', 
-                 stand_data = st_drop_geometry(test_forest), 
+
+# FORSYS test B: multi-priority static
+test_b_config <- 'configs/test_b_static_multi_priority_config.json'
+print_json_config(test_a_config)
+test_b <- forsys::run(config_file = test_b_config, 
+                 stand_data = test_forest_no_geom, 
                  return_outputs = T)
-a <- forsys::run(config_file = 'configs/static_fire_config.json', 
-            stand_data = st_drop_geometry(test_forest),
-            fire_intersect_table = fire_intersect,
-            return_outputs = T, fire_dynamic_forsys = T)
-crit <- a[[1]]$ETrt_YR > a[[1]]$Fire_YR
-crit[is.na(crit)] <- FALSE
-a[[1]][crit,]
+
+# FORSYS test C: single-priority static with fire
+test_c_config <- 'configs/test_c_static_w_fire_config.json'
+print_json_config(test_c_config)
+test_c <- forsys::run(config_file = test_c_config, 
+                      stand_data = test_forest_no_geom,
+                      fire_intersect_table = fire_intersect,
+                      return_outputs = T)
+
+# FORSYS test D: single-priority dynamic with fire
+test_d_config <- 'configs/test_d_patchmax_config.json'
+print_json_config(test_d_config)
 future::plan(future::multisession, workers=8)
-b <- forsys::run(config_file = 'configs/patchmax_config.json', 
+test_d <- forsys::run(config_file = test_d_config, 
             stand_data = test_forest,
             fire_intersect_table = fire_intersect, 
             run_with_fire = T, 
             planning_years = 3, 
             fire_year_field = 'year', 
             return_outputs = T)
+
+# FORSYS test E: multi-priority dynamic
+test_e_config <- 'configs/test_e_patchmax_multi_priority_config.json'
+print_json_config(test_e_config)
+future::plan(future::multisession, workers=8)
+test_e <- forsys::run(config_file = test_e_config, 
+                      stand_data = test_forest,
+                      return_outputs = T)
+
+# FORSYS test F: single-priority dynamic with fire
+test_f_config <- 'configs/test_f_patchmax_w_fire_config.json'
+print_json_config(test_f_config)
+future::plan(future::multisession, workers=8)
+test_f <- forsys::run(config_file = test_f_config, 
+                      stand_data = test_forest,
+                      fire_intersect_table = fire_intersect, 
+                      return_outputs = T)
+
 
 combine_priorities(
   stands = test_forest, 

@@ -71,7 +71,7 @@ run <- function(
     # annual targets
     planning_years = 1,
     annual_target_field = NULL,
-    annual_target = NULL,
+    annual_target = Inf,
     # scenario variables
     scenario_name = NULL,
     scenario_priorities = NULL,
@@ -347,7 +347,7 @@ run <- function(
         subset_fn = paste0(relative_output_path, "/subset_", scenario_name,  '_', scenario_write_tags_txt, ".csv")
       } else {
         stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, ".csv")
-        project_fn = pasate0(relative_output_path, "/proj_", scenario_name, ".csv")
+        project_fn = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
         subset_fn = paste0(relative_output_path, "/subset_", scenario_name, ".csv")
       }
     

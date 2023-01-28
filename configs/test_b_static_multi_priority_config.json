@@ -6,13 +6,13 @@
   "stand_threshold": ["threshold1 == 1"],
   "global_threshold": ["mosaic2 %in% c(2,3)"],
   "scenario_priorities": ["priority1", "priority3"],
-  "scenario_weighting_values": [1, 3, 1],
+  "scenario_weighting_values": [1, 2, 1],
   "scenario_output_fields": ["area_ha", "priority1", "priority2", "priority3", "priority4"],
   "scenario_output_grouping_fields": ["mosaic2"],
   "proj_fixed_target": [false],
   "proj_target_field": ["area_ha"],
   "proj_target_value": [0.2],
   "annual_target_field": ["area_ha"],
-  "planning_years": [3],
+  "planning_years": [2],
   "annual_target": [10000]
 }

@@ -22,7 +22,7 @@ run(
   proj_target_min_value = -Inf,
   planning_years = 1,
   annual_target_field = NULL,
-  annual_target = NULL,
+  annual_target = Inf,
   scenario_name = NULL,
   scenario_priorities = NULL,
   scenario_weighting_values = c(1, 1, 1),

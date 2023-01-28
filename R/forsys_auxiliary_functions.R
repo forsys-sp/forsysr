@@ -82,6 +82,24 @@ calculate_pcp <- function(stands, fields=NULL, availability_txt=NULL){
 }
 
 
+#' Print json config file to console
+#'
+#' @param json 
+#' @export
+
+print_json_config <- function(json){
+  print(str(jsonlite::fromJSON(json)))
+}
+
+#' Edit json config file in RStudio
+#'
+#' @param json 
+#' @export
+
+edit_json_config <- function(json){
+  file.edit(json)
+}
+
 load_R_config <- function(config_file){
   source(config_file, local = TRUE)
   for (i in ls()) {
@@ -262,5 +280,4 @@ printSpecsDocument <- function(subunit, priorities, timber_threshold, volume_con
                        "1) ForSys output - proj_all.csv")
   writeLines(parameters, file("README.txt"))
 }
-
 
