@@ -23,6 +23,7 @@ jsonlite::fromJSON('configs/patchmax_config.json')
 a <- forsys::run(config_file = 'configs/static_config.json', 
                  stand_data = st_drop_geometry(test_forest), 
                  return_outputs = T)
+jsonlite::fromJSON('configs/static_multi_priority_config.json')
 a <- forsys::run(config_file = 'configs/static_multi_priority_config.json', 
                  stand_data = st_drop_geometry(test_forest), 
                  return_outputs = T)

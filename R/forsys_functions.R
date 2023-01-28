@@ -401,6 +401,8 @@ create_grouped_dataset <- function(data, grouping_vars, summing_vars) {
     group_by_at(vars(grouping_vars)) %>%
     summarize_at(vars(summing_vars), sum)
   
+  data <- data %>% ungroup()
+  
   return(data)
 }
 
@@ -429,38 +431,37 @@ summarize_projects <- function(
   scenario_output_fields <- c(scenario_output_fields, 'weightedPriority')
   
   # append specified output attributes to selected stands
-  selected_stands <- selected_stands  %>%
-    select(stand_id_field, proj_id_field, DoTreat) %>%
-    left_join(stands_data %>% select(
-      !!stand_id_field, 
-      any_of(scenario_output_grouping_fields), 
-      any_of(scenario_output_fields),
-      weightedPriority),
-      by = stand_id_field, suffix = c("", ".dup"))
+  flds <- c(scenario_output_grouping_fields, scenario_output_fields)
+  join_x <- selected_stands %>% select(!!stand_id_field, !!proj_id_field, DoTreat, ETrt_YR)
+  join_y <- stands_data %>% select(!!stand_id_field, any_of(flds), weightedPriority)
+  selected_stands_plus <- left_join(join_x, join_y, by = stand_id_field, suffix = c("", "..dup")) %>%
+    select(!contains('..dup')) 
   
-  # summarize selected stands by grouping fields and tag with ETrt_ prefix
-  projects_etrt_out <- selected_stands %>%
-    filter(DoTreat == 1) %>%
-    create_grouped_dataset(
-      grouping_vars = unique(c(proj_id_field, scenario_output_grouping_fields)),
-      summing_vars = scenario_output_fields) %>%
-    rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields)
+  # summarize by project & year and tag with ETrt_ prefix
+  project_sum <- create_grouped_dataset(
+    data = selected_stands_plus %>% filter(DoTreat == 1),
+    grouping_vars = c(proj_id_field, 'ETrt_YR'),
+    summing_vars = scenario_output_fields)
   
-  # rank projects
-  projects_rank <- projects_etrt_out %>%
-    group_by(!!proj_id_field := get(proj_id_field)) %>%
-    summarize_at(vars(ETrt_weightedPriority), sum) %>%
-    arrange(-ETrt_weightedPriority) %>%
-    mutate(treatment_rank = rank(-ETrt_weightedPriority)) %>%
-    select(!!proj_id_field, treatment_rank)
+  project_sum <- project_sum %>% 
+    arrange(-weightedPriority) %>%
+    mutate(treatment_rank = rank(-weightedPriority))
   
-  # join etrt w/ esum outputs
-  projects_etrt_esum_out <- projects_etrt_out %>%
-    left_join(projects_rank, by = proj_id_field) %>%
-    arrange(treatment_rank) %>%
-    replace(is.na(.), 0)
+  subset_sum <- create_grouped_dataset(
+    data = selected_stands_plus %>% filter(DoTreat == 1),
+    grouping_vars = c(proj_id_field, 'ETrt_YR', scenario_output_grouping_fields),
+    summing_vars = scenario_output_fields) %>%
+    left_join(project_sum %>% select(!!proj_id_field, treatment_rank), by = proj_id_field) %>%
+    arrange(treatment_rank)
   
-  return(projects_etrt_esum_out)
+  out <- list(
+    projects = project_sum %>% 
+      rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields),
+    subset = subset_sum %>% 
+      rename_with(.fn = ~ paste0("ETrt_", .x), .cols = scenario_output_fields)
+  )
+  
+  return(out)
 }
 
 #' Combine priorities

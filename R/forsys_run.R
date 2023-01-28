@@ -260,9 +260,9 @@ run <- function(
         
         # 6. BEGIN ANNUAL FIRES ------------------------------------------------
 
-        if (run_with_fire) { # BEGIN FIRE LOOP
+        if (run_with_fire) { # BEGIN FIRE LOOP (EXPERIMENTAL)
           
-          # FIRE: randomize project rank (research specific task)
+          # randomize project order
           if(fire_random_projects){
             projects_selected_y <- shuffle_projects(projects_selected_y)
           }
@@ -283,7 +283,7 @@ run <- function(
               filter(get(stand_id_field) %in% pull(stands_burned, get(stand_id_field)) == FALSE)
           }
 
-        } # END FIRE LOOP
+        } # END FIRE LOOP (EXPERIMENTAL)
 
       } # END YEAR LOOP
 
@@ -307,30 +307,26 @@ run <- function(
         setNames(paste0('Pr_', 1:length(scenario_priorities), '_', scenario_priorities))
       
       # add scenario output fields to stand output
+      join_y <- stands %>% select(!!stand_id_field, any_of(scenario_output_fields))
       stands_out_w <- stands_out_w %>% 
-        left_join(select(stands, !!stand_id_field, any_of(scenario_output_fields)), by = stand_id_field) %>%
+        left_join(join_y, by = stand_id_field) %>%
         bind_cols(priority_write_tags) %>%
         bind_cols(scenario_write_tags)
 
-      # summarize project data
-      projects_out_w <- summarize_projects(
-        selected_stands = stands_out_w,
-        stands_data = stands,
-        stand_id_field = stand_id_field,
-        proj_id_field = proj_id_field,
-        scenario_output_grouping_fields = NULL,
-        scenario_output_fields = scenario_output_fields) %>%
-        bind_cols(priority_write_tags) %>%
-        bind_cols(scenario_write_tags)
-      
       # summarize project by subset
-      subset_out_w <- summarize_projects(
+      summary_dat <- summarize_projects(
         selected_stands = stands_out_w,
         stands_data = stands,
         stand_id_field = stand_id_field,
         proj_id_field = proj_id_field,
         scenario_output_grouping_fields = scenario_output_grouping_fields,
-        scenario_output_fields = scenario_output_fields) %>%
+        scenario_output_fields = scenario_output_fields)
+      
+      projects_out_w <- summary_dat$projects %>%
+        bind_cols(priority_write_tags) %>%
+        bind_cols(scenario_write_tags)
+      
+      subset_out_w <- summary_dat$subset %>%
         bind_cols(priority_write_tags) %>%
         bind_cols(scenario_write_tags)
       
@@ -351,7 +347,7 @@ run <- function(
         subset_fn = paste0(relative_output_path, "/subset_", scenario_name,  '_', scenario_write_tags_txt, ".csv")
       } else {
         stand_fn <- paste0(relative_output_path, "/stnd_", scenario_name, ".csv")
-        project_fn = paste0(relative_output_path, "/proj_", scenario_name, ".csv")
+        project_fn = pasate0(relative_output_path, "/proj_", scenario_name, ".csv")
         subset_fn = paste0(relative_output_path, "/subset_", scenario_name, ".csv")
       }
     

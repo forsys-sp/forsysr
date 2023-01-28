@@ -13,5 +13,6 @@
   "proj_target_field": ["area_ha"],
   "proj_target_value": [0.2],
   "annual_target_field": ["area_ha"],
+  "planning_years": [3],
   "annual_target": [10000]
 }

@@ -7,7 +7,7 @@
   "global_threshold": ["mosaic1 == 3"],
   "stand_threshold": ["priority4 > 0.5"],
   "stand_area_field": ["area_ha"],
-  "scenario_weighting_values": ["1 1 1"],
+  "scenario_weighting_values": [1, 1 1],
   "scenario_output_fields": ["priority1", "priority2",  "priority3"],
   "scenario_output_grouping_fields": ["proj_id"],
   "patchmax_proj_number": [3],
