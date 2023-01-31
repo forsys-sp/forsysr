@@ -103,10 +103,9 @@ build_preset_projects <- function(
   stands_selected_out <- stands_selected_out %>%
     mutate(DoTreat = 1, selected = 1)
   
-  # limit to project ceiling 
+  # limit output to project ceiling if set
   if(!is.null(global_ceiling_field) & !is.null(global_ceiling_value)) {
     
-    # assign project year based on annual target(s)
     projects_selected_out <- projects_selected_out %>%
       filter((cumsum(get(global_ceiling_field)) %/% global_ceiling_value + 1) == 1)
 
