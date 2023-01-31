@@ -151,16 +151,26 @@ build_dynamic_projects <- function(
     proj_target_value = Inf
   }
   
+  # modified pull functional when field is NULL
+  pull_field <- function(data, field) {
+    if (is.null(field)) {
+      out <- NULL
+    }
+    else {
+      out <- pull(data, !!field)
+    }
+  }
+  
   patchmax_out <- patchmax::simulate_projects(
     geom = geom,
-    St_id = pull(geom, !!stand_id_field), 
-    St_area = pull(geom, !!stand_area_field), 
-    St_objective = pull(geom, weightedPriority), 
+    St_id = pull_field(geom, stand_id_field), 
+    St_area = pull_field(geom, stand_area_field), 
+    St_objective = pull_field(geom, 'weightedPriority'), 
     St_threshold = stand_threshold,
     P_size = patchmax_proj_size, 
     P_size_min  = patchmax_proj_size_min, 
     P_number = patchmax_proj_number,
-    P_ceiling = pull(geom, !!proj_ceiling_field),
+    P_ceiling = pull_field(geom, proj_ceiling_field),
     P_ceiling_max = proj_ceiling,
     SDW = patchmax_SDW,
     EPW = patchmax_EPW,
