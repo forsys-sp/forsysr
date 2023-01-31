@@ -15,8 +15,8 @@ build_preset_projects(
   proj_target_min_value = -Inf,
   stand_threshold,
   proj_number = NULL,
-  proj_ceiling_field = NULL,
-  proj_ceiling = NULL
+  global_ceiling_field = NULL,
+  global_ceiling_value = NULL
 )
 }
 \arguments{
@@ -40,9 +40,9 @@ build_preset_projects(
 
 \item{proj_number}{Number of projects}
 
-\item{proj_ceiling_field}{Ceiling field containing values}
+\item{global_ceiling_field}{Ceiling field containing values}
 
-\item{proj_ceiling}{Ceiling not be to exceeded across all projects}
+\item{global_ceiling}{Ceiling not be to exceeded across all projects}
 }
 \description{
 Wrapper for building projects using predetermined project areas

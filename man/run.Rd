@@ -22,7 +22,7 @@ run(
   proj_target_min_value = -Inf,
   planning_years = 1,
   annual_target_field = NULL,
-  annual_target = Inf,
+  annual_target_value = Inf,
   scenario_name = NULL,
   scenario_priorities = NULL,
   scenario_weighting_values = c(1, 1, 1),
@@ -82,7 +82,7 @@ run(
 
 \item{annual_target_field}{Field name to use for calculating annual target. <\emph{character}>}
 
-\item{annual_target}{Value of annual cumulative target. <\emph{numeric}>}
+\item{annual_target_value}{Value of annual cumulative target. <\emph{numeric}>}
 
 \item{scenario_name}{Name for this scenario. <\emph{character}>}
 

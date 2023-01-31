@@ -10,8 +10,8 @@
 #' @param proj_target_min_value TODO ???
 #' @param stand_threshold Boolean statement on stand availablility for treatment. <emph{character}>
 #' @param proj_number Number of projects
-#' @param proj_ceiling_field Ceiling field containing values
-#' @param proj_ceiling Ceiling not be to exceeded across all projects
+#' @param global_ceiling_field Ceiling field containing values
+#' @param global_ceiling Ceiling not be to exceeded across all projects
 #'
 #' @importFrom dplyr rename select mutate arrange left_join inner_join
 #' @importFrom tidyr drop_na
@@ -27,8 +27,8 @@ build_preset_projects <- function(
     proj_target_min_value = -Inf,
     stand_threshold,
     proj_number = NULL,
-    proj_ceiling_field = NULL,
-    proj_ceiling = NULL
+    global_ceiling_field = NULL,
+    global_ceiling_value = NULL
 ){
   
   # define global variables
@@ -77,10 +77,10 @@ build_preset_projects <- function(
   
   # filter project level output by project number or treatment area ceiling
   proj_number = ifelse(is.null(proj_number), Inf, proj_number)
-  proj_ceiling = ifelse(proj_ceiling %>% is.na, Inf, proj_ceiling)
+  global_ceiling_value = ifelse(global_ceiling_value %>% is.na, Inf, global_ceiling_value)
   projects_selected_out <- projects_selected %>%
     filter(treatment_rank <= proj_number) %>%
-    filter(proj_ceiling <= proj_ceiling)
+    filter(global_ceiling_value <= global_ceiling_value)
   
   # create stand level output by joining with output projects
   join_y = stands_selected %>% 
@@ -104,11 +104,11 @@ build_preset_projects <- function(
     mutate(DoTreat = 1, selected = 1)
   
   # limit to project ceiling 
-  if(!is.null(proj_ceiling_field) & !is.null(proj_ceiling)) {
+  if(!is.null(global_ceiling_field) & !is.null(global_ceiling_value)) {
     
     # assign project year based on annual target(s)
     projects_selected_out <- projects_selected_out %>%
-      filter((cumsum(get(proj_ceiling_field)) %/% proj_ceiling + 1) == 1)
+      filter((cumsum(get(global_ceiling_field)) %/% global_ceiling_value + 1) == 1)
 
     stands_selected_out <- stands_selected_out %>%
       filter(get(proj_id_field) %in% unique(projects_selected_out %>% pull(!!proj_id_field)))
@@ -132,8 +132,8 @@ build_dynamic_projects <- function(
     patchmax_proj_number,
     proj_target_value, 
     proj_target_min_value, 
-    proj_ceiling_field,
-    proj_ceiling,
+    global_ceiling_field,
+    global_ceiling_value,
     patchmax_SDW, 
     patchmax_EPW, 
     patchmax_exclusion_limit,
@@ -170,8 +170,8 @@ build_dynamic_projects <- function(
     P_size = patchmax_proj_size, 
     P_size_min  = patchmax_proj_size_min, 
     P_number = patchmax_proj_number,
-    P_ceiling = pull_field(geom, proj_ceiling_field),
-    P_ceiling_max = proj_ceiling,
+    P_ceiling = pull_field(geom, global_ceiling_field),
+    P_ceiling_max = global_ceiling_value,
     SDW = patchmax_SDW,
     EPW = patchmax_EPW,
     exclusion_limit = patchmax_exclusion_limit,

@@ -24,7 +24,7 @@
 #' @param proj_target_min_value Minimum valid target constraint. Only used if `run_with_patchmax` is TRUE.
 #' @param planning_years Number of years to run forsys. <\emph{integer}> 
 #' @param annual_target_field Field name to use for calculating annual target. <\emph{character}> 
-#' @param annual_target Value of annual cumulative target. <\emph{numeric}> 
+#' @param annual_target_value Value of annual cumulative target. <\emph{numeric}> 
 #' @param scenario_name Name for this scenario. <\emph{character}> 
 #' @param scenario_priorities Scenario priorities. <\emph{character vector}> 
 #' @param scenario_weighting_values String of 3 integers separated by spaces defining weighting min, max, and step. <\emph{character}> 
@@ -71,7 +71,7 @@ run <- function(
     # annual targets
     planning_years = 1,
     annual_target_field = NULL,
-    annual_target = Inf,
+    annual_target_value = Inf,
     # scenario variables
     scenario_name = NULL,
     scenario_priorities = NULL,
@@ -203,8 +203,8 @@ run <- function(
             proj_target_value = proj_target_value,
             proj_target_min_value = proj_target_min_value,
             proj_number = NULL,
-            proj_ceiling_field = annual_target_field,
-            proj_ceiling = annual_target
+            global_ceiling_field = annual_target_field,
+            global_ceiling_value = annual_target_value
           )
           
           projects_selected_y <- patchstat_out[[1]]
@@ -226,8 +226,8 @@ run <- function(
             proj_target_field = proj_target_field, 
             proj_target_value = proj_target_value, 
             proj_target_min_value = proj_target_min_value, 
-            proj_ceiling_field = annual_target_field,
-            proj_ceiling = annual_target,
+            global_ceiling_field = annual_target_field,
+            global_ceiling_value = annual_target_value,
             patchmax_SDW = patchmax_SDW, 
             patchmax_EPW = patchmax_EPW, 
             patchmax_exclusion_limit = patchmax_exclusion_limit,
