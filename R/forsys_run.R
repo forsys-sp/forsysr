@@ -300,7 +300,7 @@ run <- function(
       }
 
       # append area to output fields if available
-      scenario_output_fields <- unique(c(stand_area_field, scenario_output_fields))
+      scenario_output_fields <- unique(c(stand_area_field, scenario_output_fields, 'weightedPriority'))
       
       # tag weighting scenario
       priority_write_tags <- as.data.frame(weights[w,]) %>%
@@ -318,6 +318,7 @@ run <- function(
         selected_stands = stands_out_w,
         stands_data = stands,
         stand_id_field = stand_id_field,
+        stand_area_field = stand_area_field,
         proj_id_field = proj_id_field,
         scenario_output_grouping_fields = scenario_output_grouping_fields,
         scenario_output_fields = scenario_output_fields)

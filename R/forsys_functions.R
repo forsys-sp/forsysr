@@ -420,6 +420,7 @@ create_grouped_dataset <- function(data, grouping_vars, summing_vars) {
 #' @param selected_stands 
 #' @param stands_data 
 #' @param stand_id_field 
+#' @param stand_area_field
 #' @param proj_id_field 
 #' @param scenario_output_grouping_fields 
 #' @param scenario_output_fields 
@@ -431,13 +432,11 @@ summarize_projects <- function(
     selected_stands,
     stands_data,
     stand_id_field,
+    stand_area_field,
     proj_id_field,
     scenario_output_grouping_fields,
     scenario_output_fields
 ){
-  
-  # append weighted priorities to output
-  scenario_output_fields <- c(scenario_output_fields, 'weightedPriority')
   
   # append specified output attributes to selected stands
   flds <- c(scenario_output_grouping_fields, scenario_output_fields)
@@ -452,7 +451,14 @@ summarize_projects <- function(
     grouping_vars = c(proj_id_field, 'ETrt_YR'),
     summing_vars = scenario_output_fields)
   
+  total_coverage <- create_grouped_dataset(
+    data = selected_stands_plus,
+    grouping_vars = c(proj_id_field, 'ETrt_YR'),
+    summing_vars = stand_area_field) %>%
+    pull(stand_area_field)
+  
   project_sum <- project_sum %>% 
+    mutate(pct_excluded = 1 - (get(stand_area_field) / total_coverage)) %>%
     arrange(-weightedPriority) %>%
     mutate(treatment_rank = rank(-weightedPriority))
   

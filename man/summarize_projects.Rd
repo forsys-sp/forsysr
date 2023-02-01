@@ -8,6 +8,7 @@ summarize_projects(
   selected_stands,
   stands_data,
   stand_id_field,
+  stand_area_field,
   proj_id_field,
   scenario_output_grouping_fields,
   scenario_output_fields
