@@ -554,7 +554,7 @@ filter_stands <- function(stands, filter_txt = NULL, drop = FALSE, verbose = TRU
   }, error = function(e) {
     message(paste0('!! Filter failed; proceeding with unfiltered data. Error message:\n', print(e)))
   })
-  return(stands)
+  return(out)
 }
 
 
