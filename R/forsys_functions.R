@@ -460,7 +460,7 @@ summarize_projects <- function(
   project_sum <- project_sum %>% 
     mutate(pct_excluded = 1 - (get(stand_area_field) / total_coverage)) %>%
     arrange(-weightedPriority) %>%
-    mutate(treatment_rank = rank(-weightedPriority))
+    mutate(treatment_rank = rank(-weightedPriority, ties.method = 'first'))
   
   subset_sum <- create_grouped_dataset(
     data = selected_stands_plus %>% filter(DoTreat == 1),
