@@ -114,17 +114,19 @@ outputs$project_output %>% filter(Pr_1_priority1 == 3, Pr_2_priority2 == 2)
 
 # GRAPH OUTPUT ------------------------
 
+outputs <- test_a
+
 theme_toggle('light')
 # built in graphing examples
 
 # plot attainment curves
 forsys::attainment_chart_by_target_treated(
   results_data = outputs$project_output,
-  priority = 'priority1',
+  priority = 'priority3',
   constraint_field = 'area_ha',
-  secondary = 'priority2')
+  secondary = 'priority1')
 
-# stacked attainment curvsd
+# stacked attainment curved
 forsys::cumulative_attainment_chart(
   results_data = outputs$project_output,
   priority = 'priority1',

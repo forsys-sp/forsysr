@@ -253,6 +253,7 @@ list_attainment_targets <- function(results_data) {
 #'
 #' @export
 attainment_chart_by_target_treated <- function(results_data, priority, constraint_field, secondary_effects=c()) {
+  
   g <- attainment_data_filter(results_data, priority, constraint_field, secondary_effects)
   g_long <- attainment_data_format(g)
 

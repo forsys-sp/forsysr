@@ -119,6 +119,11 @@ build_preset_projects <- function(
   ))
 }
 
+
+
+#' ForSysR wrapper for running patchmax
+#'
+#' @return
 build_dynamic_projects <- function(
     stands, 
     proj_target_field, 
@@ -140,7 +145,6 @@ build_dynamic_projects <- function(
     patchmax_sample_seed
   ){
   
-  library(patchmax)
   geom <- sf::st_as_sf(stands)
   
   if (!is.null(proj_target_field)) { 

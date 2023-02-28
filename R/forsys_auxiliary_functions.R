@@ -121,13 +121,12 @@ load_json_config <- function(json_filename) {
 load_stand_data <- function(data, filename, id_field){
   if (!is.null(data)) {
     stands <- data 
-    stands <- stands %>% mutate(!!id_field := as.character(get(id_field)))
   } else if (!is.null(filename)) {
     stands <- load_dataset(path_to_file = filename)
-    stands <- stands %>% mutate(!!id_field := as.character(get(id_field)))
   } else {
     stop("Stand data required")
   }
+  stands <- data %>% mutate(!!id_field := as.character(get(id_field)))
   return(stands)
 }
 
