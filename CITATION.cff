@@ -16,6 +16,41 @@ authors:
 - family-names: "Ager"
   given-names: "Alan"
 title: "ForSysR: A scenario planning platform for modeling multi-criteria spatial priorities in R."
-version: 1.0
+version: 1.1
 date-released: 2021-06-02
 url: "https://github.com/forsys-sp/forsysr"
+references:
+  - authors:
+      - family-names: Ager
+        given-names: Alan
+      - family-names: Evers
+        given-names: Cody
+      - family-names: Day
+        given-names: Michelle
+      - family-names: Alcasena
+        given-names: Fermin
+      - family-names: Houtman
+        given-names: Rachel
+    doi: 10.1016/j.landurbplan.2021.104212
+    journal: "Journal of Landscape and Urban Planning"
+    scope: "Cite this paper if you want to reference the general concepts of the program."
+    title: "Planning for future fire: scenario analysis of an accelerated fuel reduction plan for the western United States."
+    type: article
+    volume: 215
+    year: 2021
+  - authors:
+      - family-names: Ager
+        given-names: Alan
+      - family-names: Vogler
+        given-names: Kevin
+      - family-names: Day
+        given-names: Michelle
+      - family-names: Bailey
+        given-names: John
+    doi: 10.1016/j.ecolecon.2017.01.001
+    journal: "Ecological Economics"
+    scope: "Cite this paper if you want to reference the original research behind this program."
+    title: "Economic opportunities and trade-offs in collaborative forest landscape restoration."
+    type: article
+    volume: 136
+    year: 2017    
