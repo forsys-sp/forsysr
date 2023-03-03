@@ -10,7 +10,7 @@ Authors@R:
         person(given = "Rachel",
            family = "Houtman",
            role = c("aut", "trl"),
-           email = "Rachel.Houtman@oregonstate.edu",)
+           email = "Rachel.Houtman@oregonstate.edu",),
         person(given = "Michelle",
            family = "Day",
            role = c("aut"),
