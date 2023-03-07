@@ -311,7 +311,7 @@ run <- function(
       stands_out_w <- stands_out_w %>% 
         left_join(join_y, by = stand_id_field) %>%
         bind_cols(priority_write_tags) %>%
-        bind_cols(scenario_write_tags)
+        bind_cols(scenario_write_tags := scenario_write_tags)
 
       # summarize project by subset
       summary_dat <- summarize_projects(
