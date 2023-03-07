@@ -325,11 +325,11 @@ run <- function(
       
       projects_out_w <- summary_dat$projects %>%
         bind_cols(priority_write_tags) %>%
-        bind_cols(scenario_write_tags)
+        bind_cols(scenario_write_tags := scenario_write_tags)
       
       subset_out_w <- summary_dat$subset %>%
         bind_cols(priority_write_tags) %>%
-        bind_cols(scenario_write_tags)
+        bind_cols(scenario_write_tags := scenario_write_tags)
       
       stands_out <- bind_rows(stands_out, stands_out_w)
       projects_out <- bind_rows(projects_out, projects_out_w)
