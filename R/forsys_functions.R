@@ -62,14 +62,14 @@ build_preset_projects <- function(
   
   # clean up output
   stands_selected <- stands %>%
-    select(stand_id_field, proj_id_field, stand_area_field, 'weightedPriority') %>%
+    select(stand_id_field, proj_id_field, stand_area_field, global_ceiling_field, 'weightedPriority') %>%
     mutate(DoTreat = 1)
   
   # group selected stands by project, summarize, and rank
   projects_selected <- stands_selected %>%
     create_grouped_dataset(
       grouping_vars = proj_id_field,
-      summing_vars = c(stand_area_field, 'weightedPriority')) %>%
+      summing_vars = c(stand_area_field, global_ceiling_field, 'weightedPriority')) %>%
     replace(is.na(.), 0) %>%
     arrange(-weightedPriority) %>%
     mutate(treatment_rank = ifelse(weightedPriority > 0, 1:dplyr::n(), NA)) %>%
@@ -80,7 +80,7 @@ build_preset_projects <- function(
   global_ceiling_value = ifelse(global_ceiling_value %>% is.na, Inf, global_ceiling_value)
   projects_selected_out <- projects_selected %>%
     filter(treatment_rank <= proj_number) %>%
-    filter(global_ceiling_value <= global_ceiling_value)
+    filter(get(global_ceiling_field) <= global_ceiling_value)
   
   # create stand level output by joining with output projects
   join_y = stands_selected %>% 
