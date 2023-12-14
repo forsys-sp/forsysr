@@ -30,7 +30,7 @@ test_a <- forsys::run(config_file = test_a_config,
 
 # FORSYS test B: multi-priority static
 test_b_config <- 'configs/test_b_static_multi_priority_config.json'
-print_json_config(test_a_config)
+print_json_config(test_nb_config)
 test_b <- forsys::run(config_file = test_b_config, 
                  stand_data = test_forest_no_geom, 
                  return_outputs = T)
@@ -53,7 +53,8 @@ test_d <- forsys::run(config_file = test_d_config,
             run_with_fire = T, 
             planning_years = 3, 
             fire_year_field = 'year', 
-            return_outputs = T)
+            return_outputs = T,
+            patchmax_verbose = T)
 
 # FORSYS test E: multi-priority dynamic
 test_e_config <- 'configs/test_e_patchmax_multi_priority_config.json'

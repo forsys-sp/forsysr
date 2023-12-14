@@ -142,7 +142,8 @@ build_dynamic_projects <- function(
     patchmax_EPW, 
     patchmax_exclusion_limit,
     patchmax_sample_frac, 
-    patchmax_sample_seed
+    patchmax_sample_seed,
+    patchmax_verbose
   ){
   
   geom <- sf::st_as_sf(stands)
@@ -182,7 +183,8 @@ build_dynamic_projects <- function(
     P_constraint_max_value = proj_target_value,
     P_constraint_min_value = proj_target_min_value,
     sample_frac = patchmax_sample_frac,
-    sample_seed = patchmax_sample_seed
+    sample_seed = patchmax_sample_seed,
+    verbose = patchmax_verbose
   )
   
   projects_selected <- patchmax_out[[1]] %>%

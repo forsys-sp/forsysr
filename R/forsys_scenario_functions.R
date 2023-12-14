@@ -231,10 +231,6 @@ list_scenarios <- function() {
   }
 }
 
-write_config_file <- function(...) {
-
-}
-
 
 #' Load stored in JSON config into the current enviroment
 #'
@@ -246,6 +242,13 @@ load_json_config <- function(json_filename){
   suppressWarnings({
     json_data = readLines(json_filename) %>% jsonlite::fromJSON()
   })
+  
+  # look for null inputs (saved as an json array of lenght 0)
+  is_null <- unlist(
+    lapply(json_data, function(x){is.list(x) & length(x) == 0}))
+  if(sum(is_null) > 0){
+    json_data <- json_data[-which(is_null_input)]
+  }
   
   # assign each json item to its respective paramter in the parent environment
   for(i in names(json_data)){

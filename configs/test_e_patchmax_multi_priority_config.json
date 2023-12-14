@@ -1,5 +1,5 @@
 {
-  "scenario_name": ["patchmax_test"],
+  "scenario_name": ["test_e_patchmax_multi_priority"],
   "stand_id_field": ["stand_id"],
   "proj_id_field": ["proj_id"],
   "scenario_priorities": ["priority1", "priority3"],

@@ -1,5 +1,5 @@
 {
-  "scenario_name": ["static_multipriority_test"],
+  "scenario_name": ["test_b_static_multipriority"],
   "stand_id_field": ["stand_id"],
   "proj_id_field": ["proj_id"],
   "stand_area_field": ["area_ha"],

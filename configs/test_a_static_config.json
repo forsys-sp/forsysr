@@ -1,5 +1,5 @@
 {
-  "scenario_name": ["json_static_test"],
+  "scenario_name": ["test_a_static"],
   "stand_id_field": ["stand_id"],
   "proj_id_field": ["proj_id"],
   "stand_area_field": ["area_ha"],

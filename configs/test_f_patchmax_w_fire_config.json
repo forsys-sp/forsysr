@@ -1,5 +1,5 @@
 {
-  "scenario_name": ["patchmax_test"],
+  "scenario_name": ["test_f_patchmax_w_fire"],
   "stand_id_field": ["stand_id"],
   "proj_id_field": ["proj_id"],
   "scenario_priorities": ["priority1"],
