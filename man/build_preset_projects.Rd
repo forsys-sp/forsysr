@@ -16,7 +16,7 @@ build_preset_projects(
   stand_threshold,
   proj_number = NULL,
   global_ceiling_field = NULL,
-  global_ceiling_value = NULL
+  global_ceiling_value = Inf
 )
 }
 \arguments{
@@ -36,13 +36,13 @@ build_preset_projects(
 
 \item{proj_target_min_value}{TODO ???}
 
-\item{stand_threshold}{Boolean statement on stand availablility for treatment. <emph{character}>}
+\item{stand_threshold}{Boolean statement on stand availability for treatment. <emph{character}>}
 
-\item{proj_number}{Number of projects}
+\item{proj_number}{Number of projects. <emph{Numeric}>}
 
-\item{global_ceiling_field}{Ceiling field containing values}
+\item{global_ceiling_field}{Ceiling field containing values. <emph{character}>}
 
-\item{global_ceiling}{Ceiling not be to exceeded across all projects}
+\item{global_ceiling}{Ceiling not be to exceeded across all projects.  <emph{Numeric}>}
 }
 \description{
 Wrapper for building projects using predetermined project areas

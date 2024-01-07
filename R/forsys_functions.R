@@ -8,10 +8,10 @@
 #' @param proj_fixed_target Whether project target is fixed or relative. <emph{logical}>
 #' @param proj_target_value Absolute value or relative percent (0-1) of project area sum.
 #' @param proj_target_min_value TODO ???
-#' @param stand_threshold Boolean statement on stand availablility for treatment. <emph{character}>
-#' @param proj_number Number of projects
-#' @param global_ceiling_field Ceiling field containing values
-#' @param global_ceiling Ceiling not be to exceeded across all projects
+#' @param stand_threshold Boolean statement on stand availability for treatment. <emph{character}>
+#' @param proj_number  Number of projects. <emph{Numeric}>
+#' @param global_ceiling_field Ceiling field containing values. <emph{character}>
+#' @param global_ceiling Ceiling not be to exceeded across all projects.  <emph{Numeric}>
 #'
 #' @importFrom dplyr rename select mutate arrange left_join inner_join
 #' @importFrom tidyr drop_na
@@ -28,7 +28,7 @@ build_preset_projects <- function(
     stand_threshold,
     proj_number = NULL,
     global_ceiling_field = NULL,
-    global_ceiling_value = NULL
+    global_ceiling_value = Inf
 ){
   
   # define global variables
@@ -79,9 +79,14 @@ build_preset_projects <- function(
   proj_number = ifelse(is.null(proj_number), Inf, proj_number)
   global_ceiling_value = ifelse(global_ceiling_value %>% is.na, Inf, global_ceiling_value)
   projects_selected_out <- projects_selected %>%
-    filter(treatment_rank <= proj_number) %>%
-    filter(get(global_ceiling_field) <= global_ceiling_value)
+    filter(treatment_rank <= proj_number)
   
+  # filter by global ceiling if field is specified
+  if(!is.null(global_ceiling_field)){
+    projects_selected_out <- projects_selected_out %>%
+      filter(get(global_ceiling_field) <= global_ceiling_value)
+  }
+    
   # create stand level output by joining with output projects
   join_y = stands_selected %>% 
     inner_join(
@@ -104,7 +109,7 @@ build_preset_projects <- function(
     mutate(DoTreat = 1, selected = 1)
   
   # limit output to project ceiling if set
-  if(!is.null(global_ceiling_field) & !is.null(global_ceiling_value)) {
+  if(!is.null(global_ceiling_field)) {
     
     projects_selected_out <- projects_selected_out %>%
       filter((cumsum(get(global_ceiling_field)) %/% global_ceiling_value + 1) == 1)
@@ -123,7 +128,7 @@ build_preset_projects <- function(
 
 #' ForSysR wrapper for running patchmax
 #'
-#' @return
+#' @return list
 build_dynamic_projects <- function(
     stands, 
     proj_target_field, 
@@ -426,12 +431,12 @@ create_grouped_dataset <- function(data, grouping_vars, summing_vars) {
 #' @param selected_stands 
 #' @param stands_data 
 #' @param stand_id_field 
-#' @param stand_area_field
+#' @param stand_area_field character. Name of variable containnig the stand area
 #' @param proj_id_field 
 #' @param scenario_output_grouping_fields 
 #' @param scenario_output_fields 
 #'
-#' @return
+#' @return list containing summary for selected projects and stands
 #' @export
 
 summarize_projects <- function(

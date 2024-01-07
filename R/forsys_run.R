@@ -164,7 +164,9 @@ run <- function(
     for (w in 1:nrow(weights)) { # START WEIGHT LOOP
 
       ## create the weighted priorities.
-      message(paste0("Weighting scenario ", w, " of ", nrow(weights), ": ", paste0(weights[w,], collapse = '-')))
+      message(paste0(
+        "Weighting scenario ", w, " of ", nrow(weights), ": ", 
+        paste0(weights[w,], collapse = '-')))
 
       # calculate objective by weighting priorities
       stands <- stands %>%

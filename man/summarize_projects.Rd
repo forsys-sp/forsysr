@@ -21,11 +21,16 @@ summarize_projects(
 
 \item{stand_id_field}{}
 
+\item{stand_area_field}{character. Name of variable containnig the stand area}
+
 \item{proj_id_field}{}
 
 \item{scenario_output_grouping_fields}{}
 
 \item{scenario_output_fields}{}
+}
+\value{
+list containing summary for selected projects and stands
 }
 \description{
 Summarize project data

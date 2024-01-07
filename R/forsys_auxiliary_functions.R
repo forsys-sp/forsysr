@@ -183,7 +183,6 @@ load_dataset <- function(path_to_file) {
 #' @param run_with_shiny ???
 #' @param overwrite_output logical. Whether to first delete existing data in directory
 #'
-#' @return
 #' @export
 
 create_output_directory <- function(

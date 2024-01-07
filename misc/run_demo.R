@@ -28,9 +28,9 @@ test_a <- forsys::run(config_file = test_a_config,
                  stand_data = test_forest_no_geom, 
                  return_outputs = T)
 
-# FORSYS test B: multi-priority static
+# FORSYS test B: multi-priority static (trade-off analysis)
 test_b_config <- 'configs/test_b_static_multi_priority_config.json'
-print_json_config(test_nb_config)
+print_json_config(test_b_config)
 test_b <- forsys::run(config_file = test_b_config, 
                  stand_data = test_forest_no_geom, 
                  return_outputs = T)
@@ -43,7 +43,7 @@ test_c <- forsys::run(config_file = test_c_config,
                       fire_intersect_table = fire_intersect,
                       return_outputs = T)
 
-# FORSYS test D: single-priority dynamic with fire
+# FORSYS test D: single-priority forsys w/ patchmax and fire
 test_d_config <- 'configs/test_d_patchmax_config.json'
 print_json_config(test_d_config)
 future::plan(future::multisession, workers=8)
@@ -56,7 +56,7 @@ test_d <- forsys::run(config_file = test_d_config,
             return_outputs = T,
             patchmax_verbose = T)
 
-# FORSYS test E: multi-priority dynamic
+# FORSYS test E: multi-priority forsys w/ patchmax
 test_e_config <- 'configs/test_e_patchmax_multi_priority_config.json'
 print_json_config(test_e_config)
 future::plan(future::multisession, workers=8)
