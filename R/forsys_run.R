@@ -44,6 +44,8 @@
 #' @param patchmax_EPW Stand exclusion weight parameter. Default is 0.5. <\emph{numeric 0-1}> 
 #' @param patchmax_exclusion_limit Max percent of excluded stands in valid patch. <\emph{numeric 0-1}>
 #' @param patchmax_verbose logical. Provides additional information about the patchmax project building procedure
+#' @param patchmax_adj_method string. Default is "queen" but other options are "rook" and "buffer"
+#' @param patchmax_adj_network igraph. Optional pre-generated adjacency network to pass to patchmax
 #'
 #' @return list with selected stands, project summary, project summary by subgroup
 #'
@@ -99,6 +101,8 @@ run <- function(
     patchmax_SDW = 0.5,
     patchmax_EPW = 0.5,
     patchmax_exclusion_limit = 1,
+    patchmax_adj_network = NULL,
+    patchmax_adj_method = 'queen',
     patchmax_verbose = FALSE
     ) {
   
@@ -238,7 +242,9 @@ run <- function(
             patchmax_exclusion_limit = patchmax_exclusion_limit,
             patchmax_sample_frac = patchmax_sample_frac, 
             patchmax_sample_seed = patchmax_sample_seed,
-            patchmax_verbose = patchmax_verbose
+            patchmax_verbose = patchmax_verbose,
+            patchmax_adj_network = patchmax_adj_network,
+            patchmax_adj_method = patchmax_adj_method
           )
           
           projects_selected_y <- patchmax_out[[1]]

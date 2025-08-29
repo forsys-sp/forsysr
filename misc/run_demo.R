@@ -73,6 +73,32 @@ test_f <- forsys::run(config_file = test_f_config,
                       fire_intersect_table = fire_intersect, 
                       return_outputs = T)
 
+# FORSYS test G: patchmax using buffer-based adjacency
+test_g_config <- 'configs/test_g_patchmax_adj_network_config.json'
+print_json_config(test_g_config)
+future::plan(future::multisession, workers=8)
+test_g <- forsys::run(config_file = test_g_config, 
+                      stand_data = test_forest,
+                      fire_intersect_table = fire_intersect, 
+                      patchmax_adj_method = 'buffer', 
+                      return_outputs = T)
+
+
+trace(patchmax::simulate_projects, browser)
+untrace(patchmax::simulate_projects)
+
+# FORSYS test H: patchmax with pre-generated adjacency network
+test_h_config <- 'configs/test_h_patchmax_adj_network_config.json'
+print_json_config(test_h_config)
+future::plan(future::multisession, workers=8)
+test_forest_adj_network <- patchmax::create_adj_network(test_forest, id_field = 'stand_id', method = 'buffer')
+test_h <- forsys::run(config_file = test_h_config, 
+                      stand_data = test_forest,
+                      fire_intersect_table = fire_intersect, 
+                      patchmax_adj_network = test_forest_adj_network,
+                      write_outputs = F,
+                      return_outputs = T)
+
 
 combine_priorities(
   stands = test_forest, 
