@@ -1,6 +1,6 @@
 Package: forsys
 Title: ForSys Scenario Planning
-Version: 1.1
+Version: 1.2
 Authors@R: 
     c(
         person(given = "Cody",
@@ -43,11 +43,10 @@ Imports:
     sf,
 Suggests:
     doParallel,
-    rgdal, 
-    rgeos
+    patchmax
 License: GPL-3
 URL: https://github.com/forsys-sp/forsysr
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2

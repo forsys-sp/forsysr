@@ -148,7 +148,9 @@ build_dynamic_projects <- function(
     patchmax_exclusion_limit,
     patchmax_sample_frac, 
     patchmax_sample_seed,
-    patchmax_verbose
+    patchmax_verbose,
+    patchmax_adj_method = 'queen',
+    patchmax_adj_network = NULL
   ){
   
   geom <- sf::st_as_sf(stands)
@@ -170,7 +172,7 @@ build_dynamic_projects <- function(
     }
   }
   
-  patchmax_out <- patchmax::simulate_projects(
+  patchmax_out <- build_patches(
     geom = geom,
     St_id = pull_field(geom, stand_id_field), 
     St_area = pull_field(geom, stand_area_field), 
@@ -189,7 +191,9 @@ build_dynamic_projects <- function(
     P_constraint_min_value = proj_target_min_value,
     sample_frac = patchmax_sample_frac,
     sample_seed = patchmax_sample_seed,
-    verbose = patchmax_verbose
+    verbose = patchmax_verbose,
+    adj_method = patchmax_adj_method,
+    adj_network = patchmax_adj_network
   )
   
   projects_selected <- patchmax_out[[1]] %>%

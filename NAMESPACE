@@ -2,6 +2,7 @@
 
 export(attainment_chart_by_target_treated)
 export(attainment_data_filter)
+export(build_patches)
 export(calculate_pcp)
 export(calculate_spm)
 export(combine_priorities)
