@@ -172,7 +172,7 @@ build_dynamic_projects <- function(
     }
   }
   
-  patchmax_out <- patchmax::simulate_projects(
+  patchmax_out <- build_patches(
     geom = geom,
     St_id = pull_field(geom, stand_id_field), 
     St_area = pull_field(geom, stand_area_field), 

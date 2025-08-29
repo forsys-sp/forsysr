@@ -10,8 +10,6 @@ pacman::p_load(
   gtools,         # permutation
   jsonlite,       # Config files
   stringr,
-  rgdal,
-  rgeos,          # ?
   roxygen2,       # documentation
   scales, 
   sp,             # ? do we use

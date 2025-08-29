@@ -23,7 +23,9 @@ build_dynamic_projects(
   patchmax_exclusion_limit,
   patchmax_sample_frac,
   patchmax_sample_seed,
-  patchmax_verbose
+  patchmax_verbose,
+  patchmax_adj_method = "queen",
+  patchmax_adj_network = NULL
 )
 }
 \value{
