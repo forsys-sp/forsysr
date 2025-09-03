@@ -93,7 +93,7 @@ test_h <- forsys::run(config_file = test_h_config,
                       stand_data = test_forest,
                       fire_intersect_table = fire_intersect, 
                       patchmax_adj_network = adj_network,
-                      write_outputs = F,
+                      write_outputs = T,
                       return_outputs = T)
 
 
@@ -106,9 +106,9 @@ combine_priorities(
 filter_stands(test_forest, filter_txt = 'mosaic1 == 3')
 
 # calculate and append SPM and PCP values
-test_forest <- forsys::test_forest %>% 
-  calculate_spm(fields = c("priority1","priority2"), availability_txt = 'mosaic1 == 3') %>%
-  calculate_pcp(fields = c("priority1","priority2"), availability_txt = 'mosaic1 == 3') %>%
+test_forest <- forsys::test_forest |> 
+  calculate_spm(fields = c("priority1","priority2"), availability_txt = 'mosaic1 == 3') |>
+  calculate_pcp(fields = c("priority1","priority2"), availability_txt = 'mosaic1 == 3') |>
   combine_priorities(fields = c("priority1_SPM","priority2_SPM"))
 
 
@@ -134,7 +134,7 @@ outputs = forsys::run(
   proj_target_value = 0.2
 )
 
-outputs$project_output %>% filter(Pr_1_priority1 == 3, Pr_2_priority2 == 2)
+outputs$project_output |> filter(Pr_1_priority1 == 3, Pr_2_priority2 == 2)
 
 # GRAPH OUTPUT ------------------------
 
@@ -184,31 +184,31 @@ forsys::stacked_barchart(
 # MAP OUTPUT ------------------------
 
 # plot project where only priority1 is prioritized
-proj_output <- outputs$project_output %>% 
+proj_output <- outputs$project_output |> 
   dplyr::filter(Pr_1_priority1 == 1 & Pr_2_priority2 == 0)
 
-plot_proj_dat <- test_forest %>%
-  group_by(proj_id) %>% summarize() %>%
-  dplyr::left_join(proj_output %>% dplyr::select(proj_id, treatment_rank))
+plot_proj_dat <- test_forest |>
+  group_by(proj_id) |> summarize() |>
+  dplyr::left_join(proj_output |> dplyr::select(proj_id, treatment_rank))
 
 ggplot() + 
   geom_sf(data = plot_proj_dat, aes(fill=treatment_rank)) 
 
 # plot stands selected
-plot_proj <- test_forest %>% 
-  group_by(proj_id) %>% 
-  summarize() %>% 
+plot_proj <- test_forest |> 
+  group_by(proj_id) |> 
+  summarize() |> 
   st_geometry()
 
-plot_stand_dat <- test_forest %>%
-  select(stand_id, proj_id) %>%
-  mutate(stand_id = as.character(stand_id)) %>%
-  inner_join(outputs$stand_output %>% select(stand_id)) %>%
-  left_join(outputs$project_output %>% select(proj_id, treatment_rank))
+plot_stand_dat <- test_forest |>
+  select(stand_id, proj_id) |>
+  mutate(stand_id = as.character(stand_id)) |>
+  inner_join(outputs$stand_output |> select(stand_id)) |>
+  left_join(outputs$project_output |> select(proj_id, treatment_rank))
 
 ggplot() + 
   geom_sf(data = plot_proj_dat, aes(fill=treatment_rank)) +
-  geom_sf(data = plot_stand_dat %>% st_centroid())
+  geom_sf(data = plot_stand_dat |> st_centroid())
 
 colfunc <- colorRampPalette(c('black', NA))
 
@@ -249,13 +249,13 @@ outputs = forsys::run(
   patchmax_sample_frac = 0.1,
 )
 
-patch_sf <- stands %>%
-  mutate(stand_id = as.character(stand_id)) %>%
-  left_join(outputs$stand_output %>% dplyr::select(stand_id, treatment_rank = proj_id)) %>%
-  group_by(treatment_rank) %>% summarize_if(is.numeric, sum) %>% st_as_sf() %>%
+patch_sf <- stands |>
+  mutate(stand_id = as.character(stand_id)) |>
+  left_join(outputs$stand_output |> dplyr::select(stand_id, treatment_rank = proj_id)) |>
+  group_by(treatment_rank) |> summarize_if(is.numeric, sum) |> st_as_sf() |>
   filter(treatment_rank %in% c(1:2))
 
-availability_sf <- stands %>% filter(priority3 > 0.5) %>% summarize()
+availability_sf <- stands |> filter(priority3 > 0.5) |> summarize()
 
 ggplot() + 
   geom_sf(data=stands, aes(fill=priority1), color=NA, alpha=0.5) +
