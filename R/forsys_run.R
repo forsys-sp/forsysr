@@ -133,7 +133,7 @@ run <- function(
       create_output_directory(relative_output_path, run_with_shiny, overwrite_output)
       
       # save input parameters to file
-      params <- ls()[grepl('stand_data|fire_intersect_table|params', ls()) == FALSE] %>%
+      params <- ls()[grepl('stand_data|fire_intersect_table|params|patchmax_adj_network', ls()) == FALSE] %>%
         sapply(function(x){tryCatch(get(x), error = function(e) return(0))})
       params <- params[-which(unlist(lapply(params, is.null)))]
       writeLines(jsonlite::toJSON(params, pretty = TRUE), 
